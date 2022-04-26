@@ -5,11 +5,12 @@ EXTRA_CFLAGS = -pthread
 PIGPIO = -lpigpio -lrt
 INCLUDE = -I
 PARENT_DIRECTORY = ..
-SRC = $(PARENT_DIRECTORY)/src/
-BUILD_DIR = ../obj/
+SRC_DIR = $(PARENT_DIRECTORY)/src/
+BUILD_DIR = $(PARENT_DIRECTORY)/obj/
+LIB_DIR = $(PARENT_DIRECTORY)/lib/
 
 # Get all directories from lib
-INCLUDE_DIRS_LIB = $(wildcard $(PARENT_DIRECTORY)/lib/*/src/)
+INCLUDE_DIRS_LIB = $(wildcard $(LIB_DIR)*/src/)
 INCLUDE_DIRS += $(INCLUDE_DIRS_LIB)
 # Add lib cpp/c files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.cpp)))
@@ -17,7 +18,7 @@ CSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.c)))
 DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.h)))
 
 # Get all directories in src
-INCLUDE_DIRS_SRC = $(sort $(dir $(wildcard $(SRC)*/)))
+INCLUDE_DIRS_SRC = $(sort $(dir $(wildcard $(SRC_DIR)*/)))
 INCLUDE_DIRS += $(INCLUDE_DIRS_SRC)
 # Add sub-src directory files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*.cpp)))
@@ -28,9 +29,9 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
 # Add all src-level files
-CPPSRC += $(patsubst /%,%,$(foreach %,$(SRC),$(wildcard $(%)*.cpp)))
-CSRC += $(patsubst /%,%,$(foreach %,$(SRC),$(wildcard $(%)*.c)))
-DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC),$(wildcard $(%)*.h)))
+CPPSRC += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.cpp)))
+CSRC += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.c)))
+DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.h)))
 
 _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 
