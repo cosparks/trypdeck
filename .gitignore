@@ -1,0 +1,5 @@
+tripdeck
+obj/
+*.bin
+*.o
+*.pdf
