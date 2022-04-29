@@ -4,19 +4,11 @@ Software for an interactive multimedia fortune-telling installation.  This proje
 
 ## Building and Running the Project
 ### Install PIGPIO Library:
-• to install PIGPIO, navigate to a folder where you store libraries/external resources and enter (you may have to include sudo before each command if you don't have permissions)
+• to install PIGPIO, navigate to scripts folder and enter
 ```
-$ wget https://github.com/joan2937/pigpio/archive/master.zip
-$ unzip master.zip
-$ cd pigpio-master
-$ make
-$ sudo make install
+sudo ./install_packages.sh
 ```
-NOTE: run these commands if the python part of the install fails:
-```
-$ sudo apt install python-setuptools python3-setuptools
-$ sudo make install
-```
+
 ##### (Optional) Test PIGPIO:
 • check that pigpio is working correctly (don't enter the `#` or anything after it)
 ```
