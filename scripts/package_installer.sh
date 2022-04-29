@@ -8,4 +8,3 @@ cd pigpio-master
 make
 sudo apt install python-setuptools python3-setuptools
 sudo make install
-
