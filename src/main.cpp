@@ -32,5 +32,6 @@ int main(int argv, char** argc) {
 			cout << "Yayy" << endl;
 			lastTime = Clock::instance().millis();
 		}
+
 	}
 }
