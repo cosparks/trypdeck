@@ -43,7 +43,7 @@ _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 # 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
 %.o: %.cpp $(DEPENDENCIES)
-	$(CC) -c -o $@ $< $(CFLAGS) $(CLIBS) $(INCLUDE_FLAGS)
+	$(CC) $(CLIBS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
 tripdeck: $(_OBJ)
 	$(CC) $(VERSION) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS) 
