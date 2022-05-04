@@ -28,6 +28,6 @@ int64_t Clock::seconds() {
 }
 
 int64_t Clock::_currentTimeInMilliseconds() {
-	auto timePoint = system_clock::now();
-	return duration_cast<milliseconds>(timePoint.time_since_epoch()).count();
+	auto timePoint = chrono::system_clock::now();
+	return chrono::duration_cast<chrono::milliseconds>(timePoint.time_since_epoch()).count();
 }

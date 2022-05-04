@@ -3,10 +3,10 @@
 
 #include <chrono>
 
-using namespace std::chrono;
+using namespace std;
 
 /**
- * @brief Simple time library for this project
+ * @brief Simple time library for this project. Add any time-related functionality here!
  * Note: this class is a singleton so you can't call the constructor directly
  */
 class Clock {
