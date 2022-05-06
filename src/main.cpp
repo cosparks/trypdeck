@@ -27,10 +27,10 @@ void initializeVlc() {
 	libvlc_media_player_t *mp;
 	libvlc_media_t *m;
 
-	const char* args = "--quiet --fullscreen --no-osd --x11-display :0 -v";
+	const char* args[6] = { "--quiet", "--fullscreen", "--no-osd", "--x11-display", ":0", "-v"};
 
 	/* Load the VLC engine */
-	inst = libvlc_new(0, &args);
+	inst = libvlc_new(6, args);
 
 	/* Create a new item */
 	//m = libvlc_media_new_location(inst, "video/climbing.m4v");
@@ -41,6 +41,8 @@ void initializeVlc() {
 
 	/* No need to keep the media now */
 	libvlc_media_release(m);
+
+	libvlc_video_take_snapshot(mp, 0, "snapshots/new.png", 0, 0);
 
 	// libvlc_media_player_set_xwindow(mp, xid);
 
