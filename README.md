@@ -3,10 +3,16 @@
 Software for an interactive multimedia fortune-telling installation.  This project is designed to compile and run on a raspberry pi.
 
 ## Building and Running the Project
-### Install PIGPIO Library:
-• to install PIGPIO, navigate to scripts folder and enter
+### Clone the Project:
+• navigate to the desired folder and in the command line of your raspberry pi enter
 ```
-sudo ./install_packages.sh
+$ git clone https://github.com/cosparks/tripdeck_basscoast.git
+$ git pull
+```
+### Install Dependencies:
+• to install PIGPIO, libvlc and other dependencies, navigate to scripts folder and enter
+```
+sudo ./package-installer.sh
 ```
 
 ##### (Optional) Test PIGPIO:
@@ -20,16 +26,6 @@ $ ./x_pigpiod_if2 # check C      I/F to daemon
 $ ./x_pigpio.py   # check Python I/F to daemon
 $ ./x_pigs        # check pigs   I/F to daemon
 $ ./x_pipe        # check pipe   I/F to daemon
-```
-### Install OpenCv:
-```
-...
-```
-### Clone the Project:
-• navigate to the desired folder and in the command line of your raspberry pi enter
-```
-$ git clone https://github.com/cosparks/tripdeck_basscoast.git
-$ git pull
 ```
 ### Build and Run:
 • navigate to `.../tripdeck_basscoast/src` folder and enter
@@ -57,4 +53,4 @@ $ /etc/init.d/dphys-swapfile restart
 ```
 
 ### Dependencies:
-openCV, pigpio, stl c++17, make
+libvlc, pigpio, stl c++17, make
