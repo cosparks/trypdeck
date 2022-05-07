@@ -1,10 +1,9 @@
 CC = g++
-CFLAGS = -g -Wall
 VERSION = -std=c++17
-EXTRA_CFLAGS = -pthread
-PIGPIO = -lpigpio -lrt
-CLIBS =  $(pkg-config --cflags libvlc)
-LIBS = $(PIGPIO) $(pkg-config --libs libvlc) -lvlc
+CFLAGS = -g -Wall
+LFLAGS = -pthread
+LIBS_CARGS =  $(pkg-config --cflags libvlc)
+LIBS = -lws2811 -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc
 INCLUDE = -I
 PARENT_DIRECTORY = ..
 SRC_DIR = $(PARENT_DIRECTORY)/src/
@@ -12,7 +11,7 @@ BUILD_DIR = $(PARENT_DIRECTORY)/obj/
 LIB_DIR = $(PARENT_DIRECTORY)/lib/
 
 # Get all directories from lib
-INCLUDE_DIRS_LIB = $(wildcard $(LIB_DIR)*/src/)
+INCLUDE_DIRS_LIB += $(wildcard $(LIB_DIR)*/)
 INCLUDE_DIRS += $(INCLUDE_DIRS_LIB)
 # Add lib cpp/c files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.cpp)))
@@ -37,16 +36,21 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.h)))
 
 _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 
+# Debug Info
+# $(info DEPENDENCIES is $(DEPENDENCIES))
+
 # try to get object files into separate folder
 # OBJ = $(patsubst ../%,$(BUILD_DIR)%,$(patsubst ,%.cpp,$(_OBJ)))
 # $(TARGET)%.o: %.cpp $(DEPENDENCIES)
 # 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
+
+
 %.o: %.cpp $(DEPENDENCIES)
-	$(CC) $(CLIBS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
+	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
 tripdeck: $(_OBJ)
-	$(CC) $(VERSION) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS) 
+	$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
 .PHONY: clean
 
