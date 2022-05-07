@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define RUN_INTERVAL 40000
+#define RUN_INTERVAL 30000
 #define PRINT_INTERVAL 1000
 
 bool initializeGpio() {
@@ -24,7 +24,7 @@ bool initializeGpio() {
 }
 
 void play_video() {
-	system("omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/climbing.mp4");
+	system("omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/climbing.m4v");
 }
 
 void initializeVlc() {
@@ -55,7 +55,7 @@ void initializeVlc() {
 	libvlc_media_player_play(mp);
 
 	/* Let it play a bit */
-	this_thread::sleep_for(chrono::seconds(30));
+	this_thread::sleep_for(chrono::seconds(40));
 
 	/* Stop playing */
 	libvlc_media_player_stop(mp);
@@ -66,14 +66,7 @@ void initializeVlc() {
 	libvlc_release(inst);
 }
 
-int main(int argv, char** argc) {
-	//if (!initializeGpio()) {
-	//	return -1;
-	//}
-
-	// thread omx(play_video);
-	// omx.detach();
-
+void initializeWS281X() {
 	ws2811_t ledString =
 	{
 		.freq = WS2811_TARGET_FREQ,
@@ -104,8 +97,17 @@ int main(int argv, char** argc) {
 		cout << "failed to initialize ws2811.  Error: " << ret << endl;
 	}
 	ws2811_led_t* matrix = (ws2811_led_t*)malloc(sizeof(ws2811_led_t) * 100);
+}
 
-	initializeVlc();
+int main(int argv, char** argc) {
+	//if (!initializeGpio()) {
+	//	return -1;
+	//}
+
+	//initializeVlc();
+
+	thread omx(play_video);
+	omx.join();
 	
 	int64_t lastTime = Clock::instance().millis();
 
