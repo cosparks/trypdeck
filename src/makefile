@@ -52,6 +52,9 @@ _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 tripdeck: $(_OBJ)
 	$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
+debug: $(_OBJ)
+	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
+
 .PHONY: clean
 
 clean : $(_OBJ)

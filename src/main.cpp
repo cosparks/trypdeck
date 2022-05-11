@@ -10,11 +10,9 @@
 
 using namespace std;
 
-#define RUN_INTERVAL 30000
+#define RUN_INTERVAL 60000
 #define PRINT_INTERVAL 1000
-#define LED_INTERVAL 1
-
-#define NUM_LEDS 300
+#define LED_INTERVAL 50
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {
@@ -37,11 +35,7 @@ bool initializeGpio() {
 }
 
 void play_video() {
-	system("omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/climbing.m4v");
-}
-
-void writeSingleLed(uint32_t position, uint8_t brightness, uint8_t r, uint8_t g, uint8_t b) {
-	APA102_WriteLED(position, APA102_CreateFrame(brightness, r, g, b));
+	system("omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/climbing.mp4");
 }
 
 void initializeVlc() {
@@ -49,13 +43,13 @@ void initializeVlc() {
 	libvlc_media_player_t *mp;
 	libvlc_media_t *m;
 
-	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--x11-display", ":0" };
+	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--no-audio", "--x11-display", ":0" };
 	int numArgs = sizeof(args) / sizeof(args[0]);
 	inst = libvlc_new(numArgs, args);
 
 	/* Create a new item */
 	//m = libvlc_media_new_location(inst, "video/climbing.m4v");
-	m = libvlc_media_new_path (inst, "video/climbing.m4v");
+	m = libvlc_media_new_path (inst, "video/climbing.mp4");
 	
 	/* Create a media player playing environement */
 	mp = libvlc_media_player_new_from_media(m);
@@ -71,16 +65,18 @@ void initializeVlc() {
 	/* play the media_player */
 	libvlc_media_player_play(mp);
 
-	/* Let it play a bit */
-	this_thread::sleep_for(chrono::seconds(40));
+	// /* Let it play a bit */
+	// this_thread::sleep_for(chrono::seconds(40));
+}
 
-	/* Stop playing */
-	libvlc_media_player_stop(mp);
+void runVlc() {
+	// /* Stop playing */
+	// libvlc_media_player_stop(mp);
 
-	/* Free the media_player */
-	libvlc_media_player_release(mp);
+	// /* Free the media_player */
+	// libvlc_media_player_release(mp);
 
-	libvlc_release(inst);
+	// libvlc_release(inst);
 }
 
 void initializeWS281X() {
@@ -119,21 +115,38 @@ void initializeWS281X() {
 void runAddressableLeds(int64_t currentTime, int64_t& lastTime, uint32_t& i, uint32_t& j, bool& on) {
 	if (lastTime + LED_INTERVAL <= currentTime) {
 		if (on) {
-			writeSingleLed(j, 31, 0xFF, 0, 0);
-			i++;
+			// writeSingleLed(j, 31, 0xFF, 0, 0);
+			// i++;
 			// APA102_Fill(strip, APA102_CreateFrame(31, 0xFF, 0x0, 0x00));
 		} else {
-			writeSingleLed(j, 0, 0, 0, 0);
+			// writeSingleLed(j, 0, 0, 0, 0);
 			// APA102_Fill(strip, APA102_CreateFrame(0, 0x0, 0x0, 0x0));
 		}
 
+		// APA102_Clear();
+		// APA102_WriteLEDSegment(i, j, APA102_CreateFrame(31, 0xFF, 0x0, 0x0));
+		i = (i + 1) % ACTIVE_LEDS;
+		j = (j + 1) % ACTIVE_LEDS;
+		// writeSingleLed(j, 31, 0xFF, 0x00, 0);
+
 		// writeSingleLed(i++ % NUM_LEDS, 31, 0xFF, 0xFF, 0xFF);
 		lastTime = currentTime;
+
+		// Remove this
+		// j = (j - 1);
+		// if (j == 0) {
+		// 	j = 300;
+		// }
+
 		on = !on;
-		if (i > 3) {
-			i = 0;
-			j = (j + 1) % NUM_LEDS;
-		}
+		// if (i > 3) {
+		// 	i = 0;
+		// 	// Uncomment this
+		// 	j = (j + 1) % ACTIVE_LEDS;
+		// 	if (j == 0) {
+		// 		APA102_Clear();
+		// 	}
+		// }
 	}
 }
 
@@ -142,14 +155,17 @@ int main(int argv, char** argc) {
 		return -1;
 	}
 
-	//initializeVlc();
-	// thread omx(play_video);
-	// omx.join();
+	Apa102 lights(300);
+	lights.init();
 
-	int64_t lastTime = Clock::instance().millis();
+	// initializeVlc();
+	// thread omx(play_video);
+	// omx.detach();
+
+	int64_t lastPrintTime = Clock::instance().millis();
+	int64_t lastLedUpdateTime = lastPrintTime;
 	bool on = true;
 	uint32_t i = 0;
-	uint32_t j = 0;
 
 	while (true) {
 		int64_t currentTime = Clock::instance().millis();
@@ -158,7 +174,23 @@ int main(int argv, char** argc) {
 			break;
 		}
 
-		runAddressableLeds(currentTime, lastTime, i, j, on);
+		if (lastPrintTime + PRINT_INTERVAL <= currentTime) {
+			cout << "Current program time in milliseconds: " << currentTime << endl;
+			lastPrintTime = currentTime;
+		}
+
+		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
+			if (on) {
+				lights.clear();
+				lights.setPixel(Pixel { 31, 0xFF, 0x0, 0x0 }, Point { i, 0 });
+				i++;
+			}
+			lights.show();
+
+			i = i % lights.getActiveLeds();
+			on = !on;
+			lastLedUpdateTime = currentTime;
+		}
 	}
 
 	return 1;
