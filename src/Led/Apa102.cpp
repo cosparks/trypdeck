@@ -11,18 +11,23 @@ Apa102::~Apa102() {
 	delete[] _spiBuffer;
 }
 
-int Apa102::init() {
+void Apa102::init(uint32_t spiChan, uint32_t baud, uint32_t spiFlags) {
 	_endframeLength = _calculateEndframe(_activeLeds);
 	_spiBufferLength = 4 + (_activeLeds * 4) + _endframeLength;
 	_spiBuffer = new uint8_t[_spiBufferLength];
 
 	_writeEndframe();
-
-	return spiOpen(0, 6000000, 0);
+	
+	int result = spiOpen(spiChan, baud, spiFlags);
+	if (result < 0) {
+		throw std::runtime_error(std::string("Apa102::init Error! Unable to open SPI channel"));
+	} else {
+		_handle = (uint32_t)result;
+	}
 }
 
 void Apa102::show() {
-	spiWrite(0, (char*)_spiBuffer, _spiBufferLength);
+	spiWrite(_handle, (char*)_spiBuffer, _spiBufferLength);
 }
 
 void Apa102::clear() {
@@ -97,8 +102,8 @@ void Apa102::_doFillAction(Point p1, Point p2, std::function<void(uint8_t*)> act
 	uint8_t bottom = std::min(p1.y, p2.y);
 	uint8_t top = std::max(p1.y, p2.y);
 
-	for (int x = left; x < right; x++) {
-		for (int y = bottom; y < top; y++) {
+	for (int x = left; x <= right; x++) {
+		for (int y = bottom; y <= top; y++) {
 			int index = 4 + (x * _y + y) * 4;
 			action(&_spiBuffer[index]);
 		}
@@ -111,7 +116,7 @@ uint32_t Apa102::_getIndexFromPoint(Point point) {
 
 void Apa102::_assertPointInRange(Point point) {
 	if (point.x > _x || point.y > _y) {
-		throw std::runtime_error(std::string("Error: Point out of range!"));
+		throw std::runtime_error(std::string("Apa102 Error: Point out of range!"));
 	}
 }
 
@@ -131,243 +136,3 @@ uint32_t Apa102::_calculateEndframe(uint32_t numLeds) {
 	uint32_t endFrameLength = ((numLeds >> 1) / 8) + (addOne ? 1 : 0);
 	return (endFrameLength < 4) ? 4 : endFrameLength;
 }
-
-// struct APA102_Frame APA102_CreateFrame(uint8_t brightness, uint8_t r, uint8_t g, uint8_t b) {
-//     struct APA102_Frame led = {
-// 		.r = r,
-// 		.g = g,
-// 		.b = b,
-// 		.brightness = brightness,
-// 	};
-//     return led;
-// }
-
-// void APA102_WriteLED(uint32_t position, struct APA102_Frame led) {
-// 	uint32_t endFrameLength = (((position) >> 1) / 8 + ((position) >> 1) % 8);
-// 	endFrameLength = endFrameLength < 4 ? 4 : (endFrameLength + endFrameLength % 4);
-// 	uint32_t size = (position + 1) * 4 + 4 + endFrameLength;
-//     uint8_t led_frame[size] = {};
-	
-//     if(led.brightness > 31) {
-//         led.brightness = 31;
-//     }
-
-// 	// Fill with color
-// 	// uint32_t i;
-// 	// for (i = 4; i < (position * 4 + 4); i += 4) {
-// 	// 	led_frame[i] = 0b11100000 | (0b00011111 & led.brightness);
-// 	// 	led_frame[i+1] = led.b;
-// 	// 	led_frame[i+2] = led.g;
-// 	// 	led_frame[i+3] = led.r;
-// 	// }
-
-// 	// Clear everything up to position
-// 	uint32_t i;
-// 	for (i = 4; i < (position * 4 + 4); i += 4) {
-// 		led_frame[i] = 0b11100000;
-// 	}
-
-// 	// Fill led at position
-// 	led_frame[i] = 0b11100000 | (0b00011111 & led.brightness);
-// 	led_frame[i+1] = led.b;
-// 	led_frame[i+2] = led.g;
-// 	led_frame[i+3] = led.r;
-
-// 	// Build End Frame    (I = N * 4 + 4, where N is the position)
-// 	//	 0    1    2    3        4    5    6    7			 I    I+1  I+2  I+3      I+4  I+...
-// 	// ( 0x00 0x00 0x00 0x00 ) ( 0x0A 0x00 0x00 0x00 ) ... ( 0xFF 0xFF 0x00 0x00 ) ( 0xFF ... )
-// 	for (i = i + 4; i < size; i += 4) {
-// 		led_frame[i] = 1;
-// 		led_frame[i+1] = 1;
-// 		led_frame[i+2] = 1;
-// 		led_frame[i+3] = 1;
-// 	}
-
-// 	spiWrite(0, (char*)led_frame, i);
-// }
-
-// void APA102_WriteLEDSegment(uint32_t start, uint32_t end, struct APA102_Frame led) {
-// 	uint32_t endFrameLength = (((end) >> 1) / 8 + ((end) >> 1) % 8);
-// 	endFrameLength = endFrameLength < 4 ? 4 : (endFrameLength + endFrameLength % 4);
-// 	uint32_t size = (end + 1) * 4 + 4 + endFrameLength;
-//     uint8_t led_frame[size] = {};
-	
-//     if(led.brightness > 31) {
-//         led.brightness = 31;
-//     }
-
-// 	// Clear everything up to start
-// 	uint32_t i;
-// 	for (i = 4; i < (start * 4 + 4); i += 4) {
-// 		led_frame[i] = 0b11100000;
-// 	}
-
-// 	// Fill segment
-// 	for (; i < (end * 4 + 4); i += 4) {
-// 		led_frame[i] = 0b11100000 | (0b00011111 & led.brightness);
-// 		led_frame[i+1] = led.b;
-// 		led_frame[i+2] = led.g;
-// 		led_frame[i+3] = led.r;
-// 	}
-
-// 	// fill end frame
-// 	for (; i < size; i += 4) {
-// 		led_frame[i] = 1;
-// 		led_frame[i+1] = 1;
-// 		led_frame[i+2] = 1;
-// 		led_frame[i+3] = 1;
-// 	}
-
-// 	spiWrite(0, (char*)led_frame, i);
-// }
-
-// void APA102_Clear() {
-// 	uint32_t endFrameLength = (((NUM_LEDS) >> 1) / 8 + ((NUM_LEDS) >> 1) % 8);
-// 	endFrameLength = endFrameLength < 4 ? 4 : (endFrameLength + endFrameLength % 4);
-// 	uint32_t size = NUM_LEDS * 4 + endFrameLength + 4;
-//     uint8_t led_frame[size] = {};
-
-// 	// Fill with color
-// 	uint32_t i;
-// 	for (i = 4; i < size; i += 4) {
-// 		led_frame[i] = 0b11100000;
-// 	}
-
-// 	spiWrite(0, (char*)led_frame, size);
-// }
-
-// void APA102_Fill(struct APA102 strip, struct APA102_Frame led) {
-//     uint8_t led_frame[1024];
-//     int i;
-
-//     if(led.brightness > 31) {
-//         led.brightness = 31;
-//     }
-
-//     // APA102_Begin();
-// 	for (i = 0; i <= 4; i++) {
-// 		led_frame[i] = 0x0;
-// 	}
-
-//     for(i = 4; i < strip.n_leds; i+=4) {
-//         led_frame[i] = 0b11100000 | (0b00011111 & led.brightness);
-//         led_frame[i + 1] = led.b;
-//         led_frame[i + 2] = led.g;
-//         led_frame[i + 3] = led.r;
-//     }
-
-// 	for (; i <= strip.n_leds + 4; i++) {
-// 		led_frame[i] = 0xFF;
-// 	}
-
-// 	spiWrite(0, (char*)led_frame, i);
-//     // APA102_End();
-// }
-
-// void APA102_Stripes(struct APA102* strip, struct APA102_Frame* led, int stripe_size, int gap_size, int offset) {
-//     uint8_t led_frame[4];
-//     int i, ctr;
-
-//     ctr = offset;
-//     if(ctr < 0) {
-//         ctr = 0;
-//     }
-
-//     while(ctr > gap_size + stripe_size) {
-//         ctr -= gap_size+stripe_size;
-//         if(ctr < 0) {
-//             ctr = 0;
-//         }
-//     }
-
-//     if(led->brightness > 31) {
-//         led->brightness = 31;
-//     }
-
-//     APA102_Begin();
-//     for(i = 0; i < strip->n_leds; i++) {
-//         if(ctr < stripe_size) {
-//             led_frame[0] = 0b11100000 | (0b00011111 & led->brightness);
-//             led_frame[1] = led->b;
-//             led_frame[2] = led->g;
-//             led_frame[3] = led->r;
-//         } else {
-//             led_frame[0] = 0b11100000;
-//             led_frame[1] = 0x00;
-//             led_frame[2] = 0x00;
-//             led_frame[3] = 0x00;
-//         }
-
-//         spiWrite(0, (char*)led_frame, 4);
-
-//         ctr++;
-//         if(ctr >= stripe_size + gap_size) {
-//             ctr = 0;
-//         }
-//     }
-//     APA102_End();
-// }
-
-// void APA102_MultiStripes(struct APA102* strip, struct APA102_Frame** leds, int stripe_size, int gap_size, int offset, int coffset) {
-//     uint8_t led_frame[4];
-//     int i, ctr, cctr, clen;
-//     struct APA102_Frame* ref;
-
-//     ref = leds[0];
-//     clen = 0;
-//     cctr = 0;
-
-//     while(1) {
-//         clen++;
-//         ref = leds[clen];
-//         if(ref == 0) {
-//             break;
-//         }
-//     }
-
-//     cctr = coffset;
-
-//     if(clen == 0) {
-//         printf("APA102_MultiStripes Error: leds must contain at least one color\n");
-//     }
-
-//     ctr = offset;
-//     if(ctr < 0) {
-//         ctr = 0;
-//     }
-
-//     while(ctr > gap_size + stripe_size) {
-//         ctr -= gap_size+stripe_size;
-//         if(ctr < 0) {
-//             ctr = 0;
-//         }
-//     }
-
-//     APA102_Begin();
-//     for(i = 0; i < strip->n_leds; i++) {
-
-//         if(ctr < stripe_size) {
-//             led_frame[0] = 0b11100000 | (0b00011111 & leds[cctr]->brightness);
-//             led_frame[1] = leds[cctr]->b;
-//             led_frame[2] = leds[cctr]->g;
-//             led_frame[3] = leds[cctr]->r;
-//         } else {
-//             led_frame[0] = 0b11100000;
-//             led_frame[1] = 0x00;
-//             led_frame[2] = 0x00;
-//             led_frame[3] = 0x00;
-//         }
-
-//         spiWrite(0, (char*)led_frame, 4);
-
-//         ctr++;
-//         if(ctr >= stripe_size + gap_size) {
-//             ctr = 0;
-//             cctr++;
-//                 if(cctr == clen) {
-//                     cctr = 0;
-//                 }
-//         }
-//     }
-//     APA102_End();
-// }

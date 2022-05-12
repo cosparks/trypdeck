@@ -3,7 +3,7 @@ VERSION = -std=c++17
 CFLAGS = -g -Wall
 LFLAGS = -pthread
 LIBS_CARGS =  $(pkg-config --cflags libvlc)
-LIBS = -lws2811 -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc
+LIBS = -lws2811 -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc -lavcodec -lavformat -lavutil -lswscale
 INCLUDE = -I
 PARENT_DIRECTORY = ..
 SRC_DIR = $(PARENT_DIRECTORY)/src/
