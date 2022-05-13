@@ -42,12 +42,14 @@ using namespace std;
 #define RUN_LEDS 0
 #define RUN_BRIGHTNESS_TEST 0
 #define RUN_FILL_TEST 0
-#define RUN_SERIAL_COMMUNICATION 1
-#define INITIALIZE_GPIO RUN_LEDS | RUN_SERIAL_COMMUNICATION
+#define RUN_SERIAL_NETWORKING 1
+#define SERIAL_ID 11
+#define INITIALIZE_GPIO RUN_LEDS | RUN_SERIAL_NETWORKING
 
 #define SERIAL_BAUD 9600
 #define SPI_BAUD 6000000
 
+#define TERMINATE_PROGRAM 0
 #define RUN_INTERVAL 100000
 #define PRINT_INTERVAL 1000
 #define LED_INTERVAL 50
@@ -357,6 +359,16 @@ int main(int argv, char** argc) {
 	}
 	#endif
 
+	#if RUN_SERIAL_NETWORKING
+	int error = i2cOpen(0, SERIAL_ID, 0);
+	if (error < 0) {
+		cout << "Unable to open I2C port, terminating with error " << error << endl;
+		return -1;
+	}
+	uint32_t handle = error;
+	int64_t last_serial_publish = Clock::instance().millis();
+	#endif
+
 	#if PLAY_OMX
 	thread omx(play_video);
 	omx.detach();
@@ -387,17 +399,28 @@ int main(int argv, char** argc) {
 	while (true) {
 		int64_t currentTime = Clock::instance().millis();
 
+		#if TERMINATE_PROGRAM
 		if (currentTime >= RUN_INTERVAL) {
 			break;
 		}
+		#endif
 
 		if (lastPrintTime + PRINT_INTERVAL <= currentTime) {
 			cout << "Current program time in milliseconds: " << currentTime << endl;
 			lastPrintTime = currentTime;
 		}
 
-		#if RUN_SERIAL_COMMUNICATION
+		#if RUN_SERIAL_NETWORKING
+		if (last_serial_publish + PRINT_INTERVAL <= currentTime) {
+			char buf[32] = "Hello World";
+			i2cWriteBlockData(handle, 13, buf, 32);
+			last_serial_publish = currentTime;
 
+			int messageLength;
+			if ((messageLength = i2cReadBlockData(handle, SERIAL_ID, buf)) > 0) {
+				printf("%d byte message read from I2C: %c", messageLength, buf);
+			}
+		}
 		#endif
 
 		#if RUN_BRIGHTNESS_TEST
