@@ -25,20 +25,34 @@ extern "C" {
 #include "Apa102.h"
 #include "Clock.h"
 
-using namespace std;
-
-#define SPI_BAUD 6000000
-
-#define RUN_INTERVAL 80000
-#define PRINT_INTERVAL 1000
-#define LED_INTERVAL 50
-#define MATRIX_WIDTH 60
-#define MATRIX_HEIGHT 40
-
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
 #endif
 
+using namespace std;
+
+// PROGRAM MACROS
+#define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/numa.m4v"
+#define VLC_VIDEO_PATH "video/music.mp4"
+#define TRANSCODE_VIDEO_PATH "video/numa.m4v"
+
+#define RUN_AV_TRANSCODING 0
+#define PLAY_OMX 0
+#define SAVE_RGB_FRAMES 0
+#define RUN_LEDS 0
+#define RUN_BRIGHTNESS_TEST 0
+#define RUN_FILL_TEST 0
+#define RUN_SERIAL_COMMUNICATION 1
+#define INITIALIZE_GPIO RUN_LEDS | RUN_SERIAL_COMMUNICATION
+
+#define SERIAL_BAUD 9600
+#define SPI_BAUD 6000000
+
+#define RUN_INTERVAL 100000
+#define PRINT_INTERVAL 1000
+#define LED_INTERVAL 50
+#define MATRIX_WIDTH 60
+#define MATRIX_HEIGHT 40
 
 #define INBUF_SIZE 4096
 
@@ -63,7 +77,7 @@ bool initializeGpio() {
 }
 
 void play_video() {
-	system("omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/climbing.mp4");
+	system(OMX_ARGS);
 }
 
 void initializeVlc() {
@@ -77,7 +91,7 @@ void initializeVlc() {
 
 	/* Create a new item */
 	//m = libvlc_media_new_location(inst, "video/climbing.m4v");
-	m = libvlc_media_new_path (inst, "video/climbing.m4v");
+	m = libvlc_media_new_path (inst, VLC_VIDEO_PATH);
 	
 	/* Create a media player playing environement */
 	mp = libvlc_media_player_new_from_media(m);
@@ -94,55 +108,15 @@ void initializeVlc() {
 	libvlc_media_player_play(mp);
 
 	// /* Let it play a bit */
-	// this_thread::sleep_for(chrono::seconds(40));
-}
+	this_thread::sleep_for(chrono::seconds(40));
 
-void runVlc() {
 	// /* Stop playing */
-	// libvlc_media_player_stop(mp);
+	libvlc_media_player_stop(mp);
 
 	// /* Free the media_player */
-	// libvlc_media_player_release(mp);
+	libvlc_media_player_release(mp);
 
-	// libvlc_release(inst);
-}
-
-void runAddressableLeds(int64_t currentTime, int64_t& lastTime, uint32_t& i, uint32_t& j, bool& on) {
-	if (lastTime + LED_INTERVAL <= currentTime) {
-		if (on) {
-			// writeSingleLed(j, 31, 0xFF, 0, 0);
-			// i++;
-			// APA102_Fill(strip, APA102_CreateFrame(31, 0xFF, 0x0, 0x00));
-		} else {
-			// writeSingleLed(j, 0, 0, 0, 0);
-			// APA102_Fill(strip, APA102_CreateFrame(0, 0x0, 0x0, 0x0));
-		}
-
-		// APA102_Clear();
-		// APA102_WriteLEDSegment(i, j, APA102_CreateFrame(31, 0xFF, 0x0, 0x0));
-		// i = (i + 1) % ACTIVE_LEDS;
-		// j = (j + 1) % ACTIVE_LEDS;
-		// writeSingleLed(j, 31, 0xFF, 0x00, 0);
-
-		// writeSingleLed(i++ % NUM_LEDS, 31, 0xFF, 0xFF, 0xFF);
-		lastTime = currentTime;
-
-		// Remove this
-		// j = (j - 1);
-		// if (j == 0) {
-		// 	j = 300;
-		// }
-
-		on = !on;
-		// if (i > 3) {
-		// 	i = 0;
-		// 	// Uncomment this
-		// 	j = (j + 1) % ACTIVE_LEDS;
-		// 	if (j == 0) {
-		// 		APA102_Clear();
-		// 	}
-		// }
-	}
+	libvlc_release(inst);
 }
 
 static AVFormatContext *fmt_ctx = NULL;
@@ -254,12 +228,12 @@ static void video_decode_example()
 	int ret = 0;
 	frame = 0;
 	AVFrame *frame = av_frame_alloc();
-
 	uint8_t* imagebuffer = NULL;
 
 	// PERFORMANCE Testing
 	int64_t microBuffer[10000];
 	int i = 0;
+	int64_t start = Clock::instance().seconds();
 
 	// Read all the frames
 	while (av_read_frame_log_time(fmt_ctx, &avpkt, microBuffer[i]) >= 0) {
@@ -290,11 +264,6 @@ static void video_decode_example()
 			break;
 		}
 
-		iFrame++;
-		if (!(iFrame % 4 == 0)) {
-			continue;
-		}
-
 		// Convert frame data to RGB
 		SwsContext* swsContext = sws_getContext(frame->width, frame->height, AVPixelFormat(frame->format), frame->width, frame->height, AV_PIX_FMT_RGB24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 		AVFrame* frameRGB = av_frame_alloc(); frameRGB->format = AV_PIX_FMT_RGB24; frameRGB->width = frame->width; frameRGB->height = frame->height;
@@ -302,36 +271,20 @@ static void video_decode_example()
 		sws_scale(swsContext, frame->data, frame->linesize, 0, frame->height, frameRGB->data, frameRGB->linesize);
 		sws_freeContext(swsContext);
 		
-		saveFrame(frameRGB, iFrame);
-		
-		//cout << "Program time after frame converted to RGB: " << Clock::instance().millis() << endl;
+		#if SAVE_RGB_FRAMES
+		iFrame++;
+		if ((iFrame % 4 == 0)) {
+			saveFrame(frameRGB, iFrame);
+		}
+		#endif
 
-		// Calculate output buffer requirements
-		// int image_buffer_size = av_image_get_buffer_size(AVPixelFormat(frameRGB->format), frameRGB->width, frameRGB->height, 1);
-
-		// Print frame info
-		// fprintf(stderr,
-		// 	"[%d] Got frame of size: %dx%d (%d bytes)\r\n",
-		// 	video_dec_ctx->frame_number,
-		// 	frame->width,
-		// 	frame->height,
-		// 	image_buffer_size
-		// );
-
-		// Use temp buffer for the video data
-		// if (imagebuffer == NULL) imagebuffer = new uint8_t[image_buffer_size];
-		// 	av_image_copy_to_buffer(imagebuffer, image_buffer_size, frame->data, frame->linesize, AVPixelFormat(frame->format), frame->width, frame->height, 1);    
-
-		// Dump the frame to a file
-		// FILE* out = fopen("out_864x486.yuv", "ab");
-		// fwrite(imagebuffer, image_buffer_size, 1, out);
-		// fclose(out);
 		av_frame_free(&frameRGB);
 		i++;
 		microBuffer[i++] = Clock::instance().micros();
 	}
 
-	// CALCULATE AVERAGE TIMES
+	// TOTAL AND AVERAGE FRAME TIMES
+	int64_t end = Clock::instance().seconds();
 	int64_t j;
 	int64_t sum = 0;
 	int64_t count = 0;
@@ -347,9 +300,10 @@ static void video_decode_example()
 		j--;
 	}
 
+	cout << "Total Transcoding time in seconds is: " << end - start << endl;
 	cout << "The average time to read a frame in microseconds is: " << sum / count << endl;
 	cout << "The average time to read a frame in milliseconds is: " << (sum / count) / 1000 << endl;
-	cout << "Frames per second: " << 1000 / ((sum / count) / 1000) << endl;
+	cout << "Average frames per second: " << 1000 / ((sum / count) / 1000) << endl;
 
 	delete imagebuffer;
 	fprintf(stderr, "out of loop av_read_frame\n");
@@ -366,8 +320,7 @@ int runAv() {
 	//av_register_all();
 	//avcodec_register_all();
 	
-	//src_filename = "src/video/test.m4v";
-	src_filename = "video/test.m4v";
+	src_filename = TRANSCODE_VIDEO_PATH;
 
 	int64_t start = Clock::instance().micros();
 	// open input file, and allocate format context
@@ -397,30 +350,37 @@ int runAv() {
 
 int main(int argv, char** argc) {
 	int64_t lastPrintTime = Clock::instance().millis();
-	// if (!initializeGpio()) {
-	// 	return -1;
-	// }
 
-	// initializeVlc();
-	// thread omx(play_video);
-	// omx.detach();
+	#if INITIALIZE_GPIO
+	if (!initializeGpio()) {
+		return -1;
+	}
+	#endif
 
-	// generate ppm frames
-	// thread avCodec(runAv);
-	// avCodec.detach();
+	#if PLAY_OMX
+	thread omx(play_video);
+	omx.detach();
+	#endif
+
+	#if RUN_AV_TRANSCODING
+	thread avCodec(runAv);
+	avCodec.detach();
+	#endif
 
 	// Led Stuff
-	// Apa102 lights(10, 29);
-	// lights.init(0, SPI_BAUD, 0);
+	#if RUN_LEDS
+	Apa102 lights(10, 29);
+	lights.init(0, SPI_BAUD, 0);
 	
-	// int64_t lastLedUpdateTime = lastPrintTime;
-	// bool on = true;
-	// bool goUp = true;
-	// uint32_t i = 0;
-	// uint32_t j = 0;
-	// Pixel pixel = { 1, 0xFF, 0x00, 0x00 };
-	// Pixel nextPixel = { 1, 0x00, 0xFF, 0x00 };
-	// lights.clear();
+	int64_t lastLedUpdateTime = lastPrintTime;
+	bool on = true;
+	bool goUp = true;
+	uint32_t i = 0;
+	uint32_t j = 0;
+	Pixel pixel = { 1, 0xFF, 0x00, 0x00 };
+	Pixel nextPixel = { 1, 0x00, 0xFF, 0x00 };
+	lights.clear();
+	#endif
 
 	int frameNum = 0;
 
@@ -436,87 +396,65 @@ int main(int argv, char** argc) {
 			lastPrintTime = currentTime;
 		}
 
-		// FILE *pFile;
-		// char szFilename[32];
+		#if RUN_SERIAL_COMMUNICATION
 
-		// // Open file
-		fstream led_stream;
-		char fileName[32];
-		sprintf(fileName, "src/gen/frame%d.ppm", frameNum+=2);
-		led_stream.open(fileName, ios::out);
+		#endif
 
-		if (!led_stream.is_open()) {
-			return -1;
-		}
-
-		char header[32];
-		led_stream.read(header, 32);
-
-		char data[32];
-		for (int i = 0; i < 32; i++) {
-			data[i] = header[i];
-		}
-
-		printf(data);
-		
-		// sprintf(szFilename, "src/gen/frame%d.ppm", frameNum+=2);
-		// pFile = fopen(szFilename, "wb");
-		// pFile;
-		// Brightness Test
-		// Purple #A020F0
-		// if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
-		// 	lights.fillArea(Pixel { 31, (uint8_t)i, 0, (uint8_t)i }, Point { 0, 5 }, Point { 9, 15 });
-		// 	lights.show();
-		// 	if (goUp) {
-		// 		i = (i + 1) % 256;
-		// 	} else {
-		// 		i = (i - 1) % 256;
-		// 	}
+		#if RUN_BRIGHTNESS_TEST
+		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
+			lights.fillArea(Pixel { 31, (uint8_t)i, 0, (uint8_t)i }, Point { 0, 5 }, Point { 9, 15 });
+			lights.show();
+			if (goUp) {
+				i = (i + 1) % 256;
+			} else {
+				i = (i - 1) % 256;
+			}
 			
-		// 	if (i == 5) {
-		// 		goUp = true;
-		// 	}
-		// 	if (i == 100) {
-		// 		goUp = false;
-		// 	}
+			if (i == 5) {
+				goUp = true;
+			}
+			if (i == 100) {
+				goUp = false;
+			}
 
-		// 	j = i / 8;
-		// 	lastLedUpdateTime = currentTime;
-		// }
+			j = i / 8;
+			lastLedUpdateTime = currentTime;
+		}
+		#endif
 
-		// Fill Test
-		// if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
-		// 	if (on) {
-		// 		lights.clear();
-		// 		if (j > i) {
-		// 			lights.fillArea(pixel, Point { j, 0 }, Point { lights.getActiveLeds() - 1, 0 });
-		// 			lights.fillArea(nextPixel, Point { 0, 0 }, Point { i, 0 });
-		// 		} else {
-		// 			lights.fillArea(pixel, Point { i, 0 }, Point { j, 0 });
-		// 		}
-		// 		// lights.setPixel(Pixel { 31, 0xFF, 0x0, 0x0 }, Point { i, 0 });
-		// 		i++; j++;
-		// 	}
-		// 	lights.show();
+		#if RUN_FILL_TEST
+		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
+			if (on) {
+				lights.clear();
+				if (j > i) {
+					lights.fillArea(pixel, Point { j, 0 }, Point { lights.getActiveLeds() - 1, 0 });
+					lights.fillArea(nextPixel, Point { 0, 0 }, Point { i, 0 });
+				} else {
+					lights.fillArea(pixel, Point { i, 0 }, Point { j, 0 });
+				}
+				// lights.setPixel(Pixel { 31, 0xFF, 0x0, 0x0 }, Point { i, 0 });
+				i++; j++;
+			}
+			lights.show();
 
-		// 	i = i % lights.getActiveLeds();
-		// 	j = j % lights.getActiveLeds();
-		// 	// on = !on;
-		// 	lastLedUpdateTime = currentTime;
+			i = i % lights.getActiveLeds();
+			j = j % lights.getActiveLeds();
+			// on = !on;
+			lastLedUpdateTime = currentTime;
 
-		// 	if (j == 0) {
-		// 		pixel = nextPixel;
-		// 		if (pixel.r) {
-		// 			nextPixel = { 1, 0x00, 0xFF, 0x00 };
-		// 		} else if (pixel.g) {
-		// 			nextPixel = { 1, 0x00, 0x00, 0xFF };
-		// 		} else {
-		// 			nextPixel = { 1, 0xFF, 0x00, 0x00 };
-		// 		}
-		// 	}
-		// }
+			if (j == 0) {
+				pixel = nextPixel;
+				if (pixel.r) {
+					nextPixel = { 1, 0x00, 0xFF, 0x00 };
+				} else if (pixel.g) {
+					nextPixel = { 1, 0x00, 0x00, 0xFF };
+				} else {
+					nextPixel = { 1, 0xFF, 0x00, 0x00 };
+				}
+			}
+		}
+		#endif
 	}
-
 
 	return 1;
 }
