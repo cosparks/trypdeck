@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <thread>
 #include <pigpio.h>
@@ -28,7 +29,7 @@ using namespace std;
 
 #define SPI_BAUD 6000000
 
-#define RUN_INTERVAL 60000
+#define RUN_INTERVAL 80000
 #define PRINT_INTERVAL 1000
 #define LED_INTERVAL 50
 #define MATRIX_WIDTH 60
@@ -76,7 +77,7 @@ void initializeVlc() {
 
 	/* Create a new item */
 	//m = libvlc_media_new_location(inst, "video/climbing.m4v");
-	m = libvlc_media_new_path (inst, "video/climbing.mp4");
+	m = libvlc_media_new_path (inst, "video/climbing.m4v");
 	
 	/* Create a media player playing environement */
 	mp = libvlc_media_player_new_from_media(m);
@@ -104,39 +105,6 @@ void runVlc() {
 	// libvlc_media_player_release(mp);
 
 	// libvlc_release(inst);
-}
-
-void initializeWS281X() {
-	ws2811_t ledString =
-	{
-		.freq = WS2811_TARGET_FREQ,
-		.dmanum = 10,
-		.channel =
-		{
-			[0] =
-			{
-				.gpionum = 18,
-				.invert = 0,
-				.count = 100,
-				.strip_type = WS2811_STRIP_GBR,
-				.brightness = 255,
-			},
-			[1] =
-			{
-				.gpionum = 0,
-				.invert = 0,
-				.count = 0,
-				.brightness = 0,
-			},
-		},
-	};
-
-	ws2811_return_t ret;
-
-	if ((ret = ws2811_init(&ledString)) != WS2811_SUCCESS) {
-		cout << "failed to initialize ws2811.  Error: " << ret << endl;
-	}
-	// ws2811_led_t* matrix = (ws2811_led_t*)malloc(sizeof(ws2811_led_t) * 100);
 }
 
 void runAddressableLeds(int64_t currentTime, int64_t& lastTime, uint32_t& i, uint32_t& j, bool& on) {
@@ -238,24 +206,13 @@ void saveFrame(AVFrame* frameRGB, int frameNumber) {
 	int  y;
 
 	// Open file
-	sprintf(szFilename, "frame%d.ppm", frameNumber);
+	sprintf(szFilename, "gen/frame%d.ppm", frameNumber);
 	pFile=fopen(szFilename, "wb");
 	if(pFile==NULL)
 		return;
 
 	// Write header
 	fprintf(pFile, "P6\n%d %d\n255\n", MATRIX_WIDTH, MATRIX_HEIGHT);
-
-	Pixel c;
-	c.r = 255;
-	c.g = 0;
-	c.b = 0;
-	
-	// ******** -> ***
-	// 8 / 3 = 2
-	// ********* -> ****
-	// 9 / 4 = 2
-	// fillRect(frameRGB, 20, 20, 400, 400, c);
 
 	printf("Frame %d\n", frameNumber);
 
@@ -279,6 +236,12 @@ void saveFrame(AVFrame* frameRGB, int frameNumber) {
 	fclose(pFile);
 }
 
+int av_read_frame_log_time(AVFormatContext* context, AVPacket* packet, int64_t& time) {
+	// cout << "Program time before read frame: " << Clock::instance().millis() << endl;
+	time = Clock::instance().micros();
+	return av_read_frame(context, packet);
+}
+
 static void video_decode_example()
 {
 	AVCodecContext *c = NULL;
@@ -286,30 +249,38 @@ static void video_decode_example()
 
 	av_init_packet(&avpkt);
 
-	printf("Video decoding\n");
+	// printf("Video decoding\n");
 	int iFrame = -1;
 	int ret = 0;
 	frame = 0;
 	AVFrame *frame = av_frame_alloc();
 
 	uint8_t* imagebuffer = NULL;
+
+	// PERFORMANCE Testing
+	int64_t microBuffer[10000];
+	int i = 0;
+
 	// Read all the frames
-	while (av_read_frame(fmt_ctx, &avpkt) >= 0) {
+	while (av_read_frame_log_time(fmt_ctx, &avpkt, microBuffer[i]) >= 0) {
 		if (avpkt.size == 0)
 			break;
+		// fprintf(stderr, "Video frame size %d\r\n", avpkt.size);
+		// cout << "Program time after read frame: " << Clock::instance().millis() << endl;
 
-		fprintf(stderr, "Video frame size %d\r\n", avpkt.size);
-		
 		// This function might fail because of parameter set packets, just ignore and continue
 		ret = avcodec_send_packet(video_dec_ctx, &avpkt);
 		if (ret < 0) {
-		fprintf(stderr, "avcodec_send_packet ret < 0\n");
+			fprintf(stderr, "avcodec_send_packet ret < 0\n");
 			continue;
 		}
 
+		//cout << "Program time before avcodec receive frame: " << Clock::instance().millis() << endl;
 		// Receive the uncompressed frame back
 		ret = avcodec_receive_frame(video_dec_ctx, frame);
 		
+		//cout << "Program time before frame converted to RGB: " << Clock::instance().millis() << endl;
+
 		if (ret < 0) {
 			// Sometimes we cannot get a new frame, continue in this case
 			if (ret == AVERROR(EAGAIN))
@@ -320,12 +291,12 @@ static void video_decode_example()
 		}
 
 		iFrame++;
-		if (!(iFrame % 300 == 0)) {
+		if (!(iFrame % 4 == 0)) {
 			continue;
 		}
 
 		// Convert frame data to RGB
-		SwsContext* swsContext = sws_getContext(frame->width, frame->height, AVPixelFormat(frame->format), frame->width, frame->height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
+		SwsContext* swsContext = sws_getContext(frame->width, frame->height, AVPixelFormat(frame->format), frame->width, frame->height, AV_PIX_FMT_RGB24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 		AVFrame* frameRGB = av_frame_alloc(); frameRGB->format = AV_PIX_FMT_RGB24; frameRGB->width = frame->width; frameRGB->height = frame->height;
 		av_frame_get_buffer(frameRGB, 32);
 		sws_scale(swsContext, frame->data, frame->linesize, 0, frame->height, frameRGB->data, frameRGB->linesize);
@@ -333,31 +304,52 @@ static void video_decode_example()
 		
 		saveFrame(frameRGB, iFrame);
 		
+		//cout << "Program time after frame converted to RGB: " << Clock::instance().millis() << endl;
+
 		// Calculate output buffer requirements
-		int image_buffer_size = av_image_get_buffer_size(AVPixelFormat(frameRGB->format), frameRGB->width, frameRGB->height, 1);
+		// int image_buffer_size = av_image_get_buffer_size(AVPixelFormat(frameRGB->format), frameRGB->width, frameRGB->height, 1);
 
 		// Print frame info
-		fprintf(stderr,
-			"[%d] Got frame of size: %dx%d (%d bytes)\r\n",
-			video_dec_ctx->frame_number,
-			frame->width,
-			frame->height,
-			image_buffer_size
-		);
+		// fprintf(stderr,
+		// 	"[%d] Got frame of size: %dx%d (%d bytes)\r\n",
+		// 	video_dec_ctx->frame_number,
+		// 	frame->width,
+		// 	frame->height,
+		// 	image_buffer_size
+		// );
 
 		// Use temp buffer for the video data
-		if (imagebuffer == NULL) imagebuffer = new uint8_t[image_buffer_size];
-			av_image_copy_to_buffer(imagebuffer, image_buffer_size, frame->data, frame->linesize, AVPixelFormat(frame->format), frame->width, frame->height, 1);    
+		// if (imagebuffer == NULL) imagebuffer = new uint8_t[image_buffer_size];
+		// 	av_image_copy_to_buffer(imagebuffer, image_buffer_size, frame->data, frame->linesize, AVPixelFormat(frame->format), frame->width, frame->height, 1);    
 
 		// Dump the frame to a file
 		// FILE* out = fopen("out_864x486.yuv", "ab");
 		// fwrite(imagebuffer, image_buffer_size, 1, out);
 		// fclose(out);
 		av_frame_free(&frameRGB);
-
-		// REMOVE THIS
-		break;
+		i++;
+		microBuffer[i++] = Clock::instance().micros();
 	}
+
+	// CALCULATE AVERAGE TIMES
+	int64_t j;
+	int64_t sum = 0;
+	int64_t count = 0;
+	for (j = 0; microBuffer[j]; j+=2) {
+		if (!microBuffer[j+1]) {
+			break;
+		}
+		sum += (microBuffer[j + 1] - microBuffer[j]);
+		count++;
+	}
+
+	if (!microBuffer[j-1]) {
+		j--;
+	}
+
+	cout << "The average time to read a frame in microseconds is: " << sum / count << endl;
+	cout << "The average time to read a frame in milliseconds is: " << (sum / count) / 1000 << endl;
+	cout << "Frames per second: " << 1000 / ((sum / count) / 1000) << endl;
 
 	delete imagebuffer;
 	fprintf(stderr, "out of loop av_read_frame\n");
@@ -374,9 +366,10 @@ int runAv() {
 	//av_register_all();
 	//avcodec_register_all();
 	
-	//src_filename = "src/video/climbing.mp4";
-	src_filename = "video/climbing.mp4";
+	//src_filename = "src/video/test.m4v";
+	src_filename = "video/test.m4v";
 
+	int64_t start = Clock::instance().micros();
 	// open input file, and allocate format context
 	if (avformat_open_input(&fmt_ctx, src_filename, NULL, NULL) < 0) {
 		fprintf(stderr, "Could not open source file %s\n", src_filename);
@@ -394,13 +387,16 @@ int runAv() {
 		fprintf(stderr, "open_codec_context failed\n");
 		exit(1);
 	}
+	int64_t end = Clock::instance().micros();
+	cout << "Time to open video stream in microseconds: " << end - start << endl;
+	cout << "Time to open video stream in milliseconds: " << (end - start) / 1000 << endl;
 
 	video_decode_example();
-
 	return 0;
 }
 
 int main(int argv, char** argc) {
+	int64_t lastPrintTime = Clock::instance().millis();
 	// if (!initializeGpio()) {
 	// 	return -1;
 	// }
@@ -409,9 +405,9 @@ int main(int argv, char** argc) {
 	// thread omx(play_video);
 	// omx.detach();
 
-	runAv();
-
-	int64_t lastPrintTime = Clock::instance().millis();
+	// generate ppm frames
+	// thread avCodec(runAv);
+	// avCodec.detach();
 
 	// Led Stuff
 	// Apa102 lights(10, 29);
@@ -426,6 +422,7 @@ int main(int argv, char** argc) {
 	// Pixel nextPixel = { 1, 0x00, 0xFF, 0x00 };
 	// lights.clear();
 
+	int frameNum = 0;
 
 	while (true) {
 		int64_t currentTime = Clock::instance().millis();
@@ -439,6 +436,32 @@ int main(int argv, char** argc) {
 			lastPrintTime = currentTime;
 		}
 
+		// FILE *pFile;
+		// char szFilename[32];
+
+		// // Open file
+		fstream led_stream;
+		char fileName[32];
+		sprintf(fileName, "src/gen/frame%d.ppm", frameNum+=2);
+		led_stream.open(fileName, ios::out);
+
+		if (!led_stream.is_open()) {
+			return -1;
+		}
+
+		char header[32];
+		led_stream.read(header, 32);
+
+		char data[32];
+		for (int i = 0; i < 32; i++) {
+			data[i] = header[i];
+		}
+
+		printf(data);
+		
+		// sprintf(szFilename, "src/gen/frame%d.ppm", frameNum+=2);
+		// pFile = fopen(szFilename, "wb");
+		// pFile;
 		// Brightness Test
 		// Purple #A020F0
 		// if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {

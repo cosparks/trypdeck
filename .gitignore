@@ -1,6 +1,7 @@
 .vscode
 tripdeck
 obj/
+src/gen
 *.bin
 *.o
 *.pdf

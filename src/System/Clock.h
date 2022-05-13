@@ -16,11 +16,14 @@ class Clock {
 		~Clock();
 		void reset();
 		int64_t millis();
+		int64_t micros();
 		int64_t seconds();
 	private:
 		static Clock* _instance;
-		int64_t _startTime;
+		int64_t _startTimeMillis;
+		int64_t _startTimeMicros;
 		int64_t _currentTimeInMilliseconds();
+		int64_t _currentTimeInMicroseconds();
 };
 
 #endif
