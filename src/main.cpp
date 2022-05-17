@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <ws2811/ws2811.h>
 
 extern "C" {
 #include "libswscale/swscale.h"

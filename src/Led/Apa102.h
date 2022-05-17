@@ -1,10 +1,10 @@
 #ifndef _APA102_H_
 #define _APA102_H_
 
+#include <string>
+#include <stdexcept>
 #include <functional>
 #include <algorithm>
-#include <exception>
-
 #include <pigpio.h>
 
 struct Pixel {
