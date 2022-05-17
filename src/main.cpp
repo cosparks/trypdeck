@@ -21,6 +21,7 @@ extern "C" {
 #include "libavformat/avformat.h"
 }
 
+#include "Serial.h"
 #include "Apa102.h"
 #include "Clock.h"
 
@@ -42,7 +43,6 @@ using namespace std;
 #define RUN_BRIGHTNESS_TEST 0
 #define RUN_FILL_TEST 0
 #define RUN_SERIAL_NETWORKING 1
-#define SERIAL_ID 11
 #define INITIALIZE_GPIO RUN_LEDS | RUN_SERIAL_NETWORKING
 
 #define SERIAL_BAUD 9600
@@ -359,12 +359,8 @@ int main(int argv, char** argc) {
 	#endif
 
 	#if RUN_SERIAL_NETWORKING
-	int error = i2cOpen(0, SERIAL_ID, 0);
-	if (error < 0) {
-		cout << "Unable to open I2C port, terminating with error " << error << endl;
-		return -1;
-	}
-	uint32_t handle = error;
+	Serial serial("/dev/ttyS0", 2);
+	serial.init();
 	int64_t last_serial_publish = Clock::instance().millis();
 	#endif
 
@@ -411,14 +407,15 @@ int main(int argv, char** argc) {
 
 		#if RUN_SERIAL_NETWORKING
 		if (last_serial_publish + PRINT_INTERVAL <= currentTime) {
-			char buf[32] = "Hello World";
-			i2cWriteBlockData(handle, 13, buf, 32);
+			std::string data = "Hello World";
+
+			// tx
+			serial.transmit(data);
 			last_serial_publish = currentTime;
 
-			int messageLength;
-			if ((messageLength = i2cReadBlockData(handle, SERIAL_ID, buf)) > 0) {
-				printf("%d byte message read from I2C: %c", messageLength, buf);
-			}
+			// rx
+			data = serial.receive();
+			cout << "Serial data received: " << data << endl;
 		}
 		#endif
 
