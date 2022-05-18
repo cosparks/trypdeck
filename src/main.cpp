@@ -33,17 +33,17 @@ using namespace std;
 
 // PROGRAM MACROS
 #define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/numa.m4v"
-#define VLC_VIDEO_PATH "video/music.mp4"
 #define TRANSCODE_VIDEO_PATH "video/numa.m4v"
 
-#define RUN_AV_TRANSCODING 0
+#define RUN_AV_TRANSCODING 1
 #define PLAY_OMX 0
+#define PLAY_VLC 1
 #define SAVE_RGB_FRAMES 0
 #define RUN_LEDS 0
 #define RUN_BRIGHTNESS_TEST 0
 #define RUN_FILL_TEST 0
 #define RUN_SERIAL_NETWORKING 1
-#define INITIALIZE_GPIO RUN_LEDS | RUN_SERIAL_NETWORKING
+#define INITIALIZE_GPIO RUN_LEDS
 
 #define SERIAL_BAUD 9600
 #define SPI_BAUD 6000000
@@ -77,27 +77,54 @@ bool initializeGpio() {
 	}
 }
 
-void play_video() {
-	system(OMX_ARGS);
+void stop_omx() {
+	system("pid=$(pidof omxplayer) && kill $pid");
 }
 
-void initializeVlc() {
+void play_video_omx(std::string videoPath) {
+	std::string args =  "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/" + videoPath;
+	system(args.c_str());
+}
+
+void play_start_video() {
+	play_video_omx("numa.m4v");
+}
+
+struct VLCData {
+	libvlc_instance_t* inst;
+	libvlc_media_player_t* mp;
+};
+
+void stop_vlc(VLCData& data) {
+		// /* Stop playing */
+	libvlc_media_player_stop(data.mp);
+
+	// /* Free the media_player */
+	libvlc_media_player_release(data.mp);
+
+	libvlc_release(data.inst);
+}
+
+void play_vlc(std::string videoPath, VLCData& data) {
+	if ((data.mp != nullptr && data.inst != nullptr)) {
+		if (libvlc_media_player_is_playing(data.mp))
+			stop_vlc(data);
+	}
+
 	libvlc_instance_t * inst;
 	libvlc_media_player_t *mp;
 	libvlc_media_t *m;
 
-	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--no-audio", "--x11-display", ":0" };
+	std::string path = "video/" + videoPath;
+	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout"};
 	int numArgs = sizeof(args) / sizeof(args[0]);
 	inst = libvlc_new(numArgs, args);
 
 	/* Create a new item */
-	//m = libvlc_media_new_location(inst, "video/climbing.m4v");
-	m = libvlc_media_new_path (inst, VLC_VIDEO_PATH);
+	m = libvlc_media_new_path (inst, path.c_str());
 	
 	/* Create a media player playing environement */
 	mp = libvlc_media_player_new_from_media(m);
-
-	this_thread::sleep_for(chrono::seconds(1));
 
 	/* No need to keep the media now */
 	libvlc_media_release(m);
@@ -108,16 +135,8 @@ void initializeVlc() {
 	/* play the media_player */
 	libvlc_media_player_play(mp);
 
-	// /* Let it play a bit */
-	this_thread::sleep_for(chrono::seconds(40));
-
-	// /* Stop playing */
-	libvlc_media_player_stop(mp);
-
-	// /* Free the media_player */
-	libvlc_media_player_release(mp);
-
-	libvlc_release(inst);
+	data.inst = inst;
+	data.mp = mp;
 }
 
 static AVFormatContext *fmt_ctx = NULL;
@@ -351,6 +370,7 @@ int runAv() {
 
 int main(int argv, char** argc) {
 	int64_t lastPrintTime = Clock::instance().millis();
+	system("clear");
 
 	#if INITIALIZE_GPIO
 	if (!initializeGpio()) {
@@ -359,14 +379,19 @@ int main(int argv, char** argc) {
 	#endif
 
 	#if RUN_SERIAL_NETWORKING
-	Serial serial("/dev/ttyS0", 2);
+	Serial serial("/dev/ttyS0", O_RDWR);
 	serial.init();
 	int64_t last_serial_publish = Clock::instance().millis();
 	#endif
 
 	#if PLAY_OMX
-	thread omx(play_video);
+	thread omx(play_start_video);
 	omx.detach();
+	#endif
+
+	#if PLAY_VLC
+	VLCData vlcData = { };
+	play_vlc("numa.m4v", vlcData);
 	#endif
 
 	#if RUN_AV_TRANSCODING
@@ -401,22 +426,37 @@ int main(int argv, char** argc) {
 		#endif
 
 		if (lastPrintTime + PRINT_INTERVAL <= currentTime) {
-			cout << "Current program time in milliseconds: " << currentTime << endl;
+			// cout << "Current program time in milliseconds: " << currentTime << endl;
 			lastPrintTime = currentTime;
 		}
 
 		#if RUN_SERIAL_NETWORKING
-		if (last_serial_publish + PRINT_INTERVAL <= currentTime) {
-			std::string data = "Hello World";
-
+		// if (last_serial_publish + PRINT_INTERVAL <= currentTime) {
 			// tx
-			serial.transmit(data);
+			// serial.transmit(data);
 			last_serial_publish = currentTime;
 
 			// rx
-			data = serial.receive();
-			cout << "Serial data received: " << data << endl;
-		}
+			int64_t start = Clock::instance().epochMillis();
+			std::string data = serial.receive();
+			int64_t end = Clock::instance().epochMillis();
+			if (data.length() > 15) {
+				cout << "Serial data received: " << data << endl;
+				cout << "Received at epoch time: " << end << "ms" << endl;
+				cout << "Total blocking time on receive: " << end - start << "ms" << endl;
+
+				const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4" };
+				int i = data[data.length() - 1] - '0';
+
+				#if PLAY_OMX
+				stop_omx();
+				play_video_omx(movies[i]);
+				#endif
+				#if PLAY_VLC
+				play_vlc(movies[i], vlcData);
+				#endif
+			}
+		// }
 		#endif
 
 		#if RUN_BRIGHTNESS_TEST

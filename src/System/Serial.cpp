@@ -4,28 +4,26 @@
 #include <string.h>
 #include <stdexcept>
 
-#include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
 
-Serial::Serial(char* name, int flag, int bufferSize) : _bufferSize(bufferSize) {
-	_port = open(name, flag);
-}
+Serial::Serial(std::string portName, int flag, int bufferSize) : _portName(portName), _flag(flag), _bufferSize(bufferSize) { }
 
 Serial::~Serial() {
 	delete[] _buf;
 }
 
 void Serial::init() {
+	_portNum = open(_portName.c_str(), _flag);
 	_buf = new char[_bufferSize];
 	struct termios tty;
 	
-	if (tcgetattr(_port, &tty) != 0) {
+	if (tcgetattr(_portNum, &tty) != 0) {
 		printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
 	}
 
-	// set all flags
+	// Set all flags
 	tty.c_cflag &= ~PARENB;			// Clear parity bit
 	tty.c_cflag &= ~CSTOPB;			// Clear stop field
 	tty.c_cflag &= ~CSIZE;			// Clear size bits
@@ -45,25 +43,26 @@ void Serial::init() {
 	tty.c_oflag &= ~OPOST;		// Prevent special interpretation of output bytes (e.g. newline chars)
 	tty.c_oflag &= ~ONLCR;		// Prevent conversion of newline to carriage return/line feed
 
-	tty.c_cc[VTIME] = 1;		// Wait for up to 0.1s (1 decisecond), returning as soon as any data is received.
-	tty.c_cc[VMIN] = 0;	
+	tty.c_cc[VTIME] = 0;		// Wait for up to 0.1s (1 decisecond), returning as soon as any data is received.
+	tty.c_cc[VMIN] = 16;
 
-	// set baud rate (this sets in and out)
+	// Set baud rate
 	cfsetspeed(&tty, B19200);
 
-	// Save tty settings, also checking for error
-	if (tcsetattr(_port, TCSANOW, &tty) != 0) {
+	// Save tty settings
+	if (tcsetattr(_portNum, TCSANOW, &tty) != 0) {
 		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
 	}
 }
 
 int Serial::transmit(std::string data) {
-	if (write(_port, data.c_str(), data.length()) < 0) {
+	if (write(_portNum, data.c_str(), data.length()) < 0) {
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
 	}
 }
 
 std::string Serial::receive() {
-	read(_port, _buf, _bufferSize);
+	int num = read(_portNum, _buf, _bufferSize);
+	printf("Number of bytes read from port: %d", num);
 	return std::string(_buf);
 }

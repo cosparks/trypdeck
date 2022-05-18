@@ -18,6 +18,7 @@ class Clock {
 		int64_t millis();
 		int64_t micros();
 		int64_t seconds();
+		int64_t epochMillis();
 	private:
 		static Clock* _instance;
 		int64_t _startTimeMillis;
