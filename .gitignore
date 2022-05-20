@@ -3,6 +3,7 @@ tripdeck
 obj/
 src/gen
 src/video
+test/sandbox
 *.bin
 *.o
 *.pdf
