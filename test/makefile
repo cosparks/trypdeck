@@ -49,14 +49,8 @@ _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 %.o: %.cpp $(DEPENDENCIES)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
-tripdeck: $(_OBJ)
-	$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
-
 sandbox: $(_OBJ)
 	$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
-
-debug: $(_OBJ)
-	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
 .PHONY: clean
 
