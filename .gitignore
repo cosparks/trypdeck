@@ -4,7 +4,7 @@ obj/
 src/gen
 src/video
 *.bin
-test/*.bin
+test/sandbox
 *.o
 *.pdf
 snapshots/
