@@ -5,6 +5,7 @@ src/gen
 src/video
 test/sandbox
 *.bin
+test/sandbox
 *.o
 *.pdf
 snapshots/
