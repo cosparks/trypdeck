@@ -7,6 +7,7 @@ LIBS = -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc -lavcodec -lavformat -lav
 INCLUDE = -I
 PARENT_DIRECTORY = ..
 SRC_DIR = $(PARENT_DIRECTORY)/src/
+TEST_DIR = $(PARENT_DIRECTORY)/test/
 BUILD_DIR = $(PARENT_DIRECTORY)/obj/
 LIB_DIR = $(PARENT_DIRECTORY)/lib/
 
@@ -19,7 +20,7 @@ CSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.c)))
 DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.h)))
 
 # Get all directories in src
-INCLUDE_DIRS_SRC = $(sort $(dir $(wildcard $(SRC_DIR)*/)))
+INCLUDE_DIRS_SRC = $(sort $(dir $(wildcard $(SRC_DIR)*/*)))
 INCLUDE_DIRS += $(INCLUDE_DIRS_SRC)
 # Add sub-src directory files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*.cpp)))
@@ -30,21 +31,20 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
 # Add all src-level files
-CPPSRC += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.cpp)))
-CSRC += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.c)))
-DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.h)))
+CPPSRC += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.cpp)))
+CSRC += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.c)))
+DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.h)))
 
 _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 
 # Debug Info
-# $(info DEPENDENCIES is $(DEPENDENCIES))
+# $(info CPPSRC is $(CPPSRC))
+# $(info INCLUDE_DIRS is $(INCLUDE_DIRS))
 
 # try to get object files into separate folder
 # OBJ = $(patsubst ../%,$(BUILD_DIR)%,$(patsubst ,%.cpp,$(_OBJ)))
 # $(TARGET)%.o: %.cpp $(DEPENDENCIES)
 # 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
-
-
 
 %.o: %.cpp $(DEPENDENCIES)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)

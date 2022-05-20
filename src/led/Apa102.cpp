@@ -1,3 +1,8 @@
+#include <string>
+#include <stdexcept>
+#include <pigpio.h>
+#include <algorithm>
+
 #include "Apa102.h"
 
 Apa102::Apa102(uint32_t numLeds) : _numLeds(numLeds), _activeLeds(numLeds), _x(numLeds), _y(1) { }

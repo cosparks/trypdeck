@@ -1,11 +1,7 @@
 #ifndef _APA102_H_
 #define _APA102_H_
 
-#include <string>
-#include <stdexcept>
 #include <functional>
-#include <algorithm>
-#include <pigpio.h>
 
 struct Pixel {
 	uint8_t brightness;
@@ -113,8 +109,6 @@ class Apa102 {
 			void _doFillAction(Point& p1, Point& p2, std::function<void(uint8_t*)> action);
 
 			uint32_t _getIndexFromPoint(const Point& point);
-
-			// uint32_t _getIndexFromPoint(const uint32_t& x, const uint32_t& y);
 
 			void _writeEndframe();
 
