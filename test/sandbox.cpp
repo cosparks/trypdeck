@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <unistd.h>
 #include <thread>
 #include <pigpio.h>
 #include <vlc/vlc.h>
@@ -9,6 +10,9 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_map>
+
+#include <sys/types.h>
+#include <pwd.h>
 
 extern "C" {
 #include "libswscale/swscale.h"
@@ -22,6 +26,7 @@ extern "C" {
 #include "libavformat/avformat.h"
 }
 
+#include "settings.h"
 #include "Serial.h"
 #include "Apa102.h"
 #include "Clock.h"
@@ -40,21 +45,23 @@ using namespace std;
 #define DEBUG_MODE 0
 
 #define RUN_AV_DECODING 0
-#define PLAY_RGB_FRAMES 0
+#define PLAY_RGB_FRAMES 0 // RUN_LEDS must be on for this to work
 #define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/src/video/complex-color-test-fast.mp4"
 
 #define PLAY_OMX 0
 #define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/numa.m4v"
 
-#define PLAY_VLC 0
+#define PLAY_VLC 1
+#define PRINT_USER_INFO 0
 #define RUN_SERIAL_NETWORKING 0
+#define START_VIDEO_VLC "nyan-cat.mp4"
 
 #define TERMINATE_PROGRAM 0
 #define RUN_INTERVAL 100000
 #define PRINT_INTERVAL 1000
 
 // LED
-#define RUN_LEDS 1
+#define RUN_LEDS 0
 #define MATRIX_WIDTH 53
 #define MATRIX_HEIGHT 5
 
@@ -63,7 +70,7 @@ using namespace std;
 #define RUN_BRIGHTNESS_TEST 0
 #define RUN_STEPPING_TEST 0
 #define RUN_RAINBOW_STEPPING_TEST 0
-#define RUN_DRAW_SHAPE_TEST 1
+#define RUN_DRAW_SHAPE_TEST 0
 #define RUN_FILL_TEST 0
 #define RUN_COLOR_TEST 0
 
@@ -73,7 +80,7 @@ using namespace std;
 
 #define INBUF_SIZE 4096
 
-const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4", "numa.m4v" };
+const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4" };
 std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
 Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT);
 
@@ -116,7 +123,7 @@ struct VLCData {
 };
 
 std::string get_full_path(std::string path) {
-	return "/home/trypdeck/projects/tripdeck_basscoast/src/video/" + path;
+	return VIDEO_DIRECTORY + path;
 }
 
 void stop_vlc(VLCData& data) {
@@ -125,11 +132,11 @@ void stop_vlc(VLCData& data) {
 
 void stop_vlc_player(VLCData& data) {
 	// /* Stop playing */
-	libvlc_media_player_stop(data.mp);
+	libvlc_media_player_stop(data.mp);		
 }
 
 void initialize_vlc(VLCData& data) {
-	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout"};
+	const char* args[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
 	int numArgs = sizeof(args) / sizeof(args[0]);
 	data.inst = libvlc_new(numArgs, args);
 	data.mp = libvlc_media_player_new(data.inst);
@@ -167,6 +174,7 @@ static AVCodecContext *video_dec_ctx = NULL;
 static const char *src_filename = NULL;
 static int video_stream_idx = -1;
 static AVFrame *frame = NULL;
+static AVRational stream_time_base;
 
 const char *media_type_string(enum AVMediaType media_type)
 {
@@ -195,6 +203,7 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 	else {
 		*stream_idx = ret;
 		st = fmt_ctx->streams[*stream_idx];
+		stream_time_base = st->time_base;
 		// find decoder for the stream
 		dec_param = st->codecpar;
 		dec = avcodec_find_decoder(dec_param->codec_id);
@@ -215,9 +224,9 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 }
 
 void playFrame(AVFrame* frameRGB) {
+	#if RUN_LEDS
 	uint32_t pixelsPerLedX = frameRGB->width / MATRIX_WIDTH;
 	uint32_t pixelsPerLedY = frameRGB->height / MATRIX_HEIGHT;
-
 	lights.clear();
 
 	// Write pixel data
@@ -227,8 +236,8 @@ void playFrame(AVFrame* frameRGB) {
 			lights.setPixel(Pixel { 31, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 		}
 	}
-
 	lights.show();
+	#endif
 }
 
 int av_read_frame_log_time(AVFormatContext* context, AVPacket* packet, int64_t& time) {
@@ -248,10 +257,13 @@ static void video_decode_example()
 	AVFrame *frame = av_frame_alloc();
 	uint8_t* imagebuffer = NULL;
 
+	std::cout << "Stream time base: " << stream_time_base.num << " / " << stream_time_base.den << std::endl;
+
 	// PERFORMANCE Testing
 	int64_t microBuffer[10000];
 	int i = 0;
 	int64_t start = Clock::instance().seconds();
+	int fpsCount = 0;
 
 	// Read all the frames
 	while (av_read_frame_log_time(fmt_ctx, &avpkt, microBuffer[i]) >= 0) {
@@ -280,6 +292,16 @@ static void video_decode_example()
 
 			fprintf(stderr, "avcodec_receive_frame ret < 0\n");
 			break;
+		}
+
+		double frameTimeEstimate = (double)frame->best_effort_timestamp * ((double)stream_time_base.num / (double)stream_time_base.den);
+		std::cout << "frame time stamp offset: " << frame->best_effort_timestamp << endl;
+		std::cout << "actual time: " << frameTimeEstimate << endl;
+		fpsCount++;
+
+		if (frameTimeEstimate >= 9.99) {
+			std::cout << "Estimated fps based on frame time stamps: " << fpsCount / 10 << "fps" << std::endl;
+			return;
 		}
 
 		// Convert frame data to RGB
@@ -405,7 +427,7 @@ int main(int argv, char** argc) {
 	#if PLAY_VLC
 	VLCData vlcData = { };
 	initialize_vlc(vlcData);
-	play_vlc("numa.m4v", vlcData);
+	play_vlc(START_VIDEO_VLC, vlcData);
 	#endif
 
 	#if RUN_AV_DECODING

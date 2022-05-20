@@ -27,6 +27,9 @@ CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*.cpp))
 CSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*.c)))
 DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*.h)))
 
+# add header files directly contained in src directory (workaround so we can exclude main.cpp in src)
+DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.h)))
+
 # Create flags to include all directories (so we don't have to use paths in #include)
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
@@ -40,6 +43,7 @@ _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 # Debug Info
 # $(info CPPSRC is $(CPPSRC))
 # $(info INCLUDE_DIRS is $(INCLUDE_DIRS))
+# $(info DEPENDENCIES is $(DEPENDENCIES))
 
 # try to get object files into separate folder
 # OBJ = $(patsubst ../%,$(BUILD_DIR)%,$(patsubst ,%.cpp,$(_OBJ)))
@@ -49,8 +53,9 @@ _OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
 %.o: %.cpp $(DEPENDENCIES)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
+# includes -g for GDB
 sandbox: $(_OBJ)
-	$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
+	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
 .PHONY: clean
 

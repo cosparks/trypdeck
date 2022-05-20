@@ -1,8 +1,8 @@
 .vscode
 tripdeck
 obj/
-src/gen
-src/video
+gen/
+video/
 test/sandbox
 *.bin
 *.o
