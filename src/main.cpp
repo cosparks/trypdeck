@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <unordered_map>
 
 extern "C" {
 #include "libswscale/swscale.h"
@@ -24,6 +25,7 @@ extern "C" {
 #include "Serial.h"
 #include "Apa102.h"
 #include "Clock.h"
+#include "PixelMaps.h"
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -31,31 +33,52 @@ extern "C" {
 
 using namespace std;
 
-// PROGRAM MACROS
-#define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/numa.m4v"
-#define TRANSCODE_VIDEO_PATH "video/numa.m4v"
-
-#define RUN_AV_TRANSCODING 1
-#define PLAY_OMX 0
-#define PLAY_VLC 1
-#define SAVE_RGB_FRAMES 0
-#define RUN_LEDS 0
-#define RUN_BRIGHTNESS_TEST 0
-#define RUN_FILL_TEST 0
-#define RUN_SERIAL_NETWORKING 1
-#define INITIALIZE_GPIO RUN_LEDS
-
 #define SERIAL_BAUD 9600
 #define SPI_BAUD 6000000
+
+// PROGRAM MACROS
+#define DEBUG_MODE 0
+
+#define RUN_AV_DECODING 1
+#define PLAY_RGB_FRAMES 1
+#define TRANSCODE_VIDEO_PATH "video/complex-color-test-fast.mp4"
+
+#define PLAY_OMX 0
+#define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/numa.m4v"
+
+#define PLAY_VLC 0
+#define RUN_SERIAL_NETWORKING 0
 
 #define TERMINATE_PROGRAM 0
 #define RUN_INTERVAL 100000
 #define PRINT_INTERVAL 1000
-#define LED_INTERVAL 50
-#define MATRIX_WIDTH 60
-#define MATRIX_HEIGHT 40
+
+// LED
+#define RUN_LEDS 1
+#define MATRIX_WIDTH 53
+#define MATRIX_HEIGHT 5
+
+// LED TESTS (ONLY CHOOSE ONE AT A TIME)
+#define RUN_EDGE_TEST 0
+#define RUN_BRIGHTNESS_TEST 0
+#define RUN_STEPPING_TEST 0
+#define RUN_RAINBOW_STEPPING_TEST 0
+#define RUN_DRAW_SHAPE_TEST 0
+#define RUN_FILL_TEST 0
+#define RUN_COLOR_TEST 0
+
+#define LED_INTERVAL 80
+#define LED_STEPPING_INTERVAL 50
+#define EDGE_TEST_INTERVAL 250
 
 #define INBUF_SIZE 4096
+
+const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4", "numa.m4v" };
+std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
+
+#if RUN_LEDS
+Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT);
+#endif
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {
@@ -95,48 +118,55 @@ struct VLCData {
 	libvlc_media_player_t* mp;
 };
 
+std::string get_full_path(std::string path) {
+	#if DEBUG_MODE
+	return "src/video/" + path;
+	#else
+	return "video/" + path;
+	#endif
+}
+
 void stop_vlc(VLCData& data) {
-		// /* Stop playing */
-	libvlc_media_player_stop(data.mp);
-
-	// /* Free the media_player */
-	libvlc_media_player_release(data.mp);
-
 	libvlc_release(data.inst);
+}
+
+void stop_vlc_player(VLCData& data) {
+	// /* Stop playing */
+	libvlc_media_player_stop(data.mp);
+}
+
+void initialize_vlc(VLCData& data) {
+	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout"};
+	int numArgs = sizeof(args) / sizeof(args[0]);
+	data.inst = libvlc_new(numArgs, args);
+	data.mp = libvlc_media_player_new(data.inst);
+
+	for (std::string movie : movies) {
+		_mediaCache[movie] = libvlc_media_new_path(data.inst, get_full_path(movie).c_str());
+	}
+
 }
 
 void play_vlc(std::string videoPath, VLCData& data) {
 	if ((data.mp != nullptr && data.inst != nullptr)) {
 		if (libvlc_media_player_is_playing(data.mp))
-			stop_vlc(data);
+			stop_vlc_player(data);
 	}
-
-	libvlc_instance_t * inst;
-	libvlc_media_player_t *mp;
-	libvlc_media_t *m;
-
-	std::string path = "video/" + videoPath;
-	const char* args[] = { "-v", "-I", "dummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout"};
-	int numArgs = sizeof(args) / sizeof(args[0]);
-	inst = libvlc_new(numArgs, args);
-
-	/* Create a new item */
-	m = libvlc_media_new_path (inst, path.c_str());
 	
 	/* Create a media player playing environement */
-	mp = libvlc_media_player_new_from_media(m);
+	libvlc_media_t* current_md;
+	if ((current_md = libvlc_media_player_get_media(data.mp)) != NULL)
+		// libvlc_media_retain(current_md);
 
-	/* No need to keep the media now */
-	libvlc_media_release(m);
+	if (_mediaCache.find(videoPath) == _mediaCache.end()) {
+		throw std::runtime_error("Media not found: cache does not contain the media requested");
+	}
 
-	// libvlc_video_take_snapshot(mp, 0, "snapshots/new.png", 0, 0);
-	// libvlc_media_player_set_xwindow(mp, 0);
+	libvlc_media_t* md = _mediaCache[videoPath];
+	libvlc_media_player_set_media(data.mp, md);
 
 	/* play the media_player */
-	libvlc_media_player_play(mp);
-
-	data.inst = inst;
-	data.mp = mp;
+	libvlc_media_player_play(data.mp);
 }
 
 static AVFormatContext *fmt_ctx = NULL;
@@ -194,40 +224,21 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 	return 0;
 }
 
-void saveFrame(AVFrame* frameRGB, int frameNumber) {
-	FILE *pFile;
-	char szFilename[32];
-	int  y;
+void playFrame(AVFrame* frameRGB, int frameNumber) {
+	uint32_t pixelsPerLedX = frameRGB->width / MATRIX_WIDTH;
+	uint32_t pixelsPerLedY = frameRGB->height / MATRIX_HEIGHT;
 
-	// Open file
-	sprintf(szFilename, "gen/frame%d.ppm", frameNumber);
-	pFile=fopen(szFilename, "wb");
-	if(pFile==NULL)
-		return;
-
-	// Write header
-	fprintf(pFile, "P6\n%d %d\n255\n", MATRIX_WIDTH, MATRIX_HEIGHT);
-
-	printf("Frame %d\n", frameNumber);
-
-	int pixelsPerLedWide = frameRGB->width / MATRIX_WIDTH;
-	int pixelsPerLedHigh = frameRGB->height / MATRIX_HEIGHT;
-	int bufferSize = MATRIX_WIDTH * 3;
-	uint8_t buffer[bufferSize] = { };
+	lights.clear();
 
 	// Write pixel data
-	for(y = 0; y < MATRIX_HEIGHT; y++) {
-		for (int x = 0; x < bufferSize; x += 3) {
-			uint8_t* ptr = frameRGB->data[0] + y * pixelsPerLedHigh * frameRGB->linesize[0] + (x * pixelsPerLedWide);
-			buffer[x] = ptr[0];
-			buffer[x + 1] = ptr[1];
-			buffer[x + 2] = ptr[2];
+	for(uint32_t y = 0; y < MATRIX_HEIGHT; y++) {
+		for (uint32_t x = 0; x < MATRIX_WIDTH; x++) {
+			uint8_t* ptr = frameRGB->data[0] + (y * pixelsPerLedY) * frameRGB->linesize[0] + (3 * x * pixelsPerLedX);
+			lights.setPixel(Pixel { 31, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 		}
-		fwrite(buffer, 1, bufferSize, pFile);
 	}
 
-	// Close file
-	fclose(pFile);
+	lights.show();
 }
 
 int av_read_frame_log_time(AVFormatContext* context, AVPacket* packet, int64_t& time) {
@@ -291,11 +302,9 @@ static void video_decode_example()
 		sws_scale(swsContext, frame->data, frame->linesize, 0, frame->height, frameRGB->data, frameRGB->linesize);
 		sws_freeContext(swsContext);
 		
-		#if SAVE_RGB_FRAMES
+		#if PLAY_RGB_FRAMES
 		iFrame++;
-		if ((iFrame % 4 == 0)) {
-			saveFrame(frameRGB, iFrame);
-		}
+		playFrame(frameRGB, iFrame);
 		#endif
 
 		av_frame_free(&frameRGB);
@@ -370,12 +379,30 @@ int runAv() {
 
 int main(int argv, char** argc) {
 	int64_t lastPrintTime = Clock::instance().millis();
-	system("clear");
 
-	#if INITIALIZE_GPIO
+	#if RUN_LEDS
 	if (!initializeGpio()) {
 		return -1;
 	}
+
+	int64_t lastLedUpdateTime = lastPrintTime;
+	uint32_t currentLed = 0;
+	uint32_t edgeTestX = 0;
+	uint32_t edgeTestY = 0;
+	bool on = true;
+	bool goUp = true;
+	uint32_t i = 0;
+	uint32_t j = 0;
+	Point fillTopLeft = { 0, 0 };
+	Point fillBottomRight = { 13, 4 };
+	Shape rainbow = { 14, 5, Rainbow14x5 };
+	Shape smiley = { 6, 5, Smiley6x5 };
+	Shape heart = { 7, 5, Heart7x5 };
+	uint8_t colorTestOption = 0;
+
+	lights.init(0, SPI_BAUD, 0);
+	lights.clear();
+	cout << "Apa102 initialized with: " << lights.getActiveLeds() << " leds" << endl;
 	#endif
 
 	#if RUN_SERIAL_NETWORKING
@@ -391,27 +418,13 @@ int main(int argv, char** argc) {
 
 	#if PLAY_VLC
 	VLCData vlcData = { };
+	initialize_vlc(vlcData);
 	play_vlc("numa.m4v", vlcData);
 	#endif
 
-	#if RUN_AV_TRANSCODING
+	#if RUN_AV_DECODING
 	thread avCodec(runAv);
 	avCodec.detach();
-	#endif
-
-	// Led Stuff
-	#if RUN_LEDS
-	Apa102 lights(10, 29);
-	lights.init(0, SPI_BAUD, 0);
-	
-	int64_t lastLedUpdateTime = lastPrintTime;
-	bool on = true;
-	bool goUp = true;
-	uint32_t i = 0;
-	uint32_t j = 0;
-	Pixel pixel = { 1, 0xFF, 0x00, 0x00 };
-	Pixel nextPixel = { 1, 0x00, 0xFF, 0x00 };
-	lights.clear();
 	#endif
 
 	int frameNum = 0;
@@ -445,7 +458,6 @@ int main(int argv, char** argc) {
 				cout << "Received at epoch time: " << end << "ms" << endl;
 				cout << "Total blocking time on receive: " << end - start << "ms" << endl;
 
-				const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4" };
 				int i = data[data.length() - 1] - '0';
 
 				#if PLAY_OMX
@@ -461,7 +473,7 @@ int main(int argv, char** argc) {
 
 		#if RUN_BRIGHTNESS_TEST
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
-			lights.fillArea(Pixel { 31, (uint8_t)i, 0, (uint8_t)i }, Point { 0, 5 }, Point { 9, 15 });
+			lights.fillArea(Pixel { 31, (uint8_t)i, 0, (uint8_t)i }, Point { 11, 0 }, Point { MATRIX_WIDTH - 11, MATRIX_HEIGHT - 1 });
 			lights.show();
 			if (goUp) {
 				i = (i + 1) % 256;
@@ -481,36 +493,96 @@ int main(int argv, char** argc) {
 		}
 		#endif
 
+		#if RUN_STEPPING_TEST
+		if (lastLedUpdateTime + LED_STEPPING_INTERVAL <= currentTime) {
+			lights.clear();
+			lights.setPixel(Pixel { 31, 0xFF, 0x0, 0x0 }, currentLed);
+			currentLed++;
+			currentLed = currentLed % lights.getActiveLeds();
+			lights.show();
+			lastLedUpdateTime = currentTime;
+		}
+		#endif
+
+		#if RUN_RAINBOW_STEPPING_TEST
+		if (lastLedUpdateTime + LED_STEPPING_INTERVAL <= currentTime) {
+			lights.clear();
+			uint32_t r_i = currentLed;
+			uint32_t o_i = (currentLed + 1) % lights.getActiveLeds();
+			uint32_t y_i = (currentLed + 2) % lights.getActiveLeds();
+			uint32_t g_i = (currentLed + 3) % lights.getActiveLeds();
+			uint32_t b_i = (currentLed + 4) % lights.getActiveLeds();
+			uint32_t i_i = (currentLed + 5) % lights.getActiveLeds();
+			uint32_t v_i = (currentLed + 6) % lights.getActiveLeds();
+			lights.setPixel(Red, r_i); // r
+			lights.setPixel(Orange, o_i); // o
+			lights.setPixel(Yellow, y_i); // y
+			lights.setPixel(Green, g_i); // g
+			lights.setPixel(Blue, b_i); // b
+			lights.setPixel(Indigo, i_i); // i
+			lights.setPixel(Violet, v_i); // v
+			currentLed++;
+			currentLed = currentLed % lights.getActiveLeds();
+			lights.show();
+			lastLedUpdateTime = currentTime;
+			if (r_i > v_i)
+				cout << "Indices for leds: " << r_i << ", " << o_i << ", " << y_i << ", " << g_i << ", " << b_i << ", " << i_i << ", " << v_i << endl;
+		}
+		#endif
+
+		#if RUN_EDGE_TEST
+		if (lastLedUpdateTime + EDGE_TEST_INTERVAL <= currentTime) {
+			lights.clear();
+			lights.setPixel(Pixel { 31, 0xFF, 0, 0 }, Point { edgeTestX, edgeTestY % MATRIX_HEIGHT });
+			lights.show();
+			edgeTestY++;
+			if (edgeTestY > 0 && edgeTestY % MATRIX_HEIGHT == 0) {
+				edgeTestX = edgeTestX == 0 ? MATRIX_WIDTH - 1 : 0;
+				cout << "edgeTestX = " << edgeTestX << endl;
+			}
+			lastLedUpdateTime = currentTime;
+		}
+		#endif
+
 		#if RUN_FILL_TEST
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
-			if (on) {
-				lights.clear();
-				if (j > i) {
-					lights.fillArea(pixel, Point { j, 0 }, Point { lights.getActiveLeds() - 1, 0 });
-					lights.fillArea(nextPixel, Point { 0, 0 }, Point { i, 0 });
-				} else {
-					lights.fillArea(pixel, Point { i, 0 }, Point { j, 0 });
-				}
-				// lights.setPixel(Pixel { 31, 0xFF, 0x0, 0x0 }, Point { i, 0 });
-				i++; j++;
+			lights.clear();
+			if (fillTopLeft.x > fillBottomRight.x) {
+				lights.fillArea(Pixel { 5, 0xFF, 0, 0 }, fillTopLeft, Point { MATRIX_WIDTH - 1, 3 });
+				lights.fillArea(Pixel { 5, 0xFF, 0, 0 }, fillBottomRight, Point { 0, 1 });
+			}
+			else {
+				lights.fillArea(Red, fillTopLeft, Point { fillTopLeft });
 			}
 			lights.show();
 
-			i = i % lights.getActiveLeds();
-			j = j % lights.getActiveLeds();
+			fillTopLeft.x = (fillTopLeft.x + 1) % MATRIX_WIDTH;
+			fillBottomRight.x = (fillBottomRight.x + 1) % MATRIX_WIDTH;
 			// on = !on;
 			lastLedUpdateTime = currentTime;
+		}
+		#endif
 
-			if (j == 0) {
-				pixel = nextPixel;
-				if (pixel.r) {
-					nextPixel = { 1, 0x00, 0xFF, 0x00 };
-				} else if (pixel.g) {
-					nextPixel = { 1, 0x00, 0x00, 0xFF };
-				} else {
-					nextPixel = { 1, 0xFF, 0x00, 0x00 };
-				}
-			}
+		#if RUN_DRAW_SHAPE_TEST
+		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
+			lights.clear();
+			lights.drawShape(fillTopLeft, rainbow);
+			// lights.drawShape(Point { (fillTopLeft.x + 20) % MATRIX_WIDTH, 0 }, smiley);
+			lights.drawShape(Point { (fillTopLeft.x + 20) % MATRIX_WIDTH, 0 }, heart);
+			lights.show();
+
+			fillTopLeft.x = (fillTopLeft.x + 1) % MATRIX_WIDTH;
+			lastLedUpdateTime = currentTime;
+		}
+		#endif
+
+		#if RUN_COLOR_TEST
+		if (lastLedUpdateTime + PRINT_INTERVAL <= currentTime) {
+			lights.clear();
+			lights.fillArea(roygbiv[colorTestOption++], Point { 0, 0 }, Point { MATRIX_WIDTH - 1, MATRIX_HEIGHT - 1 } );
+			lights.show();
+			colorTestOption %= 8;
+			lastLedUpdateTime = currentTime;
 		}
 		#endif
 	}

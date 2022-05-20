@@ -63,6 +63,5 @@ int Serial::transmit(std::string data) {
 
 std::string Serial::receive() {
 	int num = read(_portNum, _buf, _bufferSize);
-	printf("Number of bytes read from port: %d", num);
 	return std::string(_buf);
 }

@@ -14,7 +14,7 @@ Apa102::~Apa102() {
 void Apa102::init(uint32_t spiChan, uint32_t baud, uint32_t spiFlags) {
 	_endframeLength = _calculateEndframe(_activeLeds);
 	_spiBufferLength = 4 + (_activeLeds * 4) + _endframeLength;
-	_spiBuffer = new uint8_t[_spiBufferLength];
+	_spiBuffer = new uint8_t[_spiBufferLength](); // () initializes array to 0x0
 
 	_writeEndframe();
 	
@@ -48,21 +48,48 @@ void Apa102::clear(Point p1, Point p2) {
 	});
 }
 
-void Apa102::setPixel(Pixel pixel, Point point) {
+void Apa102::setPixel(const Pixel& pixel, uint32_t led) {
+	if (led >= _activeLeds) {
+		std::string message = "Apa102 Error: led out of active range!  Led " + std::to_string(led) +
+			" is outside of active led range " + std::to_string(_activeLeds);
+		throw std::runtime_error(message);
+	}
+
+	led = (led * 4) + 4;
+	_spiBuffer[led] = 0b11100000 | (0b00011111 & pixel.brightness);
+	_spiBuffer[led + 1] = pixel.b;
+	_spiBuffer[led + 2] = pixel.g;
+	_spiBuffer[led + 3] = pixel.r;
+}
+
+void Apa102::setPixel(const Pixel& pixel, const Point& point) {
 	_assertPointInRange(point);
 
 	uint32_t i = _getIndexFromPoint(point);
 	_spiBuffer[i] = 0b11100000 | (0b00011111 & pixel.brightness);
-	_spiBuffer[i + 1] = pixel.g;
-	_spiBuffer[i + 2] = pixel.b;
+	_spiBuffer[i + 1] = pixel.b;
+	_spiBuffer[i + 2] = pixel.g;
 	_spiBuffer[i + 3] = pixel.r;
+}
+
+void Apa102::drawShape(Point topLeft, const Shape& shape) {
+	_assertPointInRange(topLeft);
+	uint32_t shapeY = 0;
+	for (uint32_t y = topLeft.y; y < topLeft.y + shape.height; y++) {
+		uint32_t shapeX = 0;
+		for (uint32_t x = topLeft.x; x < topLeft.x + shape.width; x++) {
+			setPixel(shape.map[shapeY * shape.width + shapeX], Point { x % _x, y % _y });
+			shapeX++;
+		}
+		shapeY++;
+	}
 }
 
 void Apa102::fillArea(Pixel pixel, Point p1, Point p2) {
 	_doFillAction(p1, p2, [pixel](uint8_t* buf) -> void {
 		buf[0] = 0b11100000 | (0b00011111 & pixel.brightness);
-		buf[1] = pixel.g;
-		buf[2] = pixel.b;
+		buf[1] = pixel.b;
+		buf[2] = pixel.g;
 		buf[3] = pixel.r;
 	});
 }
@@ -93,7 +120,7 @@ uint32_t Apa102::getNumLeds() {
 	return _numLeds;
 }
 
-void Apa102::_doFillAction(Point p1, Point p2, std::function<void(uint8_t*)> action) {
+void Apa102::_doFillAction(Point& p1, Point& p2, std::function<void(uint8_t*)> action) {
 	_assertPointInRange(p1);
 	_assertPointInRange(p2);
 
@@ -102,21 +129,30 @@ void Apa102::_doFillAction(Point p1, Point p2, std::function<void(uint8_t*)> act
 	uint8_t bottom = std::min(p1.y, p2.y);
 	uint8_t top = std::max(p1.y, p2.y);
 
-	for (int x = left; x <= right; x++) {
-		for (int y = bottom; y <= top; y++) {
-			int index = 4 + (x * _y + y) * 4;
+	for (uint32_t x = left; x <= right; x++) {
+		for (uint32_t y = bottom; y <= top; y++) {
+			uint32_t index = _getIndexFromPoint(Point {x, y});
 			action(&_spiBuffer[index]);
 		}
 	}
 }
 
-uint32_t Apa102::_getIndexFromPoint(Point point) {
-	return 4 + (point.x * _y + point.y) * 4;
+
+// { 0, 1 } -> { 5, 1 } and { 5, 1 } -> { 0, 1 } (if _x = 6)
+// 6 - 0 - 1 = 5 and 6 - 5 - 1 = 0
+uint32_t Apa102::_getIndexFromPoint(const Point& point) {
+	return 4 + (point.y * _x + (point.y % 2 == 1 ? _x - point.x - 1 : point.x)) * 4;
 }
 
-void Apa102::_assertPointInRange(Point point) {
+// uint32_t Apa102::_getIndexFromPoint(const uint32_t& x, const uint32_t& y) {
+// 	return 4 + (y * _x + (y % 2 == 1 ? _x - x - 1 : x)) * 4;
+// }
+
+void Apa102::_assertPointInRange(const Point& point) {
 	if (point.x > _x || point.y > _y) {
-		throw std::runtime_error(std::string("Apa102 Error: Point out of range!"));
+		std::string message = "Apa102 Error: Point out of range!  { " + std::to_string(point.x) +
+			", " + std::to_string(point.y) + " } is outside of matrix " + std::to_string(_x) + ", " + std::to_string(_y);
+		throw std::runtime_error(message);
 	}
 }
 

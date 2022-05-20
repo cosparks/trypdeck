@@ -19,6 +19,12 @@ struct Point {
 	uint32_t y;
 };
 
+struct Shape {
+	uint32_t width;
+	uint32_t height;
+	const Pixel* map;
+};
+
 class Apa102 {
 	public:
 		/**
@@ -58,9 +64,20 @@ class Apa102 {
 		void clear(Point p1, Point p2);
 
 		/**
+		 * @brief sets led by index, regardless of grid
+		*/ 
+		void setPixel(const Pixel& pixel, uint32_t led);
+
+		/**
 		 * @brief sets values for pixel at point
 		 */
-		void setPixel(Pixel pixel, Point point);
+		void setPixel(const Pixel& pixel, const Point& point);
+
+		/**
+		 * @brief draws a pixel bitmap from top left corner
+		 * 
+		 */
+		void drawShape(Point topLeft, const Shape& shape);
 
 		/**
 		 * @brief fills area from p1 to p2
@@ -93,15 +110,15 @@ class Apa102 {
 			uint8_t* _spiBuffer;
 			uint32_t _spiBufferLength = 0;
 
-			void _doFillAction(Point p1, Point p2, std::function<void(uint8_t*)> action);
+			void _doFillAction(Point& p1, Point& p2, std::function<void(uint8_t*)> action);
 
-			uint32_t _getIndexFromPoint(Point point);
+			uint32_t _getIndexFromPoint(const Point& point);
+
+			// uint32_t _getIndexFromPoint(const uint32_t& x, const uint32_t& y);
 
 			void _writeEndframe();
 
-			void _writePixelToBuffer(Pixel pixel, uint32_t i);
-
-			void _assertPointInRange(Point point);
+			void _assertPointInRange(const Point& point);
 
 			static uint32_t _calculateEndframe(uint32_t);
 };
