@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo apt update && sudo apt upgrade -y
-sudo apt-get -y install build-essential cmake libvlc-dev pulseaudio
+sudo apt-get -y install build-essential cmake libvlc-dev pulseaudio libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev
 sudo apt install pkg-config
 mkdir ~/resources
 cd ~/resources
@@ -9,7 +9,7 @@ unzip master.zip
 rm master.zip
 cd pigpio-master
 make
-sudo apt install python-setuptools python3-setuptools -y
+sudo apt install python-setuptools python3-setuptools
 sudo make install
 cd ~/resources
 git clone https://github.com/jgarff/rpi_ws281x.git
