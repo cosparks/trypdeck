@@ -44,26 +44,28 @@ using namespace std;
 // PROGRAM MACROS
 #define DEBUG_MODE 0
 
-#define RUN_AV_DECODING 0
-#define PLAY_RGB_FRAMES 0 // RUN_LEDS must be on for this to work
-#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/src/video/complex-color-test-fast.mp4"
+#define RUN_AV_DECODING 1
+#define PLAY_RGB_FRAMES 1 // RUN_LEDS must be on for this to work
+#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/sonic2.mp4"
 
 #define PLAY_OMX 0
-#define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/numa.m4v"
+#define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/sonic2.mp4"
 
 #define PLAY_VLC 1
 #define PRINT_USER_INFO 0
 #define RUN_SERIAL_NETWORKING 0
-#define START_VIDEO_VLC "nyan-cat.mp4"
+#define START_VIDEO_VLC "sonic2.mp4"
 
+#define RUN_DECODE_PERFORMANCE_TESTING 1
+#define RUN_MULTITHREADING 1
 #define TERMINATE_PROGRAM 0
 #define RUN_INTERVAL 100000
 #define PRINT_INTERVAL 1000
 
 // LED
-#define RUN_LEDS 0
+#define RUN_LEDS 1
 #define MATRIX_WIDTH 53
-#define MATRIX_HEIGHT 5
+#define MATRIX_HEIGHT 10
 
 // LED TESTS (ONLY CHOOSE ONE AT A TIME)
 #define RUN_EDGE_TEST 0
@@ -74,13 +76,14 @@ using namespace std;
 #define RUN_FILL_TEST 0
 #define RUN_COLOR_TEST 0
 
+// LED timing intervals
 #define LED_INTERVAL 80
 #define LED_STEPPING_INTERVAL 50
 #define EDGE_TEST_INTERVAL 250
 
 #define INBUF_SIZE 4096
 
-const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4" };
+const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4", "complex-color-test.mp4", "sonic2.mp4"  };
 std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
 Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT);
 
@@ -224,18 +227,23 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 }
 
 void playFrame(AVFrame* frameRGB) {
-	#if RUN_LEDS
 	uint32_t pixelsPerLedX = frameRGB->width / MATRIX_WIDTH;
 	uint32_t pixelsPerLedY = frameRGB->height / MATRIX_HEIGHT;
+
+	#if RUN_LEDS
 	lights.clear();
+	#endif
 
 	// Write pixel data
 	for(uint32_t y = 0; y < MATRIX_HEIGHT; y++) {
 		for (uint32_t x = 0; x < MATRIX_WIDTH; x++) {
 			uint8_t* ptr = frameRGB->data[0] + (y * pixelsPerLedY) * frameRGB->linesize[0] + (3 * x * pixelsPerLedX);
+			#if RUN_LEDS
 			lights.setPixel(Pixel { 31, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			#endif
 		}
 	}
+	#if RUN_LEDS
 	lights.show();
 	#endif
 }
@@ -254,16 +262,28 @@ static void video_decode_example()
 
 	int ret = 0;
 	frame = 0;
+	SwsContext* swsContext = sws_getContext(video_dec_ctx->width, video_dec_ctx->height,
+		AVPixelFormat(video_dec_ctx->pix_fmt), video_dec_ctx->width, video_dec_ctx->height,
+		AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+
 	AVFrame *frame = av_frame_alloc();
-	uint8_t* imagebuffer = NULL;
+	AVFrame* frameRGB = av_frame_alloc(); frameRGB->format = AV_PIX_FMT_RGB24; frameRGB->width = video_dec_ctx->width; frameRGB->height = video_dec_ctx->height;
+	if (av_frame_get_buffer(frameRGB, 32) < 0) {
+		std::cout << "Problem allocating AVFrame for RGB values" << std::endl;
+	}
 
 	std::cout << "Stream time base: " << stream_time_base.num << " / " << stream_time_base.den << std::endl;
 
 	// PERFORMANCE Testing
-	int64_t microBuffer[10000];
-	int i = 0;
+	#if RUN_DECODE_PERFORMANCE_TESTING
+	int64_t* microBuffer = new int64_t[4000]();
 	int64_t start = Clock::instance().seconds();
 	int fpsCount = 0;
+	#else
+	int64_t microBuffer[1];
+	#endif
+	int i = 0;
+	int startTime = Clock::instance().micros();
 
 	// Read all the frames
 	while (av_read_frame_log_time(fmt_ctx, &avpkt, microBuffer[i]) >= 0) {
@@ -294,32 +314,36 @@ static void video_decode_example()
 			break;
 		}
 
+
 		double frameTimeEstimate = (double)frame->best_effort_timestamp * ((double)stream_time_base.num / (double)stream_time_base.den);
 		std::cout << "frame time stamp offset: " << frame->best_effort_timestamp << endl;
 		std::cout << "actual time: " << frameTimeEstimate << endl;
-		fpsCount++;
 
-		if (frameTimeEstimate >= 9.99) {
-			std::cout << "Estimated fps based on frame time stamps: " << fpsCount / 10 << "fps" << std::endl;
-			return;
-		}
+		// if (frameTimeEstimate >= 9.99) {
+		// 	std::cout << "Estimated fps based on frame time stamps: " << fpsCount / 10 << "fps" << std::endl;
+		// 	return;
+		// }
 
 		// Convert frame data to RGB
-		SwsContext* swsContext = sws_getContext(frame->width, frame->height, AVPixelFormat(frame->format), frame->width, frame->height, AV_PIX_FMT_RGB24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-		AVFrame* frameRGB = av_frame_alloc(); frameRGB->format = AV_PIX_FMT_RGB24; frameRGB->width = frame->width; frameRGB->height = frame->height;
-		av_frame_get_buffer(frameRGB, 32);
-		sws_scale(swsContext, frame->data, frame->linesize, 0, frame->height, frameRGB->data, frameRGB->linesize);
-		sws_freeContext(swsContext);
-		
+		sws_scale(swsContext, (uint8_t const * const *)frame->data, frame->linesize, 0, frame->height, frameRGB->data, frameRGB->linesize);
+
 		#if PLAY_RGB_FRAMES
+		int64_t nextFrameTime = startTime + frame->best_effort_timestamp * (1000000L / stream_time_base.den);
+		int i = 0;
+		while (nextFrameTime > Clock::instance().micros()) {
+			i++;
+		}
 		playFrame(frameRGB);
 		#endif
 
-		av_frame_free(&frameRGB);
+		#if RUN_DECODE_PERFORMANCE_TESTING
 		i++;
 		microBuffer[i++] = Clock::instance().micros();
+		fpsCount++;
+		#endif
 	}
 
+	#if RUN_DECODE_PERFORMANCE_TESTING
 	// TOTAL AND AVERAGE FRAME TIMES
 	int64_t end = Clock::instance().seconds();
 	int64_t j;
@@ -342,11 +366,15 @@ static void video_decode_example()
 	cout << "The average time to read a frame in milliseconds is: " << (sum / count) / 1000 << endl;
 	cout << "Average frames per second: " << 1000 / ((sum / count) / 1000) << endl;
 
-	delete imagebuffer;
+	delete[] microBuffer;
+	#endif
+
 	fprintf(stderr, "out of loop av_read_frame\n");
 	avcodec_close(video_dec_ctx);
 	av_free(video_dec_ctx);
+	sws_freeContext(swsContext);
 	av_frame_free(&frame);
+	av_frame_free(&frameRGB);
 }
 
 int runAv() {
@@ -403,7 +431,7 @@ int main(int argv, char** argc) {
 	uint32_t j = 0;
 	Point fillTopLeft = { 0, 0 };
 	Point fillBottomRight = { 13, 4 };
-	Shape rainbow = { 14, 5, Rainbow14x5 };
+	Shape rainbow = { 14, 10, Rainbow14x10 };
 	Shape smiley = { 6, 5, Smiley6x5 };
 	Shape heart = { 7, 5, Heart7x5 };
 	uint8_t colorTestOption = 0;
@@ -431,8 +459,12 @@ int main(int argv, char** argc) {
 	#endif
 
 	#if RUN_AV_DECODING
+	#if RUN_MULTITHREADING
 	thread avCodec(runAv);
 	avCodec.detach();
+	#else
+	runAv();
+	#endif
 	#endif
 
 	while (true) {
