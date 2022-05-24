@@ -1,13 +1,19 @@
+#include <iostream>
 #include <string>
 #include <stdexcept>
 #include <pigpio.h>
 #include <algorithm>
+#include <math.h>
 
 #include "Apa102.h"
 
-Apa102::Apa102(uint32_t numLeds) : _numLeds(numLeds), _activeLeds(numLeds), _x(numLeds), _y(1) { }
+Apa102::Apa102(uint32_t numLeds) : _numLeds(numLeds), _activeLeds(numLeds), _x(numLeds), _y(1) {
+	// default orientation
+	_configurationOption = HorizontalTopLeft;
+}
 
-Apa102::Apa102(uint32_t x, uint32_t y) : _x(x), _y(y) {
+Apa102::Apa102(int32_t x, int32_t y, GridConfigurationOption configurationOption) :
+	_x(x), _y(y), _configurationOption(configurationOption) {
 	_numLeds = x * y;
 	_activeLeds = _numLeds;
 }
@@ -20,8 +26,10 @@ void Apa102::init(uint32_t spiChan, uint32_t baud, uint32_t spiFlags) {
 	_endframeLength = _calculateEndframe(_activeLeds);
 	_spiBufferLength = 4 + (_activeLeds * 4) + _endframeLength;
 	_spiBuffer = new uint8_t[_spiBufferLength](); // () initializes array to 0x0
-
+	
+	_assignIndexGetterFromOptions();
 	_writeEndframe();
+	clear();
 	
 	int result = spiOpen(spiChan, baud, spiFlags);
 	if (result < 0) {
@@ -53,24 +61,24 @@ void Apa102::clear(Point p1, Point p2) {
 	});
 }
 
-void Apa102::setPixel(const Pixel& pixel, uint32_t led) {
-	if (led >= _activeLeds) {
-		std::string message = "Apa102 Error: led out of active range!  Led " + std::to_string(led) +
+void Apa102::setPixel(const Pixel& pixel, uint32_t i) {
+	if (i >= _activeLeds) {
+		std::string message = "Apa102 Error: led out of active range!  Led " + std::to_string(i) +
 			" is outside of active led range " + std::to_string(_activeLeds);
 		throw std::runtime_error(message);
 	}
 
-	led = (led * 4) + 4;
-	_spiBuffer[led] = 0b11100000 | (0b00011111 & pixel.brightness);
-	_spiBuffer[led + 1] = pixel.b;
-	_spiBuffer[led + 2] = pixel.g;
-	_spiBuffer[led + 3] = pixel.r;
+	i = (i * 4) + 4;
+	_spiBuffer[i] = 0b11100000 | (0b00011111 & pixel.brightness);
+	_spiBuffer[i + 1] = pixel.b;
+	_spiBuffer[i + 2] = pixel.g;
+	_spiBuffer[i + 3] = pixel.r;
 }
 
 void Apa102::setPixel(const Pixel& pixel, const Point& point) {
 	_assertPointInRange(point);
 
-	uint32_t i = _getIndexFromPoint(point);
+	uint32_t i = (this->*_getIndexFromPoint)(point);
 	_spiBuffer[i] = 0b11100000 | (0b00011111 & pixel.brightness);
 	_spiBuffer[i + 1] = pixel.b;
 	_spiBuffer[i + 2] = pixel.g;
@@ -79,10 +87,10 @@ void Apa102::setPixel(const Pixel& pixel, const Point& point) {
 
 void Apa102::drawShape(Point topLeft, const Shape& shape) {
 	_assertPointInRange(topLeft);
-	uint32_t shapeY = 0;
-	for (uint32_t y = topLeft.y; y < topLeft.y + shape.height; y++) {
-		uint32_t shapeX = 0;
-		for (uint32_t x = topLeft.x; x < topLeft.x + shape.width; x++) {
+	int32_t shapeY = 0;
+	for (int32_t y = topLeft.y; y < topLeft.y + shape.height; y++) {
+		int32_t shapeX = 0;
+		for (int32_t x = topLeft.x; x < topLeft.x + shape.width; x++) {
 			setPixel(shape.map[shapeY * shape.width + shapeX], Point { x % _x, y % _y });
 			shapeX++;
 		}
@@ -129,29 +137,18 @@ void Apa102::_doFillAction(Point& p1, Point& p2, std::function<void(uint8_t*)> a
 	_assertPointInRange(p1);
 	_assertPointInRange(p2);
 
-	uint8_t left = std::min(p1.x, p2.x);
-	uint8_t right = std::max(p1.x, p2.x);
-	uint8_t bottom = std::min(p1.y, p2.y);
-	uint8_t top = std::max(p1.y, p2.y);
+	int32_t left = std::min(p1.x, p2.x);
+	int32_t right = std::max(p1.x, p2.x);
+	int32_t bottom = std::min(p1.y, p2.y);
+	int32_t top = std::max(p1.y, p2.y);
 
-	for (uint32_t x = left; x <= right; x++) {
-		for (uint32_t y = bottom; y <= top; y++) {
-			uint32_t index = _getIndexFromPoint(Point {x, y});
+	for (int32_t x = left; x <= right; x++) {
+		for (int32_t y = bottom; y <= top; y++) {
+			uint32_t index = (this->*_getIndexFromPoint)(Point {x, y});
 			action(&_spiBuffer[index]);
 		}
 	}
 }
-
-
-// { 0, 1 } -> { 5, 1 } and { 5, 1 } -> { 0, 1 } (if _x = 6)
-// 6 - 0 - 1 = 5 and 6 - 5 - 1 = 0
-uint32_t Apa102::_getIndexFromPoint(const Point& point) {
-	return 4 + (point.y * _x + (point.y % 2 == 1 ? _x - point.x - 1 : point.x)) * 4;
-}
-
-// uint32_t Apa102::_getIndexFromPoint(const uint32_t& x, const uint32_t& y) {
-// 	return 4 + (y * _x + (y % 2 == 1 ? _x - x - 1 : x)) * 4;
-// }
 
 void Apa102::_assertPointInRange(const Point& point) {
 	if (point.x > _x || point.y > _y) {
@@ -167,6 +164,35 @@ void Apa102::_writeEndframe() {
 	}
 }
 
+void Apa102::_assignIndexGetterFromOptions() {
+	switch (_configurationOption) {
+		case HorizontalTopLeft:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_HorizontalTopLeft;
+			break;
+		case HorizontalTopRight:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_HorizontalTopRight;
+			break;
+		case HorizontalBottomRight:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_HorizontalBottomRight;
+			break;
+		case HorizontalBottomLeft:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_HorizontalBottomLeft;
+			break;
+		case VerticalTopLeft:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_VerticalTopLeft;
+			break;
+		case VerticalTopRight:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_VerticalTopRight;
+			break;
+		case VerticalBottomRight:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_VerticalBottomRight;
+			break;
+		default:
+			_getIndexFromPoint = &Apa102::_getIndexFromPoint_VerticalBottomLeft;
+			break;
+	}
+}
+
 // endframe should be n/2 bits where n is the number of leds in the matrix
 // minumum endframe calculated by this method will be 4 bytes or 32 bits
 // ex:  for a string of 90 leds we should have at least 45 bits in the endframe
@@ -176,4 +202,48 @@ uint32_t Apa102::_calculateEndframe(uint32_t numLeds) {
 	bool addOne = ((numLeds >> 1) % 8) != 0;
 	uint32_t endFrameLength = ((numLeds >> 1) / 8) + (addOne ? 1 : 0);
 	return (endFrameLength < 4) ? 4 : endFrameLength;
+}
+
+// Invert x for odd rows from top
+uint32_t Apa102::_getIndexFromPoint_HorizontalTopLeft(const Point& point) {
+	return 4 + (point.y * _x + fabs((point.y & 0x1) * _x - point.x - (point.y & 0x1))) * 4;
+}
+
+// Invert x for even rows from top
+uint32_t Apa102::_getIndexFromPoint_HorizontalTopRight(const Point& point) {
+	return 4 + (point.y * _x + fabs((~point.y & 0x1) * _x - point.x - (~point.y & 0x1))) * 4;
+}
+
+// Invert x for even rows from bottom
+uint32_t Apa102::_getIndexFromPoint_HorizontalBottomRight(const Point& point) {
+	int32_t relativeY = _y - point.y - 1;
+	return 4 + (relativeY * _x + fabs((~relativeY & 0x1) * _x - point.x - (~relativeY & 0x1))) * 4;
+}
+
+// Invert x for odd rows from bottom
+uint32_t Apa102::_getIndexFromPoint_HorizontalBottomLeft(const Point& point) {
+	int32_t y = _y - point.y - 1;
+	return 4 + (y * _x + fabs((y & 0x1) * _x - point.x - (y & 0x1))) * 4;
+}
+
+// Invert y for odd columns from left
+uint32_t Apa102::_getIndexFromPoint_VerticalTopLeft(const Point& point) {
+	return 4 + (point.x * _y + fabs((point.x & 0x1) * _y - point.y - (point.x & 0x1))) * 4;
+}
+
+// Invert y for odd columns from right
+uint32_t Apa102::_getIndexFromPoint_VerticalTopRight(const Point& point) {
+	int32_t relativeX = _x - point.x - 1;
+	return 4 + (relativeX * _y + fabs((relativeX & 0x1) * _y - point.y - (relativeX & 0x1))) * 4;
+}
+
+// Invert y for even columns from right
+uint32_t Apa102::_getIndexFromPoint_VerticalBottomRight(const Point& point) {
+	int32_t relativeX = _x - point.x - 1;
+	return 4 + (relativeX * _y + fabs((~relativeX & 0x1) * _y - point.y - (~relativeX & 0x1))) * 4;
+}
+
+// Invert y for even columns from left
+uint32_t Apa102::_getIndexFromPoint_VerticalBottomLeft(const Point& point) {
+	return 4 + (point.x * _y + fabs((~point.x & 0x1) * _y - point.y - (~point.x & 0x1))) * 4;
 }

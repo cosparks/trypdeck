@@ -26,6 +26,8 @@ extern "C" {
 #include "libavformat/avformat.h"
 }
 
+#include <queue>
+
 #include "settings.h"
 #include "Serial.h"
 #include "Apa102.h"
@@ -46,26 +48,28 @@ using namespace std;
 
 #define RUN_AV_DECODING 1
 #define PLAY_RGB_FRAMES 1 // RUN_LEDS must be on for this to work
-#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/sonic2.mp4"
+#define PLAY_FRAMES_CORRECT_TIMING 1
+#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/nyan-cat.mp4"
 
 #define PLAY_OMX 0
 #define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/sonic2.mp4"
 
-#define PLAY_VLC 1
+#define PLAY_VLC 0
 #define PRINT_USER_INFO 0
 #define RUN_SERIAL_NETWORKING 0
-#define START_VIDEO_VLC "sonic2.mp4"
+#define START_VIDEO_VLC "rick-roll.mp4"
 
-#define RUN_DECODE_PERFORMANCE_TESTING 1
-#define RUN_MULTITHREADING 1
-#define TERMINATE_PROGRAM 0
-#define RUN_INTERVAL 100000
+#define RUN_DECODE_PERFORMANCE_TESTING 0
+#define RUN_MULTITHREADING 0
+#define TERMINATE_PROGRAM 1
+#define PROGRAM_RUN_TIME 60000
 #define PRINT_INTERVAL 1000
 
 // LED
 #define RUN_LEDS 1
-#define MATRIX_WIDTH 53
-#define MATRIX_HEIGHT 10
+#define PIXEL_BRIGHTNESS 31
+#define MATRIX_WIDTH 10
+#define MATRIX_HEIGHT 53
 
 // LED TESTS (ONLY CHOOSE ONE AT A TIME)
 #define RUN_EDGE_TEST 0
@@ -74,18 +78,19 @@ using namespace std;
 #define RUN_RAINBOW_STEPPING_TEST 0
 #define RUN_DRAW_SHAPE_TEST 0
 #define RUN_FILL_TEST 0
+#define RUN_GRID_TEST 0
 #define RUN_COLOR_TEST 0
 
 // LED timing intervals
-#define LED_INTERVAL 80
-#define LED_STEPPING_INTERVAL 50
-#define EDGE_TEST_INTERVAL 250
+#define LED_INTERVAL 10
+#define LED_STEPPING_INTERVAL 80
+#define EDGE_TEST_INTERVAL 80
 
 #define INBUF_SIZE 4096
 
-const std::string movies[] = { "music.m4v", "elden.mp4", "eldenring1.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4", "complex-color-test.mp4", "sonic2.mp4"  };
+const std::string movies[] = { "music.m4v", "elden.mp4", "kung-fu.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4", "complex-color-test.mp4", "sonic2.mp4", "rick-roll.mp4" };
 std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
-Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT);
+Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::VerticalTopRight);
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {
@@ -155,7 +160,7 @@ void play_vlc(std::string videoPath, VLCData& data) {
 		if (libvlc_media_player_is_playing(data.mp))
 			stop_vlc_player(data);
 	}
-	
+
 	/* Create a media player playing environement */
 	libvlc_media_t* current_md;
 	if ((current_md = libvlc_media_player_get_media(data.mp)) != NULL)
@@ -227,19 +232,24 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 }
 
 void playFrame(AVFrame* frameRGB) {
-	uint32_t pixelsPerLedX = frameRGB->width / MATRIX_WIDTH;
-	uint32_t pixelsPerLedY = frameRGB->height / MATRIX_HEIGHT;
+	int32_t pixelsPerLedX = frameRGB->width / MATRIX_WIDTH;
+	int32_t pixelsPerLedY = frameRGB->height / MATRIX_HEIGHT;
+	// uint32_t offsetX = pixelsPerLedX / 2;
+	// uint32_t offsetY = pixelsPerLedY / 2;
+	int32_t offsetX = 0;
+	int32_t offsetY = 0;
+
 
 	#if RUN_LEDS
 	lights.clear();
 	#endif
 
 	// Write pixel data
-	for(uint32_t y = 0; y < MATRIX_HEIGHT; y++) {
-		for (uint32_t x = 0; x < MATRIX_WIDTH; x++) {
-			uint8_t* ptr = frameRGB->data[0] + (y * pixelsPerLedY) * frameRGB->linesize[0] + (3 * x * pixelsPerLedX);
+	for(int32_t y = 0; y < MATRIX_HEIGHT; y++) {
+		for (int32_t x = 0; x < MATRIX_WIDTH; x++) {
+			uint8_t* ptr = frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
 			#if RUN_LEDS
-			lights.setPixel(Pixel { 31, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 			#endif
 		}
 	}
@@ -248,9 +258,8 @@ void playFrame(AVFrame* frameRGB) {
 	#endif
 }
 
-int av_read_frame_log_time(AVFormatContext* context, AVPacket* packet, int64_t& time) {
-	// cout << "Program time before read frame: " << Clock::instance().millis() << endl;
-	time = Clock::instance().micros();
+int av_read_frame_log_time(AVFormatContext* context, AVPacket* packet, queue<int64_t>& queue) {
+	queue.emplace(Clock::instance().micros());
 	return av_read_frame(context, packet);
 }
 
@@ -276,17 +285,15 @@ static void video_decode_example()
 
 	// PERFORMANCE Testing
 	#if RUN_DECODE_PERFORMANCE_TESTING
-	int64_t* microBuffer = new int64_t[4000]();
 	int64_t start = Clock::instance().seconds();
 	int fpsCount = 0;
-	#else
-	int64_t microBuffer[1];
 	#endif
+	std::queue<int64_t> performanceQueue;
 	int i = 0;
 	int startTime = Clock::instance().micros();
 
 	// Read all the frames
-	while (av_read_frame_log_time(fmt_ctx, &avpkt, microBuffer[i]) >= 0) {
+	while (av_read_frame_log_time(fmt_ctx, &avpkt, performanceQueue) >= 0) {
 		if (avpkt.size == 0)
 			break;
 		// fprintf(stderr, "Video frame size %d\r\n", avpkt.size);
@@ -295,6 +302,7 @@ static void video_decode_example()
 		// This function might fail because of parameter set packets, just ignore and continue
 		ret = avcodec_send_packet(video_dec_ctx, &avpkt);
 		if (ret < 0) {
+			performanceQueue.pop();
 			fprintf(stderr, "avcodec_send_packet ret < 0\n");
 			continue;
 		}
@@ -307,17 +315,14 @@ static void video_decode_example()
 
 		if (ret < 0) {
 			// Sometimes we cannot get a new frame, continue in this case
-			if (ret == AVERROR(EAGAIN))
+			if (ret == AVERROR(EAGAIN)) {
+				performanceQueue.pop();
 				continue;
+			}
 
 			fprintf(stderr, "avcodec_receive_frame ret < 0\n");
 			break;
 		}
-
-
-		double frameTimeEstimate = (double)frame->best_effort_timestamp * ((double)stream_time_base.num / (double)stream_time_base.den);
-		std::cout << "frame time stamp offset: " << frame->best_effort_timestamp << endl;
-		std::cout << "actual time: " << frameTimeEstimate << endl;
 
 		// if (frameTimeEstimate >= 9.99) {
 		// 	std::cout << "Estimated fps based on frame time stamps: " << fpsCount / 10 << "fps" << std::endl;
@@ -328,17 +333,21 @@ static void video_decode_example()
 		sws_scale(swsContext, (uint8_t const * const *)frame->data, frame->linesize, 0, frame->height, frameRGB->data, frameRGB->linesize);
 
 		#if PLAY_RGB_FRAMES
+		#if PLAY_FRAMES_CORRECT_TIMING
+		double frameTimeEstimate = (double)frame->best_effort_timestamp * ((double)stream_time_base.num / (double)stream_time_base.den);
+		// std::cout << "frame time stamp offset: " << frame->best_effort_timestamp << endl;
+		// std::cout << "actual time: " << frameTimeEstimate << endl;
 		int64_t nextFrameTime = startTime + frame->best_effort_timestamp * (1000000L / stream_time_base.den);
 		int i = 0;
 		while (nextFrameTime > Clock::instance().micros()) {
 			i++;
 		}
+		#endif
 		playFrame(frameRGB);
 		#endif
 
 		#if RUN_DECODE_PERFORMANCE_TESTING
-		i++;
-		microBuffer[i++] = Clock::instance().micros();
+		performanceQueue.emplace(Clock::instance().micros());
 		fpsCount++;
 		#endif
 	}
@@ -346,27 +355,26 @@ static void video_decode_example()
 	#if RUN_DECODE_PERFORMANCE_TESTING
 	// TOTAL AND AVERAGE FRAME TIMES
 	int64_t end = Clock::instance().seconds();
-	int64_t j;
+	performanceQueue.emplace(0x0);
 	int64_t sum = 0;
 	int64_t count = 0;
-	for (j = 0; microBuffer[j]; j+=2) {
-		if (!microBuffer[j+1]) {
+	while (!performanceQueue.empty()) {
+		int64_t preDecodeTime = performanceQueue.front();
+		performanceQueue.pop();
+		int64_t postDecodeTime = performanceQueue.front();
+		performanceQueue.pop();
+
+		if (postDecodeTime == 0) {
 			break;
 		}
-		sum += (microBuffer[j + 1] - microBuffer[j]);
+		sum += (postDecodeTime - preDecodeTime);
 		count++;
-	}
-
-	if (!microBuffer[j-1]) {
-		j--;
 	}
 
 	cout << "Total Transcoding time in seconds is: " << end - start << endl;
 	cout << "The average time to read a frame in microseconds is: " << sum / count << endl;
 	cout << "The average time to read a frame in milliseconds is: " << (sum / count) / 1000 << endl;
 	cout << "Average frames per second: " << 1000 / ((sum / count) / 1000) << endl;
-
-	delete[] microBuffer;
 	#endif
 
 	fprintf(stderr, "out of loop av_read_frame\n");
@@ -423,15 +431,17 @@ int main(int argv, char** argc) {
 
 	int64_t lastLedUpdateTime = lastPrintTime;
 	uint32_t currentLed = 0;
-	uint32_t edgeTestX = 0;
-	uint32_t edgeTestY = 0;
+	int32_t edgeTestX = 0;
+	int32_t edgeTestY = 0;
 	bool on = true;
 	bool goUp = true;
 	uint32_t i = 0;
 	uint32_t j = 0;
-	Point fillTopLeft = { 0, 0 };
-	Point fillBottomRight = { 13, 4 };
-	Shape rainbow = { 14, 10, Rainbow14x10 };
+	int32_t x = 0;
+	int32_t y = 0;
+	Point fillTopLeft = { 0, 10 };
+	Point fillBottomRight = { 5, 25 };
+	Shape rainbow = { 7, 10, Rainbow7x10 };
 	Shape smiley = { 6, 5, Smiley6x5 };
 	Shape heart = { 7, 5, Heart7x5 };
 	uint8_t colorTestOption = 0;
@@ -471,7 +481,7 @@ int main(int argv, char** argc) {
 		int64_t currentTime = Clock::instance().millis();
 
 		#if TERMINATE_PROGRAM
-		if (currentTime >= RUN_INTERVAL) {
+		if (currentTime >= PROGRAM_RUN_TIME) {
 			break;
 		}
 		#endif
@@ -511,7 +521,7 @@ int main(int argv, char** argc) {
 
 		#if RUN_BRIGHTNESS_TEST
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
-			lights.fillArea(Pixel { 31, (uint8_t)i, 0, (uint8_t)i }, Point { 11, 0 }, Point { MATRIX_WIDTH - 11, MATRIX_HEIGHT - 1 });
+			lights.fillArea(Pixel { PIXEL_BRIGHTNESS, (uint8_t)i, 0, (uint8_t)i }, Point { 11, 0 }, Point { MATRIX_WIDTH - 11, MATRIX_HEIGHT - 1 });
 			lights.show();
 			if (goUp) {
 				i = (i + 1) % 256;
@@ -534,7 +544,7 @@ int main(int argv, char** argc) {
 		#if RUN_STEPPING_TEST
 		if (lastLedUpdateTime + LED_STEPPING_INTERVAL <= currentTime) {
 			lights.clear();
-			lights.setPixel(Pixel { 31, 0xFF, 0x0, 0x0 }, currentLed);
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0x0, 0x0 }, currentLed);
 			currentLed++;
 			currentLed = currentLed % lights.getActiveLeds();
 			lights.show();
@@ -569,7 +579,7 @@ int main(int argv, char** argc) {
 		#if RUN_EDGE_TEST
 		if (lastLedUpdateTime + EDGE_TEST_INTERVAL <= currentTime) {
 			lights.clear();
-			lights.setPixel(Pixel { 31, 0xFF, 0, 0 }, Point { edgeTestX, edgeTestY % MATRIX_HEIGHT });
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, Point { edgeTestX, edgeTestY % MATRIX_HEIGHT });
 			lights.show();
 			edgeTestY++;
 			if (edgeTestY > 0 && edgeTestY % MATRIX_HEIGHT == 0) {
@@ -580,15 +590,28 @@ int main(int argv, char** argc) {
 		}
 		#endif
 
+		#if RUN_GRID_TEST
+		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
+			lights.clear();
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, Point { x, y });
+			lights.show();
+
+			x = (x + 1) % MATRIX_WIDTH;
+			y = ((x == 0) ? y + 1 : y) % MATRIX_HEIGHT;
+			// on = !on;
+			lastLedUpdateTime = currentTime;
+		}
+		#endif
+
 		#if RUN_FILL_TEST
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
 			lights.clear();
 			if (fillTopLeft.x > fillBottomRight.x) {
-				lights.fillArea(Pixel { 5, 0xFF, 0, 0 }, fillTopLeft, Point { MATRIX_WIDTH - 1, 3 });
-				lights.fillArea(Pixel { 5, 0xFF, 0, 0 }, fillBottomRight, Point { 0, 1 });
+				lights.fillArea(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, fillTopLeft, Point { MATRIX_WIDTH - 1, fillBottomRight.y });
+				lights.fillArea(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, Point { 0, fillTopLeft.y }, fillBottomRight);
 			}
 			else {
-				lights.fillArea(Red, fillTopLeft, Point { fillTopLeft });
+				lights.fillArea(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, fillTopLeft, fillBottomRight);
 			}
 			lights.show();
 
@@ -603,8 +626,8 @@ int main(int argv, char** argc) {
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
 			lights.clear();
 			lights.drawShape(fillTopLeft, rainbow);
-			// lights.drawShape(Point { (fillTopLeft.x + 20) % MATRIX_WIDTH, 0 }, smiley);
-			lights.drawShape(Point { (fillTopLeft.x + 20) % MATRIX_WIDTH, 0 }, heart);
+			lights.drawShape(Point { fillTopLeft.x, 25 }, heart);
+			lights.drawShape(Point { fillTopLeft.x, 40 }, smiley);
 			lights.show();
 
 			fillTopLeft.x = (fillTopLeft.x + 1) % MATRIX_WIDTH;

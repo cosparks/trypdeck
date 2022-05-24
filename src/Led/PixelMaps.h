@@ -4,12 +4,30 @@
 #include "Apa102.h"
 #include "Colors.h"
 
-const Pixel Rainbow14x5[] = {
+const Pixel Rainbow14x10[] = {
+	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
+	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
+	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
+	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
+	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
 	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
 	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
 	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
 	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet,
 	Red, Red, Orange, Orange, Yellow, Yellow, Green, Green, Blue, Blue, Indigo, Indigo, Violet, Violet
+};
+
+const Pixel Rainbow7x10[] = {
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet,
+	Red, Orange, Yellow, Green, Blue, Indigo, Violet
 };
 
 const Pixel Smiley6x5[] = {

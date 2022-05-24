@@ -1,7 +1,7 @@
 .vscode
 tripdeck
 obj/
-gen/
+cache/
 video/
 test/sandbox
 *.bin

@@ -11,7 +11,6 @@
 class VideoPlayer {
 	public:
 		enum VideoPlaybackOption { OneShot, Loop };
-
 		VideoPlayer();
 		~VideoPlayer();
 		void init(const std::vector<std::string>& movies, const char *const *argv, int argc);
