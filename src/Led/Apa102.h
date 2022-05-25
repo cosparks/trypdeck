@@ -32,7 +32,7 @@ class Apa102 {
 
 		/**
 		 * @brief constructs Apa102 object
-		 * @note strip will be treated as an x * y matrix of numLeds * 1, where {0,0} is the first led
+		 * @note strip will be treated as an x * y matrix of numLeds * 1, where {0,0} is the first led from SPI input
 		*/
 		Apa102(uint32_t numLeds);
 

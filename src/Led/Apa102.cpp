@@ -20,6 +20,7 @@ Apa102::Apa102(int32_t x, int32_t y, GridConfigurationOption configurationOption
 
 Apa102::~Apa102() {
 	delete[] _spiBuffer;
+	spiClose(_handle);
 }
 
 void Apa102::init(uint32_t spiChan, uint32_t baud, uint32_t spiFlags) {
