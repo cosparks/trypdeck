@@ -20,7 +20,10 @@ class MediaManager {
 	private:
 		std::unordered_map<std::string, std::vector<std::string>*> _folderToFileNames;
 		std::unordered_map<std::string, std::string> _fileNameToSystemPath;
+
 		void _updateFilesFromFolders(bool init);
+		const std::string _getFolderFromFileName(const std::string& file);
+		void _removeFileFromFolder(const std::string& file, const std::string folder);
 };
 
 #endif

@@ -19,8 +19,12 @@ int main(int argc, char** argv) {
 	int64_t endTime = Clock::instance().millis();
 
 	std::cout << "Reading from folder took " << endTime - startTime << "ms" << std::endl;
-	std::cout << "Files found:" << std::endl;
+	std::cout << "video: " << std::endl;
 	for (const std::string path : manager->getFileUrlsFromFolder(paths[0])) {
+		std::cout << "\t" << path << std::endl;
+	}
+	std::cout << "anim: " << std::endl;
+	for (const std::string path : manager->getFileUrlsFromFolder(paths[1])) {
 		std::cout << "\t" << path << std::endl;
 	}
 
@@ -34,12 +38,18 @@ int main(int argc, char** argv) {
 		manager->updateFilesFromFolders();
 		endTime = Clock::instance().micros();
 
+		this_thread::sleep_for(std::chrono::milliseconds(500));
+
 		sum += (endTime - startTime);
 		count++;
 	}
 
-	std::cout << "Files found at end:" << std::endl;
+	std::cout << "video: " << std::endl;
 	for (const std::string path : manager->getFileUrlsFromFolder(paths[0])) {
+		std::cout << "\t" << path << std::endl;
+	}
+	std::cout << "anim: " << std::endl;
+	for (const std::string path : manager->getFileUrlsFromFolder(paths[1])) {
 		std::cout << "\t" << path << std::endl;
 	}
 
