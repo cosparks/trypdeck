@@ -6,6 +6,7 @@ LIBS_CARGS =  $(pkg-config --cflags libvlc)
 LIBS = -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc -lavcodec -lavformat -lavutil -lswscale -lx264
 INCLUDE = -I
 PARENT_DIRECTORY = ..
+BIN_DIR = $(PARENT_DIRECTORY)/bin/
 SRC_DIR = $(PARENT_DIRECTORY)/src/
 BUILD_DIR = $(PARENT_DIRECTORY)/obj/
 LIB_DIR = $(PARENT_DIRECTORY)/lib/
@@ -29,33 +30,22 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*
 # Create flags to include all directories (so we don't have to use paths in #include)
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
-# Add all src-level files
-CPPSRC += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.cpp)))
-CSRC += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.c)))
-DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.h)))
-
-_OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
+OBJ := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
 
 # Debug Info
-# $(info DEPENDENCIES is $(DEPENDENCIES))
+# $(info OBJ is $(OBJ))
 
-# try to get object files into separate folder
-# OBJ = $(patsubst ../%,$(BUILD_DIR)%,$(patsubst ,%.cpp,$(_OBJ)))
-# $(TARGET)%.o: %.cpp $(DEPENDENCIES)
-# 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
-
-
-
-%.o: %.cpp $(DEPENDENCIES)
+$(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEPENDENCIES)
+	@mkdir -p $(@D)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
-tripdeck: $(_OBJ)
+tripdeck: $(OBJ)
 	$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
-debug: $(_OBJ)
-	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
+debug: $(OBJ)
+	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $(BIN_DIR)$@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
 .PHONY: clean
 
-clean : $(_OBJ)
-	rm -r $(_OBJ)
+clean : $(OBJ)
+	rm -r $(OBJ) tripdeck

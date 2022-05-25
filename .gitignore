@@ -1,10 +1,12 @@
-.vscode
+.vscode/tasks.json
+.vscode/settings.json
 tripdeck
 obj/
 cache/
 video/
 anim/
 test/sandbox
+bin/
 *.bin
 *.o
 *.pdf
