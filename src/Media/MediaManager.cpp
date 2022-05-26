@@ -1,5 +1,3 @@
-#include "MediaManager.h"
-
 #include <string.h>
 #include <iostream>
 #include <stdexcept>
@@ -8,7 +6,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#define SELECT_TIMEOUT_MICROS 500
+#include "MediaManager.h"
+
+#define SELECT_TIMEOUT_MICROS 250
 
 enum FileChangedOption { MoveToFolder, RemoveFromFolder, DoNothing };
 struct FileChangedData {
@@ -105,12 +105,9 @@ void MediaManager::_readFileDescriptor() {
 }
 
 void MediaManager::_handleFolderChangedEvent(inotify_event* event) {
-	bool added = false;
-
 	if (event->mask & IN_MOVED_TO || event->mask & IN_CREATE) {
-		std::string folder = _watchDescriptorToFolder[event->wd];
-
 		// add file to folder
+		std::string folder = _watchDescriptorToFolder[event->wd];
 		_folderToFileNames[folder]->push_back(event->name);
 		_fileNameToSystemPath[event->name] = folder + event->name;
 		added = true;
@@ -119,11 +116,7 @@ void MediaManager::_handleFolderChangedEvent(inotify_event* event) {
 	if (event->mask & IN_DELETE || event->mask & IN_MOVED_FROM) {
 		// remove file from folder
 		_removeFileFromFolder(event->name, _watchDescriptorToFolder[event->wd]);
-
-		// only need to remove from name to full path map if file has been removed from all project folders
-		if (!added) {
-			_fileNameToSystemPath.erase(event->name);
-		}
+		_fileNameToSystemPath.erase(event->name);
 	}
 }
 
