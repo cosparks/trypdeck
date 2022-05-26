@@ -49,7 +49,7 @@ using namespace std;
 #define RUN_AV_DECODING 1
 #define PLAY_RGB_FRAMES 1 // RUN_LEDS must be on for this to work
 #define PLAY_FRAMES_CORRECT_TIMING 1
-#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/nyan-cat.mp4"
+#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/kung-fu.mp4"
 
 #define PLAY_OMX 0
 #define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/sonic2.mp4"
@@ -68,8 +68,8 @@ using namespace std;
 // LED
 #define RUN_LEDS 1
 #define PIXEL_BRIGHTNESS 31
-#define MATRIX_WIDTH 10
-#define MATRIX_HEIGHT 53
+#define MATRIX_WIDTH 53
+#define MATRIX_HEIGHT 10
 
 // LED TESTS (ONLY CHOOSE ONE AT A TIME)
 #define RUN_EDGE_TEST 0
@@ -90,7 +90,7 @@ using namespace std;
 
 const std::string movies[] = { "music.m4v", "elden.mp4", "kung-fu.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4", "complex-color-test.mp4", "sonic2.mp4", "rick-roll.mp4" };
 std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
-Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::VerticalTopRight);
+Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::HorizontalTopLeft);
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {

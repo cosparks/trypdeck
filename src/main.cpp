@@ -35,10 +35,8 @@ int main(int argc, char** argv) {
 			break;
 		}
 		startTime = Clock::instance().micros();
-		manager->updateFilesFromFolders();
+		manager->run();
 		endTime = Clock::instance().micros();
-
-		this_thread::sleep_for(std::chrono::milliseconds(500));
 
 		sum += (endTime - startTime);
 		count++;
@@ -46,14 +44,15 @@ int main(int argc, char** argv) {
 
 	std::cout << "video: " << std::endl;
 	for (const std::string path : manager->getFileUrlsFromFolder(paths[0])) {
-		std::cout << "\t" << path << std::endl;
+		std::cout << "\t" << path << " -- full path: " << manager->getSystemPathFromFileName(path) << std::endl;
 	}
 	std::cout << "anim: " << std::endl;
 	for (const std::string path : manager->getFileUrlsFromFolder(paths[1])) {
-		std::cout << "\t" << path << std::endl;
+		std::cout << "\t" << path << " -- full path: " << manager->getSystemPathFromFileName(path) << std::endl;
 	}
 
-	std::cout << "Avg runtime for MediaManager::updateFilesFromFolders: " << sum / count << " micro seconds" << std::endl;
+	if (count > 0)
+		std::cout << "Avg runtime for MediaManager::updateFilesFromFolders: " << sum / count << " micro seconds" << std::endl;
 
 	delete manager;
 	return 1;

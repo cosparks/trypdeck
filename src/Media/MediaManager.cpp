@@ -1,12 +1,18 @@
 #include "MediaManager.h"
 
+#include <string.h>
+#include <iostream>
+#include <stdexcept>
 #include <algorithm>
 #include <dirent.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
-enum FileValidationOption { Move, Remove, DoNothing };
-struct FileValidationData {
-	FileValidationOption option;
+#define SELECT_TIMEOUT_MICROS 500
+
+enum FileChangedOption { MoveToFolder, RemoveFromFolder, DoNothing };
+struct FileChangedData {
+	FileChangedOption option;
 	std::string folderPath;
 };
 
@@ -19,8 +25,45 @@ MediaManager::MediaManager(const std::vector<std::string>& paths) {
 }
 
 MediaManager::~MediaManager() {
-	for (const auto& pair : _folderToFileNames) {
+	for (const auto& pair : _folderToFileNames)
 		delete pair.second;
+
+	for (const auto& pair : _watchDescriptorToFolder)
+		inotify_rm_watch(_fd, pair.first);
+
+	if (close(_fd) < 0)
+		perror("Failed to properly close file descriptor in MediaManager");
+}
+
+void MediaManager::init() {
+	// set up inotify
+	_fd = inotify_init();
+	if (_fd < 0)
+		throw std::runtime_error("Error: unable to initialize inotify_init");
+
+	for (const auto& pair : _folderToFileNames) {
+		std::cout << "Adding folder to watch: " << pair.first << std::endl;
+		int32_t wd = inotify_add_watch(_fd, pair.first.c_str(), IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_CREATE);
+
+		if (wd < 0)
+			throw std::runtime_error("Error: unable to add watch to dir " + pair.first);
+
+		_watchDescriptorToFolder[wd] = pair.first;
+	}
+	_updateFilesFromFolders();
+}
+
+void MediaManager::run() {
+	timeval time = { 0, SELECT_TIMEOUT_MICROS };
+	fd_set rfds;
+	FD_ZERO(&rfds);
+	FD_SET(_fd, &rfds);
+
+	int32_t ret = select(_fd + 1, &rfds, NULL, NULL, &time);
+	if (ret < 0) {
+		throw std::runtime_error("Error: select returned error code " + ret);
+	} else if (ret != 0 && FD_ISSET(_fd, &rfds)) {
+		_readFileDescriptor();
 	}
 }
 
@@ -33,27 +76,58 @@ const std::vector<std::string>& MediaManager::getFileUrlsFromFolder(const std::s
 	return *_folderToFileNames[folderPath];
 }
 
-void MediaManager::init() {
-	_updateFilesFromFolders(true);
+int32_t MediaManager::getNumFilesInFolder(const std::string& folderPath) {
+	return _folderToFileNames[folderPath]->size();
 }
 
-void MediaManager::updateFilesFromFolders() {
-	_updateFilesFromFolders(false);
+const std::string& MediaManager::getSystemPathFromFileName(const std::string& fileName) {
+	return _fileNameToSystemPath[fileName];
 }
 
-void MediaManager::_updateFilesFromFolders(bool init) {
-	std::unordered_map<std::string, FileValidationData> fileValidationMap;
+void MediaManager::_readFileDescriptor() {
+	int32_t len = read(_fd, _notifyBuffer, BUFFER_LENGTH);
 
-	// don't need to update application state at initialization
-	if (!init) {
-		// set up file validation map, assume that we will remove the file
-		for (const auto& pair : _folderToFileNames) {
-			for (const std::string& name : *pair.second) {
-				fileValidationMap[name] = FileValidationData { Remove, pair.first };
-			}
+	if (len < 0) {
+		perror("MediaManager read error");
+	} else if (!len) {
+		perror("MediaManager notify buffer too small");
+	}
+	int32_t i = 0;
+	while (i < len) {
+		inotify_event *event = (inotify_event*)&_notifyBuffer[i];
+
+		if (event->len > 0) {
+			_handleFolderChangedEvent(event);
 		}
+		i += EVENT_SIZE + event->len;
+	}
+	memset(_notifyBuffer, 0, BUFFER_LENGTH);
+}
+
+void MediaManager::_handleFolderChangedEvent(inotify_event* event) {
+	bool added = false;
+
+	if (event->mask & IN_MOVED_TO || event->mask & IN_CREATE) {
+		std::string folder = _watchDescriptorToFolder[event->wd];
+
+		// add file to folder
+		_folderToFileNames[folder]->push_back(event->name);
+		_fileNameToSystemPath[event->name] = folder + event->name;
+		added = true;
 	}
 
+	if (event->mask & IN_DELETE || event->mask & IN_MOVED_FROM) {
+		// remove file from folder
+		_removeFileFromFolder(event->name, _watchDescriptorToFolder[event->wd]);
+
+		// only need to remove from name to full path map if file has been removed from all project folders
+		if (!added) {
+			_fileNameToSystemPath.erase(event->name);
+		}
+	}
+}
+
+void MediaManager::_updateFilesFromFolders() {
 	// get all files from folders
 	for (const auto& pair : _folderToFileNames) {
 		DIR *dir;
@@ -83,41 +157,10 @@ void MediaManager::_updateFilesFromFolders(bool init) {
 			if (_fileNameToSystemPath.find(fileName) == _fileNameToSystemPath.end()) {
 				pair.second->push_back(fileName);
 				_fileNameToSystemPath[fileName] = fullFileName;
-				fileValidationMap[fileName] = FileValidationData { DoNothing, pair.first };
-			} else {
-				if (fileValidationMap[fileName].folderPath.compare(pair.first) != 0) {
-					fileValidationMap[fileName] = FileValidationData { Move, pair.first };
-				} else {
-					fileValidationMap[fileName] = FileValidationData { DoNothing, pair.first };
-				}
 			}
-
-			// set FileValidationData.keep to true and update file folder (in case file was moved from one folder to another)
+			// set FileChangedData.keep to true and update file folder (in case file was moved from one folder to another)
 		}
 		closedir(dir);
-	}
-
-
-	// don't need to update application state at initialization
-	if (!init) {
-		// check to see if we need to remove any files from cache
-		for (const auto& pair : fileValidationMap) {
-			switch (pair.second.option) {
-				case Move:
-					_removeFileFromFolder(pair.first, _getFolderFromFileName(pair.first));					
-					_folderToFileNames[pair.second.folderPath]->push_back(pair.first);
-					_fileNameToSystemPath[pair.first] = pair.second.folderPath + pair.first;
-					break;
-				case Remove:
-					// remove entry from _fileToSystemPath and _folderToFileNames cache
-					_fileNameToSystemPath.erase(pair.first);
-					_removeFileFromFolder(pair.first, pair.second.folderPath);
-					break;
-				default:
-					// do nothing
-					break;
-			}
-		}
 	}
 }
 
