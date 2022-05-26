@@ -11,10 +11,6 @@
 #define SELECT_TIMEOUT_MICROS 250
 
 enum FileChangedOption { MoveToFolder, RemoveFromFolder, DoNothing };
-struct FileChangedData {
-	FileChangedOption option;
-	std::string folderPath;
-};
 
 MediaManager::MediaManager() { }
 
@@ -151,7 +147,6 @@ void MediaManager::_updateFilesFromFolders() {
 				pair.second->push_back(fileName);
 				_fileNameToSystemPath[fileName] = fullFileName;
 			}
-			// set FileChangedData.keep to true and update file folder (in case file was moved from one folder to another)
 		}
 		closedir(dir);
 	}
