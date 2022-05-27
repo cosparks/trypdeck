@@ -5,27 +5,39 @@
 
 #include "settings.h"
 #include "Clock.h"
-#include "MediaManager.h"
+#include "DataManager.h"
+#include "Index.h"
+#include "VideoPlayer.h"
 
 #define RUN_TIME_MILLIS 15000
 
-const std::vector<std::string> paths = { VIDEO_DIRECTORY, LED_ANIMATION_DIRECTORY };
+const std::vector<std::string> projectFolders = { CARD_VIDEO_DIRECTORY, LED_ANIMATION_DIRECTORY, WAIT_VIDEO_DIRECTORY };
+
+const std::vector<std::string> videoFolders = { CARD_VIDEO_DIRECTORY, WAIT_VIDEO_DIRECTORY };
+const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
 
 int main(int argc, char** argv) {
-	MediaManager* manager = new MediaManager(paths);
+	DataManager* manager = new DataManager(projectFolders);
+	VideoPlayer* player = new VideoPlayer(videoFolders);
+	// player->init(manager->getFileIdsFromFolder(CARD_VIDEO_DIRECTORY), VLC_ARGS, std::extent<decltype(VLC_ARGS)>::value);
 
 	int64_t startTime = Clock::instance().millis();
 	manager->init();
+
 	int64_t endTime = Clock::instance().millis();
 
 	std::cout << "Reading from folder took " << endTime - startTime << "ms" << std::endl;
-	std::cout << "video: " << std::endl;
-	for (const std::string path : manager->getFileUrlsFromFolder(paths[0])) {
-		std::cout << "\t" << path << std::endl;
+	std::cout << "card: " << std::endl;
+	for (uint32_t path : manager->getFileIdsFromFolder(projectFolders[0])) {
+		std::cout << "\t" << path << "\t -- full path: " << Index::instance().getSystemPath(path) << std::endl;
 	}
 	std::cout << "anim: " << std::endl;
-	for (const std::string path : manager->getFileUrlsFromFolder(paths[1])) {
-		std::cout << "\t" << path << std::endl;
+	for (uint32_t path : manager->getFileIdsFromFolder(projectFolders[1])) {
+			std::cout << "\t" << path << "\t -- full path: " << Index::instance().getSystemPath(path) << std::endl;
+	}
+	std::cout << "loop: " << std::endl;
+	for (uint32_t path : manager->getFileIdsFromFolder(projectFolders[2])) {
+		std::cout << "\t" << path << "\t -- full path: " << Index::instance().getSystemPath(path) << std::endl;
 	}
 
 	int64_t sum = 0;
@@ -42,17 +54,21 @@ int main(int argc, char** argv) {
 		count++;
 	}
 
-	std::cout << "video: " << std::endl;
-	for (const std::string path : manager->getFileUrlsFromFolder(paths[0])) {
-		std::cout << "\t" << path << " -- full path: " << manager->getSystemPathFromFileName(path) << std::endl;
+	std::cout << "card: " << std::endl;
+	for (uint32_t path : manager->getFileIdsFromFolder(projectFolders[0])) {
+		std::cout << "\t" << path << "\t -- full path: " << Index::instance().getSystemPath(path) << std::endl;
 	}
 	std::cout << "anim: " << std::endl;
-	for (const std::string path : manager->getFileUrlsFromFolder(paths[1])) {
-		std::cout << "\t" << path << " -- full path: " << manager->getSystemPathFromFileName(path) << std::endl;
+	for (uint32_t path : manager->getFileIdsFromFolder(projectFolders[1])) {
+		std::cout << "\t" << path << "\t -- full path: " << Index::instance().getSystemPath(path) << std::endl;
+	}
+	std::cout << "loop: " << std::endl;
+	for (uint32_t path : manager->getFileIdsFromFolder(projectFolders[2])) {
+		std::cout << "\t" << path << "\t -- full path: " << Index::instance().getSystemPath(path) << std::endl;
 	}
 
 	if (count > 0)
-		std::cout << "Avg runtime for MediaManager::updateFilesFromFolders: " << sum / count << " micro seconds" << std::endl;
+		std::cout << "Avg runtime for DataManager::updateFilesFromFolders: " << sum / count << " micro seconds" << std::endl;
 
 	delete manager;
 	return 1;

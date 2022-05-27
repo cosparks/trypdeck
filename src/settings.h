@@ -3,7 +3,8 @@
 
 #define CACHE_RGB_FRAMES 0
 
-#define VIDEO_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/video/"
-#define LED_ANIMATION_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/anim/"
+#define WAIT_VIDEO_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/loop/"
+#define CARD_VIDEO_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/card/"
+#define LED_ANIMATION_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/anim/"
 
 #endif

@@ -1,7 +1,9 @@
 #ifndef _INPUT_MANAGER_H_
 #define _INPUT_MANAGER_H_
 
-#include "Observer.h"
+#include "td_util.h"
+
+using namespace td_util;
 
 class InputManager : public Observer {
 	public:
