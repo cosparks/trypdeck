@@ -23,6 +23,10 @@ const std::string& Index::getSystemPath(const std::string& fileName) {
 	return _idToSystemPath[std::hash<std::string>{}(fileName)];
 }
 
+uint32_t Index::getFileId(const std::string& fileName) {
+	return std::hash<std::string>{}(fileName);
+}
+
 uint32_t Index::addFile(std::string folder, const std::string& fileName) {
 	folder.append(fileName);
 	uint32_t id = std::hash<std::string>{}(fileName);

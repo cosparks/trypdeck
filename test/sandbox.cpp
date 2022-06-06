@@ -46,15 +46,15 @@ using namespace std;
 // PROGRAM MACROS
 #define DEBUG_MODE 0
 
-#define RUN_AV_DECODING 0
-#define PLAY_RGB_FRAMES 0 // RUN_LEDS must be on for this to work
-#define PLAY_FRAMES_CORRECT_TIMING 0
-#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/kung-fu.mp4"
+#define RUN_AV_DECODING 1
+#define PLAY_RGB_FRAMES 1 // RUN_LEDS must be on for this to work
+#define PLAY_FRAMES_CORRECT_TIMING 1
+#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
 
 #define PLAY_OMX 0
 #define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/sonic2.mp4"
 
-#define PLAY_VLC 1
+#define PLAY_VLC 0
 #define PRINT_USER_INFO 0
 #define RUN_SERIAL_NETWORKING 0
 #define START_VIDEO_VLC "nyan-cat.mp4"
@@ -66,8 +66,8 @@ using namespace std;
 #define PRINT_INTERVAL 1000
 
 // LED
-#define RUN_LEDS 0
-#define PIXEL_BRIGHTNESS 31
+#define RUN_LEDS 1
+#define PIXEL_BRIGHTNESS 5
 #define MATRIX_WIDTH 53
 #define MATRIX_HEIGHT 10
 

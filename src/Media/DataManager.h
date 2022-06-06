@@ -15,14 +15,13 @@
 
 /**
  * @brief Maintains representation of on-disk media files for project
+ * @note media listeners must 
  */
 class DataManager {
 	public:
 		DataManager();
-		DataManager(const std::vector<std::string>& paths);
 		~DataManager();
 		void init();
-		void addFolderPath(const std::string path);
 
 		// following methods must only be called after init
 		void run();
@@ -38,7 +37,11 @@ class DataManager {
 		std::unordered_map<std::string, std::vector<uint32_t>*> _folderToFileIds;
 		uint8_t _notifyBuffer[BUFFER_LENGTH] = { };
 
-		void _updateFilesFromFolders();
+		// adds folder and files, returns watch descriptor for folder
+		int32_t _addFolder(const std::string path);
+		void _removeFolder(const std::string& path);
+		void _addFilesFromFolder(const std::string& path);
+		void _updateListeners(inotify_event* event, const MediaChangedArgs& args);
 		void _readFileDescriptor();
 		void _handleFolderChangedEvent(inotify_event* event);
 		void _removeFileIdFromFolder(uint32_t id, const std::string folder);

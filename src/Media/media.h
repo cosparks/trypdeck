@@ -13,7 +13,8 @@ struct MediaChangedArgs {
 class MediaListener {
 	public:
 		virtual ~MediaListener() { }
-		virtual void updateMedia(MediaChangedArgs args) = 0;
+		virtual void addFileIds(const std::vector<uint32_t>& ids) = 0;
+		virtual void updateMedia(const MediaChangedArgs& args) = 0;
 		virtual const std::vector<std::string>& getMediaFolders() = 0;
 };
 
