@@ -33,15 +33,13 @@ void VideoPlayer::addFileIds(const std::vector<uint32_t>& ids) {
 void VideoPlayer::updateMedia(const MediaChangedArgs& args) {
 	switch (args.option) {
 		case MediaChangedOptions::Added:
-			std::cout << "Added file:\t\t" << Index::instance().getSystemPath(args.fileId) << std::endl;
 			_addFile(args.fileId);
 			break;
 		case MediaChangedOptions::Modified:
-			std::cout << "Modified file:\t\t" << Index::instance().getSystemPath(args.fileId) << std::endl;
 			_updateMediaForFile(args.fileId);
 			break;
 		case MediaChangedOptions::Removed:
-			std::cout << "Removed file:\t\t" << Index::instance().getSystemPath(args.fileId) << std::endl;
+			_removeFile(args.fileId);
 			break;
 		default:
 			// do nothing
@@ -64,7 +62,7 @@ void VideoPlayer::playOneShot() {
 }
 
 void VideoPlayer::playLoop() {
-	libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_loop);
+	libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_repeat);
 	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
 }
 
@@ -111,6 +109,10 @@ void VideoPlayer::_updateMediaForFile(uint32_t fileId) {
 
 void VideoPlayer::_removeFile(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
+		if (_currentMedia == fileId) {
+			stop();
+		}
+
 		int32_t i = _fileIdToIndex[fileId];
 		_removeMediaAtIndex(i);
 		_emptyIndices.emplace(i);
