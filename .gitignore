@@ -3,8 +3,7 @@
 tripdeck
 obj/
 cache/
-video/
-anim/
+media/
 test/sandbox
 bin/
 *.bin

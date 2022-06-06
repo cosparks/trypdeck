@@ -49,7 +49,7 @@ using namespace std;
 #define RUN_AV_DECODING 1
 #define PLAY_RGB_FRAMES 1 // RUN_LEDS must be on for this to work
 #define PLAY_FRAMES_CORRECT_TIMING 1
-#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/video/nyan-cat.mp4"
+#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
 
 #define PLAY_OMX 0
 #define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/sonic2.mp4"
@@ -57,7 +57,7 @@ using namespace std;
 #define PLAY_VLC 0
 #define PRINT_USER_INFO 0
 #define RUN_SERIAL_NETWORKING 0
-#define START_VIDEO_VLC "rick-roll.mp4"
+#define START_VIDEO_VLC "nyan-cat.mp4"
 
 #define RUN_DECODE_PERFORMANCE_TESTING 0
 #define RUN_MULTITHREADING 0
@@ -67,9 +67,9 @@ using namespace std;
 
 // LED
 #define RUN_LEDS 1
-#define PIXEL_BRIGHTNESS 31
-#define MATRIX_WIDTH 10
-#define MATRIX_HEIGHT 53
+#define PIXEL_BRIGHTNESS 5
+#define MATRIX_WIDTH 53
+#define MATRIX_HEIGHT 10
 
 // LED TESTS (ONLY CHOOSE ONE AT A TIME)
 #define RUN_EDGE_TEST 0
@@ -90,7 +90,7 @@ using namespace std;
 
 const std::string movies[] = { "music.m4v", "elden.mp4", "kung-fu.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4", "complex-color-test.mp4", "sonic2.mp4", "rick-roll.mp4" };
 std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
-Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::VerticalTopRight);
+Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::HorizontalTopLeft);
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {
@@ -131,7 +131,7 @@ struct VLCData {
 };
 
 std::string get_full_path(std::string path) {
-	return VIDEO_DIRECTORY + path;
+	return CARD_VIDEO_DIRECTORY + path;
 }
 
 void stop_vlc(VLCData& data) {

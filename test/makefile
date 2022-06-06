@@ -29,36 +29,33 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*
 
 # add header files directly contained in src directory (workaround so we can exclude main.cpp in src)
 DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(SRC_DIR),$(wildcard $(%)*.h)))
-INCLUDE_DIRS += $(SRC_DIR)
+INCLUDE_DIRS += $(SRC_DIR) $(TEST_DIR)
 
 # Create flags to include all directories (so we don't have to use paths in #include)
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
 # Add all src-level files
-CPPSRC += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.cpp)))
-CSRC += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.c)))
-DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.h)))
+CPPTEST := $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.cpp)))
+CTEST += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.c)))
+DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(TEST_DIR) ,$(wildcard $(%)*.h)))
 
-_OBJ = $(CPPSRC:.cpp=.o) $(CSRC:.c=.o)
+OBJ := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
+OBJ += $(patsubst $(TEST_DIR)%,$(BUILD_DIR)%, $(CPPTEST:.cpp=.o) $(CTEST:.c=.o))
 
-# Debug Info
-# $(info CPPSRC is $(CPPSRC))
-# $(info INCLUDE_DIRS is $(INCLUDE_DIRS))
-# $(info DEPENDENCIES is $(DEPENDENCIES))
-
-# try to get object files into separate folder
-# OBJ = $(patsubst ../%,$(BUILD_DIR)%,$(patsubst ,%.cpp,$(_OBJ)))
-# $(TARGET)%.o: %.cpp $(DEPENDENCIES)
-# 	$(CC) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
-
-%.o: %.cpp $(DEPENDENCIES)
+# pattern rules for src and test files
+$(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEPENDENCIES)
+	@mkdir -p $(@D)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
-# includes -g for GDB
-sandbox: $(_OBJ)
+$(BUILD_DIR)%.o: $(TEST_DIR)%.cpp $(DEPENDENCIES)
+	@mkdir -p $(@D)
+	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
+
+# build with debug info
+sandbox: $(OBJ)
 	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
 .PHONY: clean
 
-clean : $(_OBJ)
-	rm -r $(_OBJ)
+clean : $(OBJ)
+	rm -r $(OBJ) sandbox
