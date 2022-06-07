@@ -10,11 +10,8 @@
 class VideoPlayer : public MediaListener {
 	public:
 		enum VideoPlaybackOption { OneShot, Loop };
-
 		VideoPlayer(const std::vector<std::string>& folders);
 		~VideoPlayer();
-		// void addFileIds(const std::vector<uint32_t>& ids);
-		// void updateMedia(const MediaChangedArgs& args) override;
 		void init(const char *const *argv, int argc);
 		void setCurrentMedia(uint32_t fileId, VideoPlaybackOption option = OneShot);
 		uint32_t getCurrentMedia();
@@ -22,7 +19,7 @@ class VideoPlayer : public MediaListener {
 		void playLoop();
 		void stop();
 		void pause();
-		// const std::vector<std::string>& getMediaFolders();
+
 	private:
 		uint32_t _currentMedia;
 		std::unordered_map<uint32_t, int32_t> _fileIdToIndex;
