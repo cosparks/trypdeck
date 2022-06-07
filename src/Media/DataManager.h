@@ -7,8 +7,7 @@
 #include <functional>
 #include <sys/inotify.h>
 
-#include "td_util.h"
-#include "media.h"
+#include "MediaListener.h"
 
 #define EVENT_SIZE (sizeof(inotify_event))
 #define BUFFER_LENGTH (64 * (EVENT_SIZE + 16))

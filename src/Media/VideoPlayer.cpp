@@ -3,9 +3,7 @@
 #include "VideoPlayer.h"
 #include "Index.h"
 
-VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) {
-	_mediaFolders = folders;
-}
+VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) : MediaListener(folders) { }
 
 VideoPlayer::~VideoPlayer() { }
 
@@ -22,29 +20,6 @@ void VideoPlayer::setCurrentMedia(uint32_t fileId, VideoPlaybackOption option) {
 	}
 
 	_currentMedia = fileId;
-}
-
-void VideoPlayer::addFileIds(const std::vector<uint32_t>& ids) {
-	for (uint32_t fileId : ids) {
-		_addFile(fileId);
-	}
-}
-
-void VideoPlayer::updateMedia(const MediaChangedArgs& args) {
-	switch (args.option) {
-		case MediaChangedOptions::Added:
-			_addFile(args.fileId);
-			break;
-		case MediaChangedOptions::Modified:
-			_updateMediaForFile(args.fileId);
-			break;
-		case MediaChangedOptions::Removed:
-			_removeFile(args.fileId);
-			break;
-		default:
-			// do nothing
-			break;
-	}
 }
 
 uint32_t VideoPlayer::getCurrentMedia() {
@@ -74,11 +49,7 @@ void VideoPlayer::pause() {
 	libvlc_media_list_player_pause(_mediaListPlayer);
 }
 
-const std::vector<std::string>& VideoPlayer::getMediaFolders() {
-	return _mediaFolders;
-}
-
-void VideoPlayer::_addFile(uint32_t fileId) {
+void VideoPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		int32_t i = 0;
 
@@ -96,18 +67,7 @@ void VideoPlayer::_addFile(uint32_t fileId) {
 	}
 }
 
-void VideoPlayer::_updateMediaForFile(uint32_t fileId) {
-	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
-		int32_t i = _fileIdToIndex[fileId];
-		_removeMediaAtIndex(i);
-		_createAndInsertMedia(fileId, i);
-	}
-	else {
-		_addFile(fileId);
-	}
-}
-
-void VideoPlayer::_removeFile(uint32_t fileId) {
+void VideoPlayer::_removeMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
 		if (_currentMedia == fileId) {
 			stop();
@@ -116,6 +76,17 @@ void VideoPlayer::_removeFile(uint32_t fileId) {
 		int32_t i = _fileIdToIndex[fileId];
 		_removeMediaAtIndex(i);
 		_emptyIndices.emplace(i);
+	}
+}
+
+void VideoPlayer::_updateMedia(uint32_t fileId) {
+	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
+		int32_t i = _fileIdToIndex[fileId];
+		_removeMediaAtIndex(i);
+		_createAndInsertMedia(fileId, i);
+	}
+	else {
+		_addMedia(fileId);
 	}
 }
 

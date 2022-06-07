@@ -164,7 +164,7 @@ void DataManager::_handleFolderChangedEvent(inotify_event* event) {
 
 void DataManager::_updateListeners(inotify_event* event, const MediaChangedArgs& args) {
 	for (MediaListener* listener : *_watchDescriptorToListeners[event->wd]) {
-		listener->updateMedia(args);
+		listener->update(args);
 	}
 }
 
