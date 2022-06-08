@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
-#include <pigpio.h>
 #include <algorithm>
 #include <math.h>
 
@@ -132,6 +131,14 @@ uint32_t Apa102::getActiveLeds() {
 
 uint32_t Apa102::getNumLeds() {
 	return _numLeds;
+}
+
+int32_t Apa102::getWidth() {
+	return _x;
+}
+
+int32_t Apa102::getHeight() {
+	return _y;
 }
 
 void Apa102::_doFillAction(Point& p1, Point& p2, std::function<void(uint8_t*)> action) {

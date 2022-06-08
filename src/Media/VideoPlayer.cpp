@@ -3,20 +3,38 @@
 #include "VideoPlayer.h"
 #include "Index.h"
 
-VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) : MediaListener(folders) { }
+const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
+#define VLC_NUM_ARGS 9
+
+VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) : MediaPlayer(folders) { }
 
 VideoPlayer::~VideoPlayer() { }
 
-void VideoPlayer::init(const char *const *argv, int argc) {
-	_instance = libvlc_new(argc, argv);
+void VideoPlayer::init() {
+	_instance = libvlc_new(VLC_NUM_ARGS, VLC_ARGS);
 	_mediaList = libvlc_media_list_new(_instance);
 	_mediaListPlayer = libvlc_media_list_player_new(_instance);
 	libvlc_media_list_player_set_media_list(_mediaListPlayer, _mediaList);
 }
 
-void VideoPlayer::setCurrentMedia(uint32_t fileId, VideoPlaybackOption option) {
+void VideoPlayer::run() {
+	// do nothing
+}
+
+void VideoPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		throw std::runtime_error("Media not found: cache does not contain the media requested");
+	}
+
+	switch (option) {
+		case MediaPlaybackOption::OneShot:
+			libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_default);
+			break;
+		case MediaPlaybackOption::Loop:
+			libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_repeat);
+			break;
+		default:
+			break;
 	}
 
 	_currentMedia = fileId;
@@ -26,26 +44,27 @@ uint32_t VideoPlayer::getCurrentMedia() {
 	return _currentMedia;
 }
 
-void VideoPlayer::playOneShot() {
-	if (_mediaListPlayer != nullptr) {
-	if (libvlc_media_list_player_is_playing(_mediaListPlayer))
-		stop();
-	}
-
-	libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_default);
-	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
+uint32_t VideoPlayer::getNumMediaFiles() {
+	return _fileIdToIndex.size();
 }
 
-void VideoPlayer::playLoop() {
-	libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_repeat);
+void VideoPlayer::play() {
+	if (_mediaListPlayer != nullptr) {
+		if (libvlc_media_list_player_is_playing(_mediaListPlayer))
+			stop();
+	}
+
+	_state = MediaPlayerState::Play;
 	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
 }
 
 void VideoPlayer::stop() {
+	_state = MediaPlayerState::Stop;
 	libvlc_media_list_player_stop(_mediaListPlayer);
 }
 
 void VideoPlayer::pause() {
+	_state = MediaPlayerState::Pause;
 	libvlc_media_list_player_pause(_mediaListPlayer);
 }
 

@@ -204,8 +204,7 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 	AVCodec *dec = NULL;
 	ret = av_find_best_stream(fmt_ctx, type, -1, -1, NULL, 0);
 	if (ret < 0) {
-		fprintf(stderr, "Could not find %s stream in input file '%s'\n",
-		media_type_string(type), src_filename);
+		fprintf(stderr, "Could not find %s stream in input file '%s'\n", media_type_string(type), src_filename);
 		return ret;
 	}
 	else {
@@ -216,16 +215,14 @@ static int open_codec_context(int *stream_idx, AVFormatContext *fmt_ctx, enum AV
 		dec_param = st->codecpar;
 		dec = avcodec_find_decoder(dec_param->codec_id);
 		if (!dec) {
-		fprintf(stderr, "Failed to find %s codec\n",
-			media_type_string(type));
-		return ret;
+		fprintf(stderr, "Failed to find %s codec\n", media_type_string(type));
+			return ret;
 		}
 		video_dec_ctx = avcodec_alloc_context3(dec);
 		avcodec_parameters_to_context(video_dec_ctx, dec_param);
 		if ((ret = avcodec_open2(video_dec_ctx, dec, NULL)) < 0) {
-		fprintf(stderr, "Failed to open %s codec\n",
-			media_type_string(type));
-		return ret;
+			fprintf(stderr, "Failed to open %s codec\n", media_type_string(type));
+			return ret;
 		}
 	}
 	return 0;
@@ -266,7 +263,6 @@ int av_read_frame_log_time(AVFormatContext* context, AVPacket* packet, queue<int
 static void video_decode_example()
 {
 	AVPacket avpkt;
-
 	av_init_packet(&avpkt);
 
 	int ret = 0;

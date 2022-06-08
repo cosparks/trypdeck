@@ -7,6 +7,7 @@
 #include <functional>
 #include <sys/inotify.h>
 
+#include "Runnable.h"
 #include "MediaListener.h"
 
 #define EVENT_SIZE (sizeof(inotify_event))
@@ -16,14 +17,14 @@
  * @brief Maintains representation of on-disk media files for project
  * @note media listeners must 
  */
-class DataManager {
+class DataManager : public Runnable {
 	public:
 		DataManager();
 		~DataManager();
-		void init();
+		void init() override;
 
 		// following methods must only be called after init
-		void run();
+		void run() override;
 		const std::vector<uint32_t>& getFileIdsFromFolder(const std::string& path);
 		const std::vector<std::string> getSystemPathsFromFolder(const std::string& path);
 		int32_t getNumFilesInFolder(const std::string& path);

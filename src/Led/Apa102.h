@@ -2,6 +2,7 @@
 #define _APA102_H_
 
 #include <functional>
+#include <pigpio.h>
 
 struct Pixel {
 	uint8_t brightness;
@@ -104,6 +105,16 @@ class Apa102 {
 		 * @brief gets the number of leds in the matrix
 		 */
 		uint32_t getNumLeds();
+
+		/**
+		 * @brief gets value of _x
+		*/ 
+		int32_t getWidth();
+
+		/**
+		 * @brief gets value of _y
+		*/ 
+		int32_t getHeight();
 
 		private:
 			uint32_t _numLeds;

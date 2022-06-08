@@ -5,20 +5,20 @@
 #include <queue>
 #include <unordered_map>
 
-#include "MediaListener.h"
+#include "MediaPlayer.h"
 
-class VideoPlayer : public MediaListener {
+class VideoPlayer : public MediaPlayer {
 	public:
-		enum VideoPlaybackOption { OneShot, Loop };
 		VideoPlayer(const std::vector<std::string>& folders);
 		~VideoPlayer();
-		void init(const char *const *argv, int argc);
-		void setCurrentMedia(uint32_t fileId, VideoPlaybackOption option = OneShot);
-		uint32_t getCurrentMedia();
-		void playOneShot();
-		void playLoop();
-		void stop();
-		void pause();
+		void init() override;
+		void run() override;
+		void setCurrentMedia(uint32_t fileId, MediaPlaybackOption option = OneShot) override;
+		uint32_t getCurrentMedia() override;
+		uint32_t getNumMediaFiles() override;
+		void play() override;
+		void stop() override;
+		void pause() override;
 
 	private:
 		uint32_t _currentMedia;

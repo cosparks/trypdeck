@@ -5,13 +5,15 @@
 #include <vector>
 #include <stdint.h>
 
+#include "Runnable.h"
+
 enum MediaChangedOptions { Added, Removed, Modified };
 struct MediaChangedArgs {
 	uint32_t fileId;
 	MediaChangedOptions option;
 };
 
-class MediaListener {
+class MediaListener : public Runnable {
 	public:
 		MediaListener(const std::vector<std::string>& folders);
 		virtual ~MediaListener();

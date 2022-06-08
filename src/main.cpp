@@ -10,20 +10,22 @@
 #include "DataManager.h"
 #include "Index.h"
 #include "VideoPlayer.h"
+#include "LedPlayer.h"
 
-#define RUN_TIME_MILLIS 45000
+#define RUN_TIME_MILLIS 200000
 #define VIDEO_CHANGE_INTERVAL 10000
 
 const std::vector<std::string> projectFolders = { CARD_VIDEO_DIRECTORY, LED_ANIMATION_DIRECTORY, WAIT_VIDEO_DIRECTORY };
-const std::vector<std::string> videoFolders1 = { CARD_VIDEO_DIRECTORY, LED_ANIMATION_DIRECTORY };
+const std::vector<std::string> videoFolders1 = { CARD_VIDEO_DIRECTORY };
 const std::vector<std::string> videoFolders2 = { WAIT_VIDEO_DIRECTORY };
+const std::vector<std::string> ledFolders = { LED_ANIMATION_DIRECTORY };
 
-VideoPlayer player1(videoFolders1);
-VideoPlayer player2(videoFolders2);
+Apa102 apa102(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT, LED_GRID_CONFIGURATION_OPTION);
+VideoPlayer videoPlayer1(videoFolders1);
+VideoPlayer videoPlayer2(videoFolders2);
+LedPlayer ledPlayer(ledFolders, &apa102);
 
-const std::vector<VideoPlayer*> players = { &player1, &player2 };
-
-const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
+const std::vector<MediaPlayer*> players = { &videoPlayer1, &videoPlayer2, &ledPlayer };
 
 int main(int argc, char** argv) {
 	system("sudo sh -c \"TERM=linux setterm -foreground black -clear all >/dev/tty0\"");
@@ -33,10 +35,11 @@ int main(int argc, char** argv) {
 	DataManager* manager = new DataManager();
 	manager->init();
 	
-	for (VideoPlayer* player : players) {
-		player->init(VLC_ARGS, 9);
+	for (MediaPlayer* player : players) {
+		player->init();
 		manager->addMediaListener(player);
 	}
+
 	int64_t endTime = Clock::instance().millis();
 
 	std::cout << "Reading from folders took " << endTime - startTime << "ms" << std::endl;
@@ -46,10 +49,12 @@ int main(int argc, char** argv) {
 	int64_t lastTime = -VIDEO_CHANGE_INTERVAL;
 
 	lastTime = Clock::instance().millis();
-	const auto& vec = manager->getFileIdsFromFolder(CARD_VIDEO_DIRECTORY);
+	const auto& vec = manager->getFileIdsFromFolder(LED_ANIMATION_DIRECTORY);
 
-	player1.setCurrentMedia(vec[0]);
-	player1.playLoop();
+	ledPlayer.setCurrentMedia(vec[0], MediaPlayer::MediaPlaybackOption::OneShot);
+	ledPlayer.play();
+
+	std::cout << "LedPlayer set to play: " << Index::instance().getSystemPath(vec[0]) << std::endl;
 
 	while (true) {
 		if (Clock::instance().millis() > RUN_TIME_MILLIS) {
@@ -57,18 +62,7 @@ int main(int argc, char** argv) {
 		}
 
 		manager->run();
-
-		// if (Clock::instance().millis() > lastTime + VIDEO_CHANGE_INTERVAL) {
-		// 	lastTime = Clock::instance().millis();
-		// 	const auto& vec = manager->getFileIdsFromFolder(CARD_VIDEO_DIRECTORY);
-
-		// 	std::default_random_engine generator;
-		// 	std::uniform_int_distribution<int32_t> distribution(0, vec.size() - 1);
-		// 	int32_t i = distribution(generator);
-		// 	player1.setCurrentMedia(vec[i]);
-		// 	player1.playLoop();
-		// 	std::cout << "Playing media at index: " << i << std::endl;
-		// }
+		ledPlayer.run();
 
 		sum += (endTime - startTime);
 		count++;
