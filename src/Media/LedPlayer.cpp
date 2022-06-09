@@ -144,7 +144,7 @@ void LedPlayer::_removeMedia(uint32_t fileId) {
 
 void LedPlayer::_updateMedia(uint32_t fileId) {
 	if (_currentMedia == fileId) {
-		_mediaChanged == true;
+		_mediaChanged = true;
 
 		if (_state == MediaPlayerState::Play)
 			play();
@@ -222,49 +222,20 @@ void LedPlayer::_showNextFrame() {
 		}
 	}
 
-	// TODO: REMOVE DEBUG CODE
-
 	#if not ENABLE_DEBUG
 	_apa102->show();
 	#endif
 }
 
 void LedPlayer::_openStream() {
-	_openFormatContext();
-	_openCodecContext();
-	_openSwsContext();
-	_updateFrameContext();
-	_streamIsOpen = true;
-}
-
-void LedPlayer::_closeStream() {
-	if (_swsContext != NULL)
-		sws_freeContext(_swsContext);
-
-	if (_codecContext != NULL)
-		avcodec_free_context(&_codecContext);
-
-	if (_formatContext != NULL)
-		avformat_close_input(&_formatContext);
-
-	if (_frameRGB != NULL)
-		av_frame_free(&_frameRGB);
-
-	if (_frame != NULL)
-		av_frame_free(&_frame);
-
-	_streamIsOpen = false;
-}
-
-void LedPlayer::_openFormatContext() {
+	// open format context
 	if (avformat_open_input(&_formatContext, Index::instance().getSystemPath(_currentMedia).c_str(), NULL, NULL) < 0)
 		throw std::runtime_error("Error: Unable to open format context for file: " + Index::instance().getSystemPath(_currentMedia));
 
 	if (avformat_find_stream_info(_formatContext, NULL) < 0)
 		throw std::runtime_error("Error: Unable to find stream info for file: " + Index::instance().getSystemPath(_currentMedia));
-}
 
-void LedPlayer::_openCodecContext() {
+	// open codec context
 	AVStream *stream;
 	AVCodecParameters *codecParams = NULL;
 	AVCodec *decoder = NULL;
@@ -289,18 +260,15 @@ void LedPlayer::_openCodecContext() {
 		if (avcodec_open2(_codecContext, decoder, NULL) < 0)
 			throw std::runtime_error("Error: Unable to open decoder for file: " + Index::instance().getSystemPath(_currentMedia));
 	}
-}
 
-void LedPlayer::_openSwsContext() {
-	_swsContext = sws_getContext(_codecContext->width, _codecContext->height,
-		AVPixelFormat(_codecContext->pix_fmt), _codecContext->width, _codecContext->height,
-		AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+	// open sws context (color conversion)
+	_swsContext = sws_getContext(_codecContext->width, _codecContext->height, AVPixelFormat(_codecContext->pix_fmt), _codecContext->width,
+		_codecContext->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
 
 	if (_swsContext == NULL)
 		throw std::runtime_error("Error: unable to open sws context for current media");
-}
 
-void LedPlayer::_updateFrameContext() {
+	// initialize frames
 	_frame = av_frame_alloc();
 	_frameRGB = av_frame_alloc();
 	_frameRGB->format = AV_PIX_FMT_RGB24;
@@ -310,4 +278,25 @@ void LedPlayer::_updateFrameContext() {
 	if (av_frame_get_buffer(_frameRGB, 32) < 0) {
 		throw std::runtime_error("Error: Problem allocating AVFrame buffer for LedPlayer::_frameRGB");
 	}
+
+	_streamIsOpen = true;
+}
+
+void LedPlayer::_closeStream() {
+	if (_swsContext != NULL)
+		sws_freeContext(_swsContext);
+
+	if (_codecContext != NULL)
+		avcodec_free_context(&_codecContext);
+
+	if (_formatContext != NULL)
+		avformat_close_input(&_formatContext);
+
+	if (_frameRGB != NULL)
+		av_frame_free(&_frameRGB);
+
+	if (_frame != NULL)
+		av_frame_free(&_frame);
+
+	_streamIsOpen = false;
 }

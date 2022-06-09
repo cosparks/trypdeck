@@ -55,10 +55,6 @@ class LedPlayer : public MediaPlayer {
 		void _showNextFrame();
 		void _openStream();
 		void _closeStream();
-		void _openFormatContext();
-		void _openCodecContext();
-		void _openSwsContext();
-		void _updateFrameContext();
 };
 
 #endif

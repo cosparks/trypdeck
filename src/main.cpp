@@ -51,20 +51,21 @@ int main(int argc, char** argv) {
 
 	ledPlayer.setCurrentMedia(vec1[0], MediaPlayer::Loop);
 	ledPlayer.play();
-	// videoPlayer1.setCurrentMedia(vec2[0], MediaPlayer::Loop);
-	// videoPlayer1.play();
+	videoPlayer1.setCurrentMedia(vec2[0], MediaPlayer::Loop);
+	videoPlayer1.play();
 
 	startTime = Clock::instance().millis();
 	while (true) {
 		int64_t currentTime = Clock::instance().millis();
 
-		// if (currentTime > RUN_TIME_MILLIS) {
-		// 	break;
-		// }
+		if (currentTime > RUN_TIME_MILLIS) {
+			break;
+		}
 
 		manager.run();
 		ledPlayer.run();
 
+		// TEST LED / VIDEO TIMING
 		// if (currentTime > VIDEO_PLAY_INTERVAL + startTime) {
 		// 	ledPlayer.stop();
 		// 	videoPlayer1.stop();
