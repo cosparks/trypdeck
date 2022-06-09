@@ -138,7 +138,7 @@ class Apa102 {
 			// index getters for different led configurations:
 			//		each possible led configuration has a separate method which will be assigned to _getIndexFromPoint--
 			//		this is an optimization to avoid branching, as _getIndexFromPoint will likely be called hundreds of
-			//		thousands if not millions of times per second
+			//		thousands if not millions of times per second with larger LED setups
 			uint32_t _getIndexFromPoint_HorizontalTopLeft(const Point& point);
 			uint32_t _getIndexFromPoint_HorizontalTopRight(const Point& point);
 			uint32_t _getIndexFromPoint_HorizontalBottomLeft(const Point& point);

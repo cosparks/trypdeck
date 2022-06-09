@@ -16,6 +16,7 @@ class MediaPlayer : public MediaListener {
 		virtual void stop() = 0;
 		virtual void pause() = 0;
 		MediaPlayerState getState();
+		bool isPlaying();
 	protected:
 		MediaPlayerState _state = Stop;
 };

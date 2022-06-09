@@ -25,16 +25,18 @@ class VideoPlayer : public MediaPlayer {
 		std::unordered_map<uint32_t, int32_t> _fileIdToIndex;
 		std::queue<uint32_t> _emptyIndices;
 		// lib vlc
-		libvlc_instance_t* _instance = nullptr;
-		libvlc_media_list_player_t* _mediaListPlayer = nullptr;
+		libvlc_instance_t* _instance = NULL;
+		libvlc_media_list_player_t* _mediaListPlayer = NULL;
 		int32_t _mediaListSize = 0;
-		libvlc_media_list_t* _mediaList = nullptr;
+		libvlc_media_list_t* _mediaList = NULL;
+		libvlc_event_manager_t* _eventManager = NULL;
 
 		void _addMedia(uint32_t fileId) override;
 		void _removeMedia(uint32_t fileId) override;
 		void _updateMedia(uint32_t fileId) override;
 		void _createAndInsertMedia(uint32_t fileId, int32_t i);
 		void _removeMediaAtIndex(int32_t i);
+		
 };
 
 #endif

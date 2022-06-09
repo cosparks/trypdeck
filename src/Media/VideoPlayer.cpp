@@ -15,11 +15,11 @@ void VideoPlayer::init() {
 	_mediaList = libvlc_media_list_new(_instance);
 	_mediaListPlayer = libvlc_media_list_player_new(_instance);
 	libvlc_media_list_player_set_media_list(_mediaListPlayer, _mediaList);
+
+	_eventManager = libvlc_media_list_player_event_manager(_mediaListPlayer);
 }
 
-void VideoPlayer::run() {
-	// do nothing
-}
+void VideoPlayer::run() { }
 
 void VideoPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
@@ -49,21 +49,33 @@ uint32_t VideoPlayer::getNumMediaFiles() {
 }
 
 void VideoPlayer::play() {
-	if (_mediaListPlayer != nullptr) {
-		if (libvlc_media_list_player_is_playing(_mediaListPlayer))
-			stop();
+	if (_mediaListPlayer == NULL) {
+		throw std::runtime_error("Error: VideoPlayer has not been initialized!");
 	}
+
+	if (!_currentMedia) {
+		throw std::runtime_error("Error: VideoPlayer::_currentMedia has either not been set, or has been removed!");
+	}
+
+	if (libvlc_media_list_player_is_playing(_mediaListPlayer))
+		stop();
 
 	_state = MediaPlayerState::Play;
 	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
 }
 
 void VideoPlayer::stop() {
+	if (_state == Stop)
+		return;
+	
 	_state = MediaPlayerState::Stop;
 	libvlc_media_list_player_stop(_mediaListPlayer);
 }
 
 void VideoPlayer::pause() {
+	if (_state == Pause)
+		return;
+
 	_state = MediaPlayerState::Pause;
 	libvlc_media_list_player_pause(_mediaListPlayer);
 }
@@ -89,6 +101,7 @@ void VideoPlayer::_addMedia(uint32_t fileId) {
 void VideoPlayer::_removeMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
 		if (_currentMedia == fileId) {
+			_currentMedia = 0;
 			stop();
 		}
 

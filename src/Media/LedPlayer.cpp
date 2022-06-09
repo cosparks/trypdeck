@@ -9,24 +9,37 @@ LedPlayer::LedPlayer(const std::vector<std::string>& folders, Apa102* apa102) : 
 	_apa102 = apa102;
 }
 
-LedPlayer::~LedPlayer() { }
-
-void LedPlayer::init() {
-	if (gpioInitialise() < 0)
-		throw std::runtime_error("Error: PI GPIO Initialization failed");
-
-	_apa102->init(0, SPI_BAUD, 0);
+LedPlayer::~LedPlayer() {
+	#if not ENABLE_DEBUG
 	_apa102->clear();
 	_apa102->show();
+	#endif
+}
+
+void LedPlayer::init() {
+	#if not ENABLE_DEBUG
+	if (gpioInitialise() < 0)
+		throw std::runtime_error("Error: PI GPIO Initialization failed");
+	#endif
+	
+	_apa102->init(0, SPI_BAUD, 0);
+
+	#if not ENABLE_DEBUG
+	_apa102->clear();
+	_apa102->show();
+	#endif
 }
 
 void LedPlayer::run() {
 	if (_state == Play) {
+		if (!_streamIsOpen)
+			throw std::runtime_error("Error: LedPlayer::play called without first opening stream");
+
 		if (Clock::instance().micros() > _nextFrameTimeMicros) {
 			_showNextFrame();
 
-			if (!_getNextFrame()) {
-				// TODO: handle end of stream
+			if (_getNextFrame() < 0) {
+				stop();
 			}
 		}
 	}
@@ -39,14 +52,7 @@ void LedPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 
 	_currentMedia = fileId;
 	_playbackOption = option;
-
-	if (_state == Play || _state == Pause)
-		stop();
-	
-	_openFormatContext();
-	_openCodecContext();
-	_openSwsContext();
-	_updateFrameContext();
+	_mediaChanged = true;
 }
 
 uint32_t LedPlayer::getCurrentMedia() {
@@ -58,34 +64,52 @@ uint32_t LedPlayer::getNumMediaFiles() {
 }
 
 void LedPlayer::play() {
-	if (_formatContext == NULL)
-		throw std::runtime_error("Error: Must set current media on LedPlayer before calling play()");
+	if (!_currentMedia)
+		throw std::runtime_error("Error: LedPlayer::_currentMedia has either not been set, or has been removed!");
+	
+	// return if we are being asked to play media which is already playing
+	if (_state == Play && !_mediaChanged)
+		return;
 
-	if (_state == Pause) {
+	bool openStream = true;
+
+	// if we have opened a stream, paused and haven't changed _currentMedia, start playback from same point and don't reopen stream
+	//		otherwise if the stream is open, close it and restart
+	if (_state == Pause && _streamIsOpen && !_mediaChanged) {
+		openStream = false;
 		_playStartTimeMicros = Clock::instance().micros() - (_nextFrameTimeMicros - _playStartTimeMicros);
-		if (_frameRGB != NULL)
-			_showNextFrame();
-	} else {
+		_showNextFrame();
+	} else if (_streamIsOpen) {
+		_closeStream();
+	}
+
+	if (openStream) {
+		_openStream();
 		_playStartTimeMicros = Clock::instance().micros();
 	}
+
+	_mediaChanged = false;
 	_state = Play;
 
-	if (!_getNextFrame()) {
-		// TODO: handle end of stream
-		throw std::runtime_error("TEST ERROR: Unable to grab next frame");
+	if (_getNextFrame() < 0) {
+		stop();
 	}
 }
 
 void LedPlayer::stop() {
-	_state = Stop;
-	_closeStream();
+	if (_state == Stop)
+		return;
 
+	_state = Stop;
+
+	#if not ENABLE_DEBUG
 	_apa102->clear();
 	_apa102->show();
+	#endif
 }
 
 void LedPlayer::pause() {
-	if (_state == Stop || _state == Pause)
+	if (_state == Pause || _state == Stop)
 		return;
 
 	_state = Pause;
@@ -94,26 +118,69 @@ void LedPlayer::pause() {
 void LedPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToData.find(fileId) == _fileIdToData.end()) {
 		_fileIdToData[fileId] = 0;
+
+		// TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
+		if (_streamIsOpen) {
+			setCurrentMedia(fileId, MediaPlaybackOption::Loop);
+
+			if (_state == MediaPlayerState::Play)
+				play();
+		}
 	}
 }
 
 void LedPlayer::_removeMedia(uint32_t fileId) {
 	if (_fileIdToData.find(fileId) != _fileIdToData.end()) {
+		// if current media file has been removed and LedPlayer is playing it, stop
+		if (_currentMedia == fileId && _state != Stop) {
+			_currentMedia = 0;
+			stop();
+			_closeStream();
+		}
+
 		_fileIdToData.erase(fileId);
 	}
 }
 
 void LedPlayer::_updateMedia(uint32_t fileId) {
-	// do nothing
+	if (_currentMedia == fileId) {
+		_mediaChanged == true;
+
+		if (_state == MediaPlayerState::Play)
+			play();
+	}
 }
 
-bool LedPlayer::_getNextFrame() {
-	while (av_read_frame(_formatContext, &_avPacket) >= 0) {
-		if (_avPacket.size == 0)
-			return false;
+int32_t LedPlayer::_getNextFrame() {
+	int32_t ret;
+	AVPacket packet = { };
+	av_init_packet(&packet);
+	bool streamRestarted = false;
+
+	while (true) {
+		ret = av_read_frame(_formatContext, &packet);
+
+		if (ret == AVERROR_EOF) {
+			if (_playbackOption == MediaPlaybackOption::Loop) {
+				// reset avformat context and and continue loop
+				AVStream* stream = _formatContext->streams[_streamId];
+				avio_seek(_formatContext->pb, 0, SEEK_SET);
+				avformat_seek_file(_formatContext, _streamId, 0, 0, stream->duration, 0);
+
+				_playStartTimeMicros = Clock::instance().micros();
+				streamRestarted = true;
+				continue;
+			} else {
+				ret = -1;
+				break;
+			}
+		}
+
+		if (packet.size == 0)
+			break;
 
 		// This function might fail. Ignore and continue
-		int32_t ret = avcodec_send_packet(_codecContext, &_avPacket);
+		int32_t ret = avcodec_send_packet(_codecContext, &packet);
 		if (ret < 0)
 			continue;
 
@@ -130,11 +197,13 @@ bool LedPlayer::_getNextFrame() {
 
 		// Convert frame data to RGB
 		sws_scale(_swsContext, (uint8_t const * const *)_frame->data, _frame->linesize, 0, _frame->height, _frameRGB->data, _frameRGB->linesize);
-		_nextFrameTimeMicros = _playStartTimeMicros + _frame->best_effort_timestamp * (1000000L / _streamTimeBase.den);
+
+		// sometimes when a stream is restarted, the first frame will have an incorrect timestamp. branching here fixes that
+		_nextFrameTimeMicros = streamRestarted ? _playStartTimeMicros : _playStartTimeMicros + _frame->best_effort_timestamp * (1000000L / _streamTimeBase.den);
 		break;
 	}
-
-	return true;
+	av_packet_unref(&packet);
+	return ret;
 }
 
 void LedPlayer::_showNextFrame() {
@@ -152,7 +221,39 @@ void LedPlayer::_showNextFrame() {
 			_apa102->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 		}
 	}
+
+	// TODO: REMOVE DEBUG CODE
+
+	#if not ENABLE_DEBUG
 	_apa102->show();
+	#endif
+}
+
+void LedPlayer::_openStream() {
+	_openFormatContext();
+	_openCodecContext();
+	_openSwsContext();
+	_updateFrameContext();
+	_streamIsOpen = true;
+}
+
+void LedPlayer::_closeStream() {
+	if (_swsContext != NULL)
+		sws_freeContext(_swsContext);
+
+	if (_codecContext != NULL)
+		avcodec_free_context(&_codecContext);
+
+	if (_formatContext != NULL)
+		avformat_close_input(&_formatContext);
+
+	if (_frameRGB != NULL)
+		av_frame_free(&_frameRGB);
+
+	if (_frame != NULL)
+		av_frame_free(&_frame);
+
+	_streamIsOpen = false;
 }
 
 void LedPlayer::_openFormatContext() {
@@ -164,16 +265,15 @@ void LedPlayer::_openFormatContext() {
 }
 
 void LedPlayer::_openCodecContext() {
-	int32_t streamId;
 	AVStream *stream;
 	AVCodecParameters *codecParams = NULL;
 	AVCodec *decoder = NULL;
-	streamId = av_find_best_stream(_formatContext, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-	if (streamId < 0) {
+	_streamId = av_find_best_stream(_formatContext, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+	if (_streamId < 0) {
 		throw std::runtime_error("Error: Unable to find stream in file: " + Index::instance().getSystemPath(_currentMedia));
 	}
 	else {
-		stream = _formatContext->streams[streamId];
+		stream = _formatContext->streams[_streamId];
 		_streamTimeBase = stream->time_base;
 
 		// find decoder for the stream
@@ -201,7 +301,6 @@ void LedPlayer::_openSwsContext() {
 }
 
 void LedPlayer::_updateFrameContext() {
-	av_init_packet(&_avPacket);
 	_frame = av_frame_alloc();
 	_frameRGB = av_frame_alloc();
 	_frameRGB->format = AV_PIX_FMT_RGB24;
@@ -211,19 +310,4 @@ void LedPlayer::_updateFrameContext() {
 	if (av_frame_get_buffer(_frameRGB, 32) < 0) {
 		throw std::runtime_error("Error: Problem allocating AVFrame buffer for LedPlayer::_frameRGB");
 	}
-}
-
-void LedPlayer::_closeStream() {
-	if (_swsContext != NULL)
-		sws_freeContext(_swsContext);
-	if (_codecContext != NULL)
-		avcodec_free_context(&_codecContext);
-	if (_formatContext != NULL)	
-		avformat_close_input(&_formatContext);
-	if (_frameRGB != NULL)
-		av_frame_free(&_frameRGB);
-	if (_frame != NULL)
-		av_frame_free(&_frame);
-
-	av_packet_unref(&_avPacket);
 }

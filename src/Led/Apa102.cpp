@@ -30,7 +30,7 @@ void Apa102::init(uint32_t spiChan, uint32_t baud, uint32_t spiFlags) {
 	_assignIndexGetterFromOptions();
 	_writeEndframe();
 	clear();
-	
+
 	int result = spiOpen(spiChan, baud, spiFlags);
 	if (result < 0) {
 		throw std::runtime_error(std::string("Apa102::init Error! Unable to open SPI channel"));

@@ -32,7 +32,7 @@ class LedPlayer : public MediaPlayer {
 		void pause() override;
 
 	private:
-		uint32_t _currentMedia;
+		uint32_t _currentMedia = 0;
 		MediaPlaybackOption _playbackOption;
 		std::unordered_map<uint32_t, uint32_t> _fileIdToData;
 		Apa102* _apa102 = NULL;
@@ -41,21 +41,24 @@ class LedPlayer : public MediaPlayer {
 		SwsContext* _swsContext = NULL;
 		AVFrame* _frame;
 		AVFrame* _frameRGB;
-		AVPacket _avPacket;
 		AVRational _streamTimeBase = { 0, 0 };
+		int32_t _streamId;
 		int64_t _playStartTimeMicros = 0;
 		int64_t _nextFrameTimeMicros = 0;
+		bool _streamIsOpen = false;
+		bool _mediaChanged = false;
 
 		void _addMedia(uint32_t fileId) override;
 		void _removeMedia(uint32_t fileId) override;
 		void _updateMedia(uint32_t fileId) override;
-		bool _getNextFrame();
+		int32_t _getNextFrame();
 		void _showNextFrame();
+		void _openStream();
+		void _closeStream();
 		void _openFormatContext();
 		void _openCodecContext();
 		void _openSwsContext();
 		void _updateFrameContext();
-		void _closeStream();
 };
 
 #endif
