@@ -2,6 +2,7 @@
 #define _APA102_H_
 
 #include <functional>
+#include <pigpio.h>
 
 struct Pixel {
 	uint8_t brightness;
@@ -105,6 +106,16 @@ class Apa102 {
 		 */
 		uint32_t getNumLeds();
 
+		/**
+		 * @brief gets value of _x
+		*/ 
+		int32_t getWidth();
+
+		/**
+		 * @brief gets value of _y
+		*/ 
+		int32_t getHeight();
+
 		private:
 			uint32_t _numLeds;
 			uint32_t _activeLeds;
@@ -127,7 +138,7 @@ class Apa102 {
 			// index getters for different led configurations:
 			//		each possible led configuration has a separate method which will be assigned to _getIndexFromPoint--
 			//		this is an optimization to avoid branching, as _getIndexFromPoint will likely be called hundreds of
-			//		thousands if not millions of times per second
+			//		thousands if not millions of times per second with larger LED setups
 			uint32_t _getIndexFromPoint_HorizontalTopLeft(const Point& point);
 			uint32_t _getIndexFromPoint_HorizontalTopRight(const Point& point);
 			uint32_t _getIndexFromPoint_HorizontalBottomLeft(const Point& point);

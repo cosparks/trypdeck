@@ -3,82 +3,84 @@
 #include "VideoPlayer.h"
 #include "Index.h"
 
-VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) {
-	_mediaFolders = folders;
-}
+const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
+#define VLC_NUM_ARGS 9
+
+VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) : MediaPlayer(folders) { }
 
 VideoPlayer::~VideoPlayer() { }
 
-void VideoPlayer::init(const char *const *argv, int argc) {
-	_instance = libvlc_new(argc, argv);
+void VideoPlayer::init() {
+	_instance = libvlc_new(VLC_NUM_ARGS, VLC_ARGS);
 	_mediaList = libvlc_media_list_new(_instance);
 	_mediaListPlayer = libvlc_media_list_player_new(_instance);
 	libvlc_media_list_player_set_media_list(_mediaListPlayer, _mediaList);
+
+	_eventManager = libvlc_media_list_player_event_manager(_mediaListPlayer);
 }
 
-void VideoPlayer::setCurrentMedia(uint32_t fileId, VideoPlaybackOption option) {
+void VideoPlayer::run() { }
+
+void VideoPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		throw std::runtime_error("Media not found: cache does not contain the media requested");
 	}
 
-	_currentMedia = fileId;
-}
-
-void VideoPlayer::addFileIds(const std::vector<uint32_t>& ids) {
-	for (uint32_t fileId : ids) {
-		_addFile(fileId);
-	}
-}
-
-void VideoPlayer::updateMedia(const MediaChangedArgs& args) {
-	switch (args.option) {
-		case MediaChangedOptions::Added:
-			_addFile(args.fileId);
+	switch (option) {
+		case MediaPlaybackOption::OneShot:
+			libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_default);
 			break;
-		case MediaChangedOptions::Modified:
-			_updateMediaForFile(args.fileId);
-			break;
-		case MediaChangedOptions::Removed:
-			_removeFile(args.fileId);
+		case MediaPlaybackOption::Loop:
+			libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_repeat);
 			break;
 		default:
-			// do nothing
 			break;
 	}
+
+	_currentMedia = fileId;
 }
 
 uint32_t VideoPlayer::getCurrentMedia() {
 	return _currentMedia;
 }
 
-void VideoPlayer::playOneShot() {
-	if (_mediaListPlayer != nullptr) {
-	if (libvlc_media_list_player_is_playing(_mediaListPlayer))
-		stop();
-	}
-
-	libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_default);
-	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
+uint32_t VideoPlayer::getNumMediaFiles() {
+	return _fileIdToIndex.size();
 }
 
-void VideoPlayer::playLoop() {
-	libvlc_media_list_player_set_playback_mode(_mediaListPlayer, libvlc_playback_mode_repeat);
+void VideoPlayer::play() {
+	if (_mediaListPlayer == NULL) {
+		throw std::runtime_error("Error: VideoPlayer has not been initialized!");
+	}
+
+	if (!_currentMedia) {
+		throw std::runtime_error("Error: VideoPlayer::_currentMedia has either not been set, or has been removed!");
+	}
+
+	if (libvlc_media_list_player_is_playing(_mediaListPlayer))
+		stop();
+
+	_state = MediaPlayerState::Play;
 	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
 }
 
 void VideoPlayer::stop() {
+	if (_state == Stop)
+		return;
+	
+	_state = MediaPlayerState::Stop;
 	libvlc_media_list_player_stop(_mediaListPlayer);
 }
 
 void VideoPlayer::pause() {
+	if (_state == Pause)
+		return;
+
+	_state = MediaPlayerState::Pause;
 	libvlc_media_list_player_pause(_mediaListPlayer);
 }
 
-const std::vector<std::string>& VideoPlayer::getMediaFolders() {
-	return _mediaFolders;
-}
-
-void VideoPlayer::_addFile(uint32_t fileId) {
+void VideoPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		int32_t i = 0;
 
@@ -96,26 +98,27 @@ void VideoPlayer::_addFile(uint32_t fileId) {
 	}
 }
 
-void VideoPlayer::_updateMediaForFile(uint32_t fileId) {
-	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
-		int32_t i = _fileIdToIndex[fileId];
-		_removeMediaAtIndex(i);
-		_createAndInsertMedia(fileId, i);
-	}
-	else {
-		_addFile(fileId);
-	}
-}
-
-void VideoPlayer::_removeFile(uint32_t fileId) {
+void VideoPlayer::_removeMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
 		if (_currentMedia == fileId) {
+			_currentMedia = 0;
 			stop();
 		}
 
 		int32_t i = _fileIdToIndex[fileId];
 		_removeMediaAtIndex(i);
 		_emptyIndices.emplace(i);
+	}
+}
+
+void VideoPlayer::_updateMedia(uint32_t fileId) {
+	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
+		int32_t i = _fileIdToIndex[fileId];
+		_removeMediaAtIndex(i);
+		_createAndInsertMedia(fileId, i);
+	}
+	else {
+		_addMedia(fileId);
 	}
 }
 
