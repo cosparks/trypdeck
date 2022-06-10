@@ -39,7 +39,7 @@ INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 OBJ := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
 
 # Debug Info
-$(info INCLUDE_DIRS_SRC is $(INCLUDE_DIRS_SRC))
+# $(info INCLUDE_DIRS_SRC is $(INCLUDE_DIRS_SRC))
 
 $(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEPENDENCIES)
 	@mkdir -p $(@D)
