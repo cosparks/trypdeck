@@ -21,6 +21,12 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*
 
 # Get all directories in src
 INCLUDE_DIRS_SRC = $(sort $(dir $(wildcard $(SRC_DIR)*/)))
+ifneq ($(filter $(SRC_DIR),$(INCLUDE_DIRS_SRC)),)
+    # do nothing
+else
+    INCLUDE_DIRS_SRC += $(SRC_DIR)
+endif
+
 INCLUDE_DIRS += $(INCLUDE_DIRS_SRC)
 # Add sub-src directory files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*.cpp)))
@@ -33,7 +39,7 @@ INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 OBJ := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
 
 # Debug Info
-# $(info OBJ is $(OBJ))
+$(info INCLUDE_DIRS_SRC is $(INCLUDE_DIRS_SRC))
 
 $(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEPENDENCIES)
 	@mkdir -p $(@D)
