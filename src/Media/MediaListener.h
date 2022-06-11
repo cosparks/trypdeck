@@ -15,10 +15,11 @@ struct MediaChangedArgs {
 
 class MediaListener : public Runnable {
 	public:
-		MediaListener(const std::vector<std::string>& folders);
+		MediaListener();
 		virtual ~MediaListener();
 		void addFileIds(const std::vector<uint32_t>& ids);
 		void update(const MediaChangedArgs& args);
+		void addMediaFolder(const std::string folder);
 		const std::vector<std::string>& getMediaFolders();
 	protected:
 		std::vector<std::string> _mediaFolders;

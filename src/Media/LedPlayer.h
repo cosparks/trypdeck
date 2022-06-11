@@ -20,7 +20,7 @@ extern "C" {
 
 class LedPlayer : public MediaPlayer {
 	public:
-		LedPlayer(const std::vector<std::string>& folders, Apa102* apa102);
+		LedPlayer(Apa102* apa102);
 		~LedPlayer();
 		void init() override;
 		void run() override;

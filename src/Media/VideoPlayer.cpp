@@ -6,7 +6,7 @@
 const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
 #define VLC_NUM_ARGS 9
 
-VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) : MediaPlayer(folders) { }
+VideoPlayer::VideoPlayer() { }
 
 VideoPlayer::~VideoPlayer() { }
 

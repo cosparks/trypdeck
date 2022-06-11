@@ -3,7 +3,7 @@ VERSION = -std=c++17
 CFLAGS = -g -Wall
 LFLAGS = -pthread
 LIBS_CARGS =  $(pkg-config --cflags libvlc)
-LIBS = -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc -lavcodec -lavformat -lavutil -lswscale -lx264
+LIBS = -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc -lavcodec -lavformat -lavutil -lswscale -lx264 -lncurses
 INCLUDE = -I
 PARENT_DIRECTORY = ..
 BIN_DIR = $(PARENT_DIRECTORY)/bin/

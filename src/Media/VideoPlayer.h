@@ -9,7 +9,7 @@
 
 class VideoPlayer : public MediaPlayer {
 	public:
-		VideoPlayer(const std::vector<std::string>& folders);
+		VideoPlayer();
 		~VideoPlayer();
 		void init() override;
 		void run() override;

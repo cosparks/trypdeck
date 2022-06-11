@@ -1,8 +1,6 @@
 #include "MediaListener.h"
 
-MediaListener::MediaListener(const std::vector<std::string>& folders) {
-	_mediaFolders = folders;
-}
+MediaListener::MediaListener() { }
 
 MediaListener::~MediaListener() { }
 
@@ -27,6 +25,10 @@ void MediaListener::update(const MediaChangedArgs& args) {
 			// do nothing
 			break;
 	}
+}
+
+void MediaListener::addMediaFolder(const std::string folder) {
+	_mediaFolders.push_back(folder);
 }
 
 const std::vector<std::string>& MediaListener::getMediaFolders() {

@@ -5,8 +5,8 @@
 #include <vector>
 
 namespace td_util {
-	const std::string getVideoPath(const std::string& path);
-	const std::string getAnimPath(const std::string& path);
+	// const std::string getVideoPath(const std::string& path);
+	// const std::string getAnimPath(const std::string& path);
 
 	typedef void* CommandArgs;
 	class Command {

@@ -5,7 +5,7 @@
 #include "Index.h"
 #include "LedPlayer.h"
 
-LedPlayer::LedPlayer(const std::vector<std::string>& folders, Apa102* apa102) : MediaPlayer(folders) {
+LedPlayer::LedPlayer(Apa102* apa102) {
 	_apa102 = apa102;
 }
 

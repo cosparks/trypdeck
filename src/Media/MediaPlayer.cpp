@@ -1,6 +1,6 @@
 #include "MediaPlayer.h"
 
-MediaPlayer::MediaPlayer(const std::vector<std::string>& folders) : MediaListener(folders) { }
+MediaPlayer::MediaPlayer() { }
 
 MediaPlayer::~MediaPlayer() { }
 
