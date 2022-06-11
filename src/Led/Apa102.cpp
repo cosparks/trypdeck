@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <math.h>
 
+#include "settings.h"
 #include "Apa102.h"
 
 Apa102::Apa102(uint32_t numLeds) : _numLeds(numLeds), _activeLeds(numLeds), _x(numLeds), _y(1) {
@@ -31,12 +32,14 @@ void Apa102::init(uint32_t spiChan, uint32_t baud, uint32_t spiFlags) {
 	_writeEndframe();
 	clear();
 
+	#if not ENABLE_DEBUG
 	int result = spiOpen(spiChan, baud, spiFlags);
 	if (result < 0) {
 		throw std::runtime_error(std::string("Apa102::init Error! Unable to open SPI channel"));
 	} else {
 		_handle = (uint32_t)result;
 	}
+	#endif
 }
 
 void Apa102::show() {

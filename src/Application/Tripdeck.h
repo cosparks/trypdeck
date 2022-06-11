@@ -21,7 +21,7 @@ class Tripdeck : public Runnable {
 		void run();
 		void addVideoFolder(TripdeckState state, const char* folder);
 		void addLedFolder(TripdeckState state, const char* folder);
-		void handleKeyboardInput(char input);
+		void handleKeyboardInput(int32_t input);
 
 	private:
 		DataManager* _dataManager;
@@ -36,10 +36,6 @@ class Tripdeck : public Runnable {
 		bool _run;
 
 		void _onStateChanged();
-		void _handleStartup();
-		void _handleWait();
-		void _handlePulled();
-		void _handleReveal();
 };
 
 #endif

@@ -5,12 +5,16 @@
 #include "Clock.h"
 #include "Tripdeck.h"
 
+#define RUN_TIME_MILLIS 330000000
+#define VIDEO_PLAY_INTERVAL 10000
+#define VLC_DELAY 600
+
 Tripdeck::Tripdeck(DataManager* dataManager, MediaPlayer* ledPlayer, MediaPlayer* videoPlayer) :
 	_dataManager(dataManager), _ledPlayer(ledPlayer), _videoPlayer(videoPlayer) {
 		if (!_dataManager)
 			throw std::runtime_error("Error: Tripdeck::_dataManager cannot be NULL");
 
-		_runnableObjects.push_back(_ledPlayer);
+		_runnableObjects.push_back(_dataManager);
 
 		if (_ledPlayer) 
 			_runnableObjects.push_back(_ledPlayer);
@@ -54,8 +58,8 @@ void Tripdeck::addLedFolder(TripdeckState state, const char* folder) {
 	_stateToLedFolder[state] = folder;
 }
 
-void Tripdeck::handleKeyboardInput(char input) {
-	std::cout << "Key pressed with char val " << +input << std::endl;
+void Tripdeck::handleKeyboardInput(int32_t input) {
+	std::cout << "Key pressed with char val " << input << std::endl;
 }
 
 void Tripdeck::_onStateChanged() {
@@ -69,7 +73,7 @@ void Tripdeck::_onStateChanged() {
 
 	// set random video file from folder
 	const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[_state]);
-	uint32_t randomVideoFile = videoFiles[rand() % videoFiles.size()];	
+	uint32_t randomVideoFile = videoFiles[rand() % videoFiles.size()];
 	_videoPlayer->setCurrentMedia(randomVideoFile, MediaPlayer::MediaPlaybackOption::Loop);
-	_ledPlayer->play();
+	_videoPlayer->play();
 }

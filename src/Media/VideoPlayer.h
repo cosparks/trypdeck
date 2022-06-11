@@ -29,7 +29,6 @@ class VideoPlayer : public MediaPlayer {
 		libvlc_media_list_player_t* _mediaListPlayer = NULL;
 		int32_t _mediaListSize = 0;
 		libvlc_media_list_t* _mediaList = NULL;
-		libvlc_event_manager_t* _eventManager = NULL;
 
 		void _addMedia(uint32_t fileId) override;
 		void _removeMedia(uint32_t fileId) override;

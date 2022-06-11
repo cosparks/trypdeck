@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "Index.h"
 #include "DataManager.h"
@@ -98,12 +99,15 @@ int32_t DataManager::_addFolder(const std::string path) {
 	if (_folderToFileIds.find(path) == _folderToFileIds.end()) {
 		// create new entry in folder-to-fileId map
 		_folderToFileIds[path] = new std::vector<uint32_t>();
-		std::cout << "Adding folder to watch: " << path << std::endl;
+		std::cout << "Adding folder to watch " << path << std::endl;
 
 		// add inotify watch for folder
 		int32_t wd = inotify_add_watch(_fd, path.c_str(), IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_CREATE | IN_MODIFY);
-		if (wd < 0)
-			throw std::runtime_error("Error: unable to add watch to dir " + path);
+		if (wd < 0) {
+			std::string error = _getWatchDescriptorError(errno);
+			throw std::runtime_error("inotify " + error +  ": unable to add watch to dir " + path);
+		}
+
 		_watchDescriptorToFolder[wd] = path;
 
 		// add files from folder to Index and member file
@@ -213,4 +217,44 @@ int32_t DataManager::_getWatchDescriptorForFolder(const std::string& folder) {
 			return pair.first;
 	}
 	return wd;
+}
+
+const std::string DataManager::_getWatchDescriptorError(int32_t error) {
+	const char* ret;
+	switch (error) {
+		case EACCES:
+			ret = "EACCESS";
+			break;
+		case EBADF:
+			ret = "EBADF";
+			break;
+		case EEXIST:
+			ret = "EEXIST";
+			break;
+		case EFAULT:
+			ret = "EFAULT";
+			break;
+		case EINVAL:
+			ret = "EINVAL";
+			break;
+		case ENAMETOOLONG:
+			ret = "ENAMETOOLONG";
+			break;
+		case ENOENT:
+			ret = "ENOENT";
+			break;
+		case ENOMEM:
+			ret = "ENOMEM";
+			break;
+		case ENOSPC:
+			ret = "ENOSPC";
+			break;
+		case ENOTDIR:
+			ret = "ENOTDIR";
+			break;
+		default:
+			ret = "UNDEFINED";
+			break;
+	}
+	return std::string(ret);
 }

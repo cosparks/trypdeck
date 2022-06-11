@@ -3,12 +3,16 @@
 
 #include <ncurses.h>
 
-#include "Input.h"
+#include "Runnable.h"
 
 template <class T>
-class KeyboardInput : public Input<char> {
+class KeyboardInput : public Runnable {
 	public:
-		KeyboardInput() { }
+		KeyboardInput(T* object, void (T::*callback)(int32_t)) {
+			_object = object;
+			_callback = callback;
+		}
+
 		~KeyboardInput() {
 			endwin();
 		}
@@ -20,26 +24,27 @@ class KeyboardInput : public Input<char> {
 		void run() override {
 			nodelay(stdscr, TRUE);
 			noecho();
+			bool keyDown = false;
+			int32_t input = getch();
 
-			char input = getch();
-			if (input != 255) {
-				(_object->*_callback)(input);
+			if (input == ERR) {
+				// do nothing
+			} else {
+				keyDown = true;
 				ungetch(input);
 			}
 
 			echo();
 			nodelay(stdscr, FALSE);
-		}
 
-		void setCallback(T* object, void (T::*callback)(char)) {
-			_object = object;
-			_callback = callback;
+			if (keyDown) {
+				(_object->*_callback)(input);
+			}
 		}
 
 	private:
 		T* _object;
-		void (T::*_callback)(char);
-		uint32_t (Apa102::*_getIndexFromPoint)(const Point&);
+		void (T::*_callback)(int32_t);
 };
 
 #endif
