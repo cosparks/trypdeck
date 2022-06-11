@@ -10,6 +10,8 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_map>
+#include <stack> 
+#include <functional>
 
 #include <sys/types.h>
 #include <pwd.h>
@@ -40,19 +42,21 @@ extern "C" {
 
 using namespace std;
 
-#define SERIAL_BAUD 9600
-#define SPI_BAUD 6000000
+#define SERIAL_BAUD_TEST 9600
+#define SPI_BAUD_TEST 6000000
 
 // PROGRAM MACROS
 #define DEBUG_MODE 0
 
-#define RUN_AV_DECODING 1
-#define PLAY_RGB_FRAMES 1 // RUN_LEDS must be on for this to work
-#define PLAY_FRAMES_CORRECT_TIMING 1
+#define RUN_AV_DECODING 0
+#define PLAY_RGB_FRAMES 0 // RUN_LEDS must be on for this to work
+#define PLAY_FRAMES_CORRECT_TIMING 0
 #define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
 
-#define PLAY_OMX 0
-#define OMX_ARGS "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/sonic2.mp4"
+#define PLAY_OMX 1
+#define STOP_OMX_ARGS "killall omxplayer.bin" // MAYBE ADD "omxplayer -p -o hdmi /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
+#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
+#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/loop/complex-color-test.mp4"
 
 #define PLAY_VLC 0
 #define PRINT_USER_INFO 0
@@ -62,12 +66,12 @@ using namespace std;
 #define RUN_DECODE_PERFORMANCE_TESTING 0
 #define RUN_MULTITHREADING 0
 #define TERMINATE_PROGRAM 1
-#define PROGRAM_RUN_TIME 60000
-#define PRINT_INTERVAL 1000
+#define PROGRAM_RUN_TIME 50000
+#define MULTI_PURPOSE_INTERVAL 5000
 
 // LED
-#define RUN_LEDS 1
-#define PIXEL_BRIGHTNESS 5
+#define RUN_LEDS 0
+#define PIXEL_BRIGHTNESS_TEST 5
 #define MATRIX_WIDTH 53
 #define MATRIX_HEIGHT 10
 
@@ -112,17 +116,41 @@ bool initializeGpio() {
 	}
 }
 
-void stop_omx() {
-	system("pid=$(pidof omxplayer) && kill $pid");
+void on_thread_exit(std::function<void()> func) {
+	class ThreadExiter {
+		public:
+			ThreadExiter() = default;
+			ThreadExiter(ThreadExiter const&) = delete;
+			void operator=(ThreadExiter const&) = delete;
+			~ThreadExiter() {
+				while (!exit_funcs.empty()) {
+					exit_funcs.top()();
+					exit_funcs.pop();
+				}
+			}
+			void add(std::function<void()> func) {
+				exit_funcs.push(std::move(func));
+			}
+		private:
+			std::stack<std::function<void()>> exit_funcs;
+	};
+
+	thread_local ThreadExiter exiter;
+	exiter.add(std::move(func));
 }
 
-void play_video_omx(std::string videoPath) {
-	std::string args =  "omxplayer /home/trypdeck/projects/tripdeck_basscoast/src/video/" + videoPath;
-	system(args.c_str());
+void stop_omx() {
+	system(STOP_OMX_ARGS);
+}
+
+void play_video_omx(const char* omxArgs, std::function<void()> func) {
+	on_thread_exit(func);
+	system(omxArgs);
 }
 
 void play_start_video() {
-	play_video_omx("numa.m4v");
+	play_video_omx(OMX_ARGS1, [](void) -> void { ; });
+
 }
 
 struct VLCData {
@@ -246,7 +274,7 @@ void playFrame(AVFrame* frameRGB) {
 		for (int32_t x = 0; x < MATRIX_WIDTH; x++) {
 			uint8_t* ptr = frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
 			#if RUN_LEDS
-			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS_TEST, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 			#endif
 		}
 	}
@@ -442,7 +470,7 @@ int main(int argv, char** argc) {
 	Shape heart = { 7, 5, Heart7x5 };
 	uint8_t colorTestOption = 0;
 
-	lights.init(0, SPI_BAUD, 0);
+	lights.init(0, SPI_BAUD_TEST, 0);
 	lights.clear();
 	cout << "Apa102 initialized with: " << lights.getActiveLeds() << " leds" << endl;
 	#endif
@@ -454,8 +482,9 @@ int main(int argv, char** argc) {
 	#endif
 
 	#if PLAY_OMX
-	thread omx(play_start_video);
-	omx.detach();
+	bool first = true;
+	uint32_t threadCount = 1;
+	std::thread(play_video_omx, OMX_ARGS1, [threadCount](void) -> void { std::cout << "Thread number " << threadCount << " has exited" << std::endl; }).detach();
 	#endif
 
 	#if PLAY_VLC
@@ -473,6 +502,7 @@ int main(int argv, char** argc) {
 	#endif
 	#endif
 
+
 	while (true) {
 		int64_t currentTime = Clock::instance().millis();
 
@@ -482,13 +512,21 @@ int main(int argv, char** argc) {
 		}
 		#endif
 
-		if (lastPrintTime + PRINT_INTERVAL <= currentTime) {
-			// cout << "Current program time in milliseconds: " << currentTime << endl;
-			lastPrintTime = currentTime;
-		}
+		// if (currentTime > lastPrintTime + MULTI_PURPOSE_INTERVAL) {
+		// 	#if PLAY_OMX
+		// 	stop_omx();
+		// 	threadCount++;
+		// 	if (first)
+		// 		std::thread(play_video_omx, OMX_ARGS1, [threadCount](void) -> void { std::cout << "Thread number " << threadCount << " has exited" << std::endl; }).detach();
+		// 	else
+		// 		std::thread(play_video_omx, OMX_ARGS2, [threadCount](void) -> void { std::cout << "Thread number " << threadCount << " has exited" << std::endl; }).detach();
+		// 	#endif
+		// 	first = !first;
+		// 	lastPrintTime = currentTime;
+		// }
 
 		#if RUN_SERIAL_NETWORKING
-		// if (last_serial_publish + PRINT_INTERVAL <= currentTime) {
+		// if (last_serial_publish + MULTI_PURPOSE_INTERVAL <= currentTime) {
 			// tx
 			// serial.transmit(data);
 			last_serial_publish = currentTime;
@@ -517,7 +555,7 @@ int main(int argv, char** argc) {
 
 		#if RUN_BRIGHTNESS_TEST
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
-			lights.fillArea(Pixel { PIXEL_BRIGHTNESS, (uint8_t)i, 0, (uint8_t)i }, Point { 11, 0 }, Point { MATRIX_WIDTH - 11, MATRIX_HEIGHT - 1 });
+			lights.fillArea(Pixel { PIXEL_BRIGHTNESS_TEST, (uint8_t)i, 0, (uint8_t)i }, Point { 11, 0 }, Point { MATRIX_WIDTH - 11, MATRIX_HEIGHT - 1 });
 			lights.show();
 			if (goUp) {
 				i = (i + 1) % 256;
@@ -540,7 +578,7 @@ int main(int argv, char** argc) {
 		#if RUN_STEPPING_TEST
 		if (lastLedUpdateTime + LED_STEPPING_INTERVAL <= currentTime) {
 			lights.clear();
-			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0x0, 0x0 }, currentLed);
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS_TEST, 0xFF, 0x0, 0x0 }, currentLed);
 			currentLed++;
 			currentLed = currentLed % lights.getActiveLeds();
 			lights.show();
@@ -575,7 +613,7 @@ int main(int argv, char** argc) {
 		#if RUN_EDGE_TEST
 		if (lastLedUpdateTime + EDGE_TEST_INTERVAL <= currentTime) {
 			lights.clear();
-			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, Point { edgeTestX, edgeTestY % MATRIX_HEIGHT });
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS_TEST, 0xFF, 0, 0 }, Point { edgeTestX, edgeTestY % MATRIX_HEIGHT });
 			lights.show();
 			edgeTestY++;
 			if (edgeTestY > 0 && edgeTestY % MATRIX_HEIGHT == 0) {
@@ -589,7 +627,7 @@ int main(int argv, char** argc) {
 		#if RUN_GRID_TEST
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
 			lights.clear();
-			lights.setPixel(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, Point { x, y });
+			lights.setPixel(Pixel { PIXEL_BRIGHTNESS_TEST, 0xFF, 0, 0 }, Point { x, y });
 			lights.show();
 
 			x = (x + 1) % MATRIX_WIDTH;
@@ -603,11 +641,11 @@ int main(int argv, char** argc) {
 		if (lastLedUpdateTime + LED_INTERVAL <= currentTime) {
 			lights.clear();
 			if (fillTopLeft.x > fillBottomRight.x) {
-				lights.fillArea(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, fillTopLeft, Point { MATRIX_WIDTH - 1, fillBottomRight.y });
-				lights.fillArea(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, Point { 0, fillTopLeft.y }, fillBottomRight);
+				lights.fillArea(Pixel { PIXEL_BRIGHTNESS_TEST, 0xFF, 0, 0 }, fillTopLeft, Point { MATRIX_WIDTH - 1, fillBottomRight.y });
+				lights.fillArea(Pixel { PIXEL_BRIGHTNESS_TEST, 0xFF, 0, 0 }, Point { 0, fillTopLeft.y }, fillBottomRight);
 			}
 			else {
-				lights.fillArea(Pixel { PIXEL_BRIGHTNESS, 0xFF, 0, 0 }, fillTopLeft, fillBottomRight);
+				lights.fillArea(Pixel { PIXEL_BRIGHTNESS_TEST, 0xFF, 0, 0 }, fillTopLeft, fillBottomRight);
 			}
 			lights.show();
 
@@ -632,7 +670,7 @@ int main(int argv, char** argc) {
 		#endif
 
 		#if RUN_COLOR_TEST
-		if (lastLedUpdateTime + PRINT_INTERVAL <= currentTime) {
+		if (lastLedUpdateTime + MULTI_PURPOSE_INTERVAL <= currentTime) {
 			lights.clear();
 			lights.fillArea(roygbiv[colorTestOption++], Point { 0, 0 }, Point { MATRIX_WIDTH - 1, MATRIX_HEIGHT - 1 } );
 			lights.show();
