@@ -152,8 +152,10 @@ void LedPlayer::_updateMedia(uint32_t fileId) {
 }
 
 // TODO: DEBUG CODE REMOVE LATER
+#if ENABLE_DEBUG
 int32_t printDebug = 0;
 int32_t i = 0;
+#endif
 
 int32_t LedPlayer::_getNextFrame() {
 	int32_t ret;
