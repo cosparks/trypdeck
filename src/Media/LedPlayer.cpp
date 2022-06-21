@@ -5,14 +5,12 @@
 #include "Index.h"
 #include "LedPlayer.h"
 
-LedPlayer::LedPlayer(Apa102* apa102) {
-	_apa102 = apa102;
-}
+LedPlayer::LedPlayer(LedController* ledController) : _ledController(ledController) { }
 
 LedPlayer::~LedPlayer() {
 	#if not ENABLE_DEBUG
-	_apa102->clear();
-	_apa102->show();
+	_ledController->clear();
+	_ledController->show();
 	#endif
 }
 
@@ -22,11 +20,11 @@ void LedPlayer::init() {
 		throw std::runtime_error("Error: PI GPIO Initialization failed");
 	#endif
 	
-	_apa102->init(0, SPI_BAUD, 0);
+	_ledController->init(SPI_BAUD, MAIN_LED_GRID_CONFIGURATION_OPTION_A, MAIN_LED_GRID_CONFIGURATION_OPTION_B);
 
 	#if not ENABLE_DEBUG
-	_apa102->clear();
-	_apa102->show();
+	_ledController->clear();
+	_ledController->show();
 	#endif
 }
 
@@ -103,8 +101,8 @@ void LedPlayer::stop() {
 	_state = Stop;
 
 	#if not ENABLE_DEBUG
-	_apa102->clear();
-	_apa102->show();
+	_ledController->clear();
+	_ledController->show();
 	#endif
 }
 
@@ -239,23 +237,21 @@ int32_t LedPlayer::_getNextFrame() {
 }
 
 void LedPlayer::_showNextFrame() {
-	int32_t width = _apa102->getWidth();
-	int32_t height = _apa102->getHeight();
-	int32_t pixelsPerLedX = _frameRGB->width / width;
-	int32_t pixelsPerLedY = _frameRGB->height / height;
+	int32_t pixelsPerLedX = _frameRGB->width / MAIN_LED_MATRIX_WIDTH;
+	int32_t pixelsPerLedY = _frameRGB->height / MAIN_LED_MATRIX_HEIGHT;
 	int32_t offsetX = 0;
 	int32_t offsetY = 0;
 
 	// Write pixel data
-	for(int32_t y = 0; y < height; y++) {
-		for (int32_t x = 0; x < width; x++) {
+	for(int32_t y = 0; y < MAIN_LED_MATRIX_HEIGHT; y++) {
+		for (int32_t x = 0; x < MAIN_LED_MATRIX_WIDTH; x++) {
 			uint8_t* ptr = _frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * _frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
-			_apa102->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			_ledController->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 		}
 	}
 
 	#if not ENABLE_DEBUG
-	_apa102->show();
+	_ledController->show();
 	#endif
 }
 

@@ -14,10 +14,10 @@ int main(int argc, char** argv) {
 	// setup
 	int64_t startTime = Clock::instance().millis();
 	system("sudo sh -c \"TERM=linux setterm -foreground black -clear all >/dev/tty0\"");
-
-	Apa102 apa102(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT, LED_GRID_CONFIGURATION_OPTION);
+	
 	VideoPlayer videoPlayer;
-	LedPlayer ledPlayer(&apa102);
+	LedController ledController(MAIN_LED_MATRIX_WIDTH, MAIN_LED_MATRIX_HEIGHT, MAIN_LED_MATRIX_SPLIT, MAIN_LED_GRID_AB_ORIENTATION);
+	LedPlayer ledPlayer(&ledController);
 	DataManager dataManager;
 	Tripdeck application(&dataManager, &ledPlayer, &videoPlayer);
 

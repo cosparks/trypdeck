@@ -29,7 +29,7 @@ struct Shape {
 class Apa102 {
 	public:
 		enum GridConfigurationOption { HorizontalTopLeft, HorizontalTopRight, HorizontalBottomRight, HorizontalBottomLeft,
-			VerticalTopLeft, VerticalTopRight, VerticalBottomRight, VerticalBottomLeft,};
+			VerticalTopLeft, VerticalTopRight, VerticalBottomRight, VerticalBottomLeft };
 
 		/**
 		 * @brief constructs Apa102 object
