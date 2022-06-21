@@ -10,7 +10,6 @@
 #include "Runnable.h"
 #include "DataManager.h"
 #include "MediaPlayer.h"
-#include "KeyboardInput.h"
 
 class Tripdeck : public Runnable {
 	public:
@@ -25,8 +24,6 @@ class Tripdeck : public Runnable {
 
 	private:
 		DataManager* _dataManager;
-		// needs a more definitive type of input handler
-		KeyboardInput<Tripdeck>* _keyboardInputHandler;
 		MediaPlayer* _ledPlayer;
 		MediaPlayer* _videoPlayer;
 		std::unordered_map<TripdeckState, std::string> _stateToVideoFolder;

@@ -151,11 +151,15 @@ void LedPlayer::_updateMedia(uint32_t fileId) {
 	}
 }
 
+// TODO: DEBUG CODE REMOVE LATER
+int32_t printDebug = 0;
+int32_t i = 0;
+
 int32_t LedPlayer::_getNextFrame() {
 	int32_t ret;
+	AVStream* stream = _formatContext->streams[_streamId];
 	AVPacket packet = { };
 	av_init_packet(&packet);
-	bool streamRestarted = false;
 
 	while (true) {
 		ret = av_read_frame(_formatContext, &packet);
@@ -163,12 +167,17 @@ int32_t LedPlayer::_getNextFrame() {
 		if (ret == AVERROR_EOF) {
 			if (_playbackOption == MediaPlaybackOption::Loop) {
 				// reset avformat context and and continue loop
-				AVStream* stream = _formatContext->streams[_streamId];
 				avio_seek(_formatContext->pb, 0, SEEK_SET);
-				avformat_seek_file(_formatContext, _streamId, 0, 0, stream->duration, 0);
+				avformat_seek_file(_formatContext, _streamId, 0, 0, stream->duration, AVSEEK_FLAG_ANY);
 
-				_playStartTimeMicros = Clock::instance().micros();
-				streamRestarted = true;
+				_streamRestarted = true;
+				
+				// TODO: REMOVE DEBUGGING CODE
+				#if ENABLE_DEBUG
+				i = 0;
+				printDebug = 1;
+				#endif
+
 				continue;
 			} else {
 				ret = -1;
@@ -195,11 +204,32 @@ int32_t LedPlayer::_getNextFrame() {
 			throw std::runtime_error("Error: avcodec_receive_frame returned < 0");
 		}
 
+		// flush non-key frames from end of video
+		if (_streamRestarted && _frame->key_frame) {
+			_playStartTimeMicros = Clock::instance().micros();
+			_streamRestarted = false;
+		}
+
 		// Convert frame data to RGB
 		sws_scale(_swsContext, (uint8_t const * const *)_frame->data, _frame->linesize, 0, _frame->height, _frameRGB->data, _frameRGB->linesize);
 
-		// sometimes when a stream is restarted, the first frame will have an incorrect timestamp. branching here fixes that
-		_nextFrameTimeMicros = streamRestarted ? _playStartTimeMicros : _playStartTimeMicros + _frame->best_effort_timestamp * (1000000L / _streamTimeBase.den);
+		_nextFrameTimeMicros = _playStartTimeMicros + _frame->best_effort_timestamp * (1000000L / _streamTimeBase.den);
+
+		#if ENABLE_DEBUG
+		if (_streamRestarted) {
+			std::cout << "----frame restarted----" << std::endl;
+		}
+
+		if (i < 5 && printDebug) {
+			std::cout << "Current time: " << Clock::instance().micros() << std::endl;
+			std::cout << "Next frame time: " << _nextFrameTimeMicros << std::endl;
+			std::cout << "-----------------------" << std::endl;
+			i++;
+		} else {
+			printDebug = 0;
+		}
+		#endif
+
 		break;
 	}
 	av_packet_unref(&packet);

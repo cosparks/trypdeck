@@ -47,6 +47,7 @@ class LedPlayer : public MediaPlayer {
 		int64_t _nextFrameTimeMicros = 0;
 		bool _streamIsOpen = false;
 		bool _mediaChanged = false;
+		bool _streamRestarted = false;
 
 		void _addMedia(uint32_t fileId) override;
 		void _removeMedia(uint32_t fileId) override;
