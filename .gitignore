@@ -1,5 +1,5 @@
 .vscode/
-!.vscode/lauch.json
+!.vscode/launch.json
 tripdeck
 obj/
 cache/
