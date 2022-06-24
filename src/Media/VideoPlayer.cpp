@@ -3,10 +3,10 @@
 #include "VideoPlayer.h"
 #include "Index.h"
 
-const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
-#define VLC_NUM_ARGS 9
+const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--quiet", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
+#define VLC_NUM_ARGS 10
 
-VideoPlayer::VideoPlayer(const std::vector<std::string>& folders) : MediaPlayer(folders) { }
+VideoPlayer::VideoPlayer() { }
 
 VideoPlayer::~VideoPlayer() { }
 
@@ -15,8 +15,6 @@ void VideoPlayer::init() {
 	_mediaList = libvlc_media_list_new(_instance);
 	_mediaListPlayer = libvlc_media_list_player_new(_instance);
 	libvlc_media_list_player_set_media_list(_mediaListPlayer, _mediaList);
-
-	_eventManager = libvlc_media_list_player_event_manager(_mediaListPlayer);
 }
 
 void VideoPlayer::run() { }
@@ -95,6 +93,14 @@ void VideoPlayer::_addMedia(uint32_t fileId) {
 
 		_fileIdToIndex[fileId] = i;
 		_createAndInsertMedia(fileId, i);
+	}
+
+	// TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
+	if (libvlc_media_list_player_is_playing(_mediaListPlayer)) {
+		setCurrentMedia(fileId, MediaPlaybackOption::Loop);
+
+		if (_state == MediaPlayerState::Play)
+			play();
 	}
 }
 

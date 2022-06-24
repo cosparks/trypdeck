@@ -3,17 +3,21 @@
 
 #include "Apa102.h"
 
-// system
-#define ENABLE_DEBUG 0	// when true, stops all calls to pigpio
-
 // media files
-#define WAIT_VIDEO_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/loop/"
-#define CARD_VIDEO_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/card/"
-#define LED_ANIMATION_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/anim/"
+#define VIDEO_STARTUP_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/startup/"
+#define VIDEO_WAIT_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/wait/"
+#define VIDEO_PULLED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/pulled/"
+#define VIDEO_REVEAL_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/reveal/"
+
+#define LED_STARTUP_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/startup/"
+#define LED_WAIT_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/wait/"
+#define LED_PULLED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/pulled/"
+#define LED_REVEAL_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/reveal/"
 
 // gpio
-#define SERIAL_BAUD 9600
-#define SPI_BAUD 4000000
+#define SERIAL_BAUD 9600 // networking
+#define SPI_BAUD 4000000 // led matrix
+#define ENABLE_DEBUG 0	// when true, stops all calls to pigpio (this disables leds!)
 
 // led
 #define LED_MATRIX_WIDTH 53

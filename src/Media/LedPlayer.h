@@ -20,7 +20,7 @@ extern "C" {
 
 class LedPlayer : public MediaPlayer {
 	public:
-		LedPlayer(const std::vector<std::string>& folders, Apa102* apa102);
+		LedPlayer(Apa102* apa102);
 		~LedPlayer();
 		void init() override;
 		void run() override;
@@ -47,6 +47,7 @@ class LedPlayer : public MediaPlayer {
 		int64_t _nextFrameTimeMicros = 0;
 		bool _streamIsOpen = false;
 		bool _mediaChanged = false;
+		bool _streamRestarted = false;
 
 		void _addMedia(uint32_t fileId) override;
 		void _removeMedia(uint32_t fileId) override;

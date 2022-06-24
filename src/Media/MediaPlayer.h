@@ -7,7 +7,7 @@ class MediaPlayer : public MediaListener {
 	public:
 		enum MediaPlaybackOption { OneShot, Loop };
 		enum MediaPlayerState { Play, Stop, Pause };
-		MediaPlayer(const std::vector<std::string>& folders);
+		MediaPlayer();
 		~MediaPlayer();
 		virtual void setCurrentMedia(uint32_t fileId, MediaPlaybackOption option = OneShot) = 0;
 		virtual uint32_t getCurrentMedia() = 0;
