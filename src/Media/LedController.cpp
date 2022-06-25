@@ -3,32 +3,33 @@
 #include "settings.h"
 #include "LedController.h"
 
-LedController::LedController(int32_t width, int32_t height, int32_t centre, SplitConfigurationOption option) : _width(width),
-    _height(height), _centre(centre), _option(option) { }
+LedController::LedController(int32_t width, int32_t height, int32_t centre, SplitConfigurationOption option,
+    Apa102::GridConfigurationOption gridOptionA, Apa102::GridConfigurationOption gridOptionB) : 
+        _width(width), _height(height), _centre(centre), _splitOption(option), _gridOptionA(gridOptionA), _gridOptionB(gridOptionB) { }
 
 LedController::~LedController() {
     delete _ledGridA;
     delete _ledGridB;
 }
 
-void LedController::init(uint32_t spiBaud, Apa102::GridConfigurationOption optionA, Apa102::GridConfigurationOption optionB) {
-    switch (_option) {
+void LedController::init(uint32_t spiBaud) {
+    switch (_splitOption) {
         case Horizontal:
-            _ledGridA = new Apa102(_centre, _height, optionA);
-            _ledGridB = new Apa102(_width - _centre, _height, optionB);
+            _ledGridA = new Apa102(_centre, _height, _gridOptionA);
+            _ledGridB = new Apa102(_width - _centre, _height, _gridOptionB);
             break;
         case Vertical:
-            _ledGridA = new Apa102(_width, _centre, optionA);
-            _ledGridB = new Apa102(_width, _height - _centre, optionB);
+            _ledGridA = new Apa102(_width, _centre, _gridOptionA);
+            _ledGridB = new Apa102(_width, _height - _centre, _gridOptionB);
             break;
         default:
-            _ledGridA = new Apa102(_width, _height, optionA);
+            _ledGridA = new Apa102(_width, _height, _gridOptionA);
             _ledGridB = NULL;
             break;
     }
 
     _ledGridA->init(0, SPI_BAUD, 0);
-    if (_option != None)
+    if (_splitOption != None)
         _ledGridB->init(1, SPI_BAUD, 0);
 
     _clear();
@@ -44,7 +45,7 @@ void LedController::show() {
 }
 
 void LedController::setPixel(const Pixel& pixel, const Point& point) {
-    switch (_option) {
+    switch (_splitOption) {
         case Horizontal:
             _setPixelHorizontal(pixel, point);
             break;

@@ -20,7 +20,7 @@ void LedPlayer::init() {
 		throw std::runtime_error("Error: PI GPIO Initialization failed");
 	#endif
 	
-	_ledController->init(SPI_BAUD, LED_GRID_CONFIGURATION_OPTION, LED_GRID_CONFIGURATION_OPTION_2);
+	_ledController->init(SPI_BAUD);
 
 	#if not ENABLE_DEBUG
 	_ledController->clear();

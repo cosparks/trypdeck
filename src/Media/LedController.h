@@ -9,9 +9,10 @@
 class LedController {
     public:
         enum SplitConfigurationOption { Horizontal, Vertical, None };
-        LedController(int32_t width, int32_t height, int32_t centre, SplitConfigurationOption option);
+        LedController(int32_t width, int32_t height, int32_t centre, SplitConfigurationOption option,
+            Apa102::GridConfigurationOption gridOptionA, Apa102::GridConfigurationOption gridOptionB);
         ~LedController();
-        void init(uint32_t spiBaud, Apa102::GridConfigurationOption optionA, Apa102::GridConfigurationOption optionB);
+        void init(uint32_t spiBaud);
         void clear();
         void show();
         void setPixel(const Pixel& pixel, const Point& point);
@@ -21,8 +22,10 @@ class LedController {
         Apa102* _ledGridB;
         int32_t _width;
         int32_t _height;
-        int32_t _centre;
-        SplitConfigurationOption _option;
+        int32_t _centre;        
+        SplitConfigurationOption _splitOption;
+        Apa102::GridConfigurationOption _gridOptionA;
+        Apa102::GridConfigurationOption _gridOptionB;
 
         inline void _setPixelHorizontal(const Pixel& pixel, const Point& point);
         inline void _setPixelVertical(const Pixel& pixel, const Point& point);

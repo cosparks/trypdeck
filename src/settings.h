@@ -26,7 +26,7 @@
 #define NO_LEDS 2
 
 // led (make modifications for different setups below)
-#define LED_SETTING MAIN_LEDS
+#define LED_SETTING CENTRE_LEDS
 #define PIXEL_BRIGHTNESS 31
 
 #if (LED_SETTING == MAIN_LEDS)
@@ -34,14 +34,13 @@
 #define LED_MATRIX_WIDTH 50
 #define LED_MATRIX_HEIGHT 50
 #define LED_MATRIX_SPLIT 25
-#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft		// configuration of first led grid in main light chamber
-#define LED_GRID_CONFIGURATION_OPTION_2 Apa102::VerticalTopRight	// configuration of second led grid in main light chamber
+#define LED_GRID_CONFIGURATION_OPTION_A Apa102::VerticalTopLeft		// configuration of first led grid in main light chamber
+#define LED_GRID_CONFIGURATION_OPTION_B Apa102::VerticalTopRight	// configuration of second led grid in main light chamber
 #define LED_GRID_AB_ORIENTATION LedController::Horizontal			// orientation of grid A and grid B (Horizontal -> A B -- Vertical -> A / B)
 #elif (LED_SETTING == CENTRE_LEDS)
 // settings for centre LED grid
 #define LED_MATRIX_WIDTH 25
 #define LED_MATRIX_HEIGHT 30
-#define LED_MATRIX_SPLIT 0
 #define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft
 #define LED_GRID_AB_ORIENTATION LedController::None
 #endif
