@@ -12,16 +12,24 @@ LedController::~LedController() {
 }
 
 void LedController::init(uint32_t spiBaud, Apa102::GridConfigurationOption optionA, Apa102::GridConfigurationOption optionB) {
-    if (_option == Horizontal) {
-        _ledGridA = new Apa102(_centre, _height, optionA);
-        _ledGridB = new Apa102(_width - _centre, _height, optionB);
-    } else if (_option == Vertical) {
-        _ledGridA = new Apa102(_width, _centre, optionA);
-        _ledGridB = new Apa102(_width, _height - _centre, optionB);
+    switch (_option) {
+        case Horizontal:
+            _ledGridA = new Apa102(_centre, _height, optionA);
+            _ledGridB = new Apa102(_width - _centre, _height, optionB);
+            break;
+        case Vertical:
+            _ledGridA = new Apa102(_width, _centre, optionA);
+            _ledGridB = new Apa102(_width, _height - _centre, optionB);
+            break;
+        default:
+            _ledGridA = new Apa102(_width, _height, optionA);
+            _ledGridB = NULL;
+            break;
     }
 
     _ledGridA->init(0, SPI_BAUD, 0);
-    _ledGridB->init(1, SPI_BAUD, 0);
+    if (_option != None)
+        _ledGridB->init(1, SPI_BAUD, 0);
 
     _clear();
     _show();
@@ -36,20 +44,29 @@ void LedController::show() {
 }
 
 void LedController::setPixel(const Pixel& pixel, const Point& point) {
-    if (_option == Horizontal)
-        _setPixelHorizontal(pixel, point);
-    else
-        _setPixelVertical(pixel, point);
+    switch (_option) {
+        case Horizontal:
+            _setPixelHorizontal(pixel, point);
+            break;
+        case Vertical:
+            _setPixelVertical(pixel, point);
+            break;
+        default:
+            _ledGridA->setPixel(pixel, point);
+            break;
+    }
 }
 
 void LedController::_clear() {
     _ledGridA->clear();
-    _ledGridB->clear();
+    if (_ledGridB)
+        _ledGridB->clear();
 }
 
 void LedController::_show() {
     _ledGridA->show();
-    _ledGridB->show();
+    if (_ledGridB)
+        _ledGridB->show();
 }
 
 void LedController::_setPixelHorizontal(const Pixel& pixel, const Point& point) {

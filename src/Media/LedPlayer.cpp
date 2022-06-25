@@ -20,7 +20,7 @@ void LedPlayer::init() {
 		throw std::runtime_error("Error: PI GPIO Initialization failed");
 	#endif
 	
-	_ledController->init(SPI_BAUD, MAIN_LED_GRID_CONFIGURATION_OPTION_A, MAIN_LED_GRID_CONFIGURATION_OPTION_B);
+	_ledController->init(SPI_BAUD, LED_GRID_CONFIGURATION_OPTION, LED_GRID_CONFIGURATION_OPTION_2);
 
 	#if not ENABLE_DEBUG
 	_ledController->clear();
@@ -237,14 +237,14 @@ int32_t LedPlayer::_getNextFrame() {
 }
 
 void LedPlayer::_showNextFrame() {
-	int32_t pixelsPerLedX = _frameRGB->width / MAIN_LED_MATRIX_WIDTH;
-	int32_t pixelsPerLedY = _frameRGB->height / MAIN_LED_MATRIX_HEIGHT;
+	int32_t pixelsPerLedX = _frameRGB->width / LED_MATRIX_WIDTH;
+	int32_t pixelsPerLedY = _frameRGB->height / LED_MATRIX_HEIGHT;
 	int32_t offsetX = 0;
 	int32_t offsetY = 0;
 
 	// Write pixel data
-	for(int32_t y = 0; y < MAIN_LED_MATRIX_HEIGHT; y++) {
-		for (int32_t x = 0; x < MAIN_LED_MATRIX_WIDTH; x++) {
+	for(int32_t y = 0; y < LED_MATRIX_HEIGHT; y++) {
+		for (int32_t x = 0; x < LED_MATRIX_WIDTH; x++) {
 			uint8_t* ptr = _frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * _frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
 			_ledController->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 		}

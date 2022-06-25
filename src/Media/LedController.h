@@ -8,7 +8,7 @@
  */
 class LedController {
     public:
-        enum SplitConfigurationOption { Horizontal, Vertical };
+        enum SplitConfigurationOption { Horizontal, Vertical, None };
         LedController(int32_t width, int32_t height, int32_t centre, SplitConfigurationOption option);
         ~LedController();
         void init(uint32_t spiBaud, Apa102::GridConfigurationOption optionA, Apa102::GridConfigurationOption optionB);
