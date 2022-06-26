@@ -20,10 +20,5 @@ class InputThreadedSerial : public Input {
 		std::mutex _stateMutex;
 
 		void _readInternal();
-		void _setCurrentlyReading(bool value);
-		bool _getCurrentlyReading();
-		void _setDataAvailable(bool value);
-		bool _getDataAvailable();
-};
 
 #endif

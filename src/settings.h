@@ -10,7 +10,7 @@
 // ID
 #define ID "0"						// each pi on the network MUST have a unique id--change this setting for different pis
 
-// Timing
+// Timing (only matters for Leader)
 #define STARTUP_TIME 20000			// duration for pis to sync up and play startup animation
 #define PULL_DEBOUNCE_TIME 2000		// duration within which other people can still pull chain before pulled animation starts
 #define REVEAL_TIME 20000			// duration for which tarot cards will be displayed before returning to wait state
@@ -46,6 +46,7 @@
 #define LED_MATRIX_HEIGHT 30
 #define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft
 #define GRID_AB_ORIENTATION LedController::None
+#else
 // do nothing						// no leds
 #endif // LED_SETTINGS
 
