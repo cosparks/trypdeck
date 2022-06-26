@@ -20,5 +20,6 @@ class InputThreadedSerial : public Input {
 		std::mutex _stateMutex;
 
 		void _readInternal();
+};
 
 #endif

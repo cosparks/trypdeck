@@ -1,7 +1,6 @@
 #include <iostream>
 #include "TripdeckBehaviorLeader.h"
 
-
 TripdeckBehaviorLeader::TripdeckBehaviorLeader(InputManager* inputManager, Serial* serial) : TripdeckBehavior(inputManager, serial) { }
 
 TripdeckBehaviorLeader::~TripdeckBehaviorLeader() { }
