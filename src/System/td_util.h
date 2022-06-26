@@ -15,19 +15,21 @@ namespace td_util {
 			virtual void execute(CommandArgs args) = 0;
 	};
 
-	typedef void* UpdateArgs;
-	class Observer {
+	class Input {
 		public:
-			virtual ~Observer() { };
-			virtual void notify(UpdateArgs args) = 0;
+			Input(uint32_t id);
+			virtual ~Input();
+			virtual bool read() = 0;
+			uint32_t getId();
+			const std::string& getData();
+		protected:
+			uint32_t _id;
+			std::string _data;
 	};
 
-	class ObservableObject {
-		public:
-			virtual ~ObservableObject() { }
-		protected:
-			std::vector<Observer*> _observers;
-			virtual void notify() = 0;
+	struct InputData {
+		uint32_t id;
+		const std::string& _data;
 	};
 }
 

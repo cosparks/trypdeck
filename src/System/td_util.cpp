@@ -1,10 +1,13 @@
-// #include "settings.h"
-// #include "td_util.h"
+#include "td_util.h"
 
-// const std::string td_util::getVideoPath(const std::string& path) {
-// 	return CARD_VIDEO_DIRECTORY + path;
-// }
+td_util::Input::Input(uint32_t id) : _id(id) { }
 
-// const std::string td_util::getAnimPath(const std::string& path) {
-// 	return LED_ANIMATION_DIRECTORY + path;
-// }
+td_util::Input::~Input() { }
+
+uint32_t td_util::Input::getId() {
+	return _id;
+}
+
+const std::string& td_util::Input::getData() {
+	return _data;
+}

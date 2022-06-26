@@ -3,7 +3,7 @@
 #include "settings.h"
 #include "LedController.h"
 
-LedController::LedController(int32_t width, int32_t height, int32_t centre, SplitConfigurationOption option,
+LedController::LedController(int32_t width, int32_t height, int32_t centre, SplitOrientationOption option,
     Apa102::GridConfigurationOption gridOptionA, Apa102::GridConfigurationOption gridOptionB) : 
         _width(width), _height(height), _centre(centre), _splitOption(option), _gridOptionA(gridOptionA), _gridOptionB(gridOptionB) { }
 
@@ -58,6 +58,14 @@ void LedController::setPixel(const Pixel& pixel, const Point& point) {
     }
 }
 
+int32_t LedController::getWidth() {
+	return _width;
+}
+
+int32_t LedController::getHeight() {
+	return _height;
+}
+
 void LedController::_clear() {
     _ledGridA->clear();
     if (_ledGridB)
@@ -77,7 +85,6 @@ void LedController::_setPixelHorizontal(const Pixel& pixel, const Point& point) 
         _ledGridB->setPixel(pixel, Point { point.x - _centre, point.y });
     }
 }
-
 
 void LedController::_setPixelVertical(const Pixel& pixel, const Point& point) {
     if (point.y <_centre) {
