@@ -5,9 +5,6 @@
 #include <vector>
 
 namespace td_util {
-	// const std::string getVideoPath(const std::string& path);
-	// const std::string getAnimPath(const std::string& path);
-
 	typedef void* CommandArgs;
 	class Command {
 		public:
@@ -29,7 +26,7 @@ namespace td_util {
 
 	struct InputData {
 		uint32_t id;
-		const std::string& _data;
+		const std::string& buffer;
 	};
 }
 

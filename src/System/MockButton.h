@@ -1,6 +1,7 @@
 #ifndef _MOCK_BUTTON_H_
 #define _MOCK_BUTTON_H_
 
+#include <iostream>
 #include <cstdlib>
 
 #include "td_util.h"
@@ -21,11 +22,10 @@ class MockButton : public Input {
 			if (Clock::instance().millis() > _nextTime) {
 				int64_t random = std::rand() % _maxRange;
 
-				if (random < _minRange) {
+				if (random < _minRange)
 					random = std::rand() % (_maxRange - random) + random;
-					_nextTime = Clock::instance().millis() + random;
-				}
-
+				_nextTime = Clock::instance().millis() + random;
+				
 				return true;
 			}
 			return false;
@@ -33,7 +33,7 @@ class MockButton : public Input {
 
 	private:
 		int64_t _lastTime = 0;
-		int64_t _nextTime = 0;
+		int64_t _nextTime = 5000;
 		int64_t _minRange = 0;
 		int64_t _maxRange = 0;
 };

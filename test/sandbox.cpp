@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_map>
-#include <stack> 
+#include <stack>
 #include <functional>
 
 #include <sys/types.h>
@@ -180,7 +180,6 @@ void initialize_vlc(VLCData& data) {
 	for (std::string movie : movies) {
 		_mediaCache[movie] = libvlc_media_new_path(data.inst, get_full_path(movie).c_str());
 	}
-
 }
 
 void play_vlc(std::string videoPath, VLCData& data) {

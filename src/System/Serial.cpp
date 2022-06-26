@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdexcept>
 
-#include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
@@ -56,7 +55,7 @@ void Serial::init() {
 	}
 }
 
-void Serial::transmit(std::string data) {
+void Serial::transmit(const std::string& data) {
 	if (write(_portNum, data.c_str(), data.length()) < 0) {
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
 	}
