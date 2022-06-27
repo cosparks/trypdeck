@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "TripdeckBehavior.h"
-#include "InputThreadedSerial.h"
 
 class TripdeckBehaviorLeader : public TripdeckBehavior {
 	public:
@@ -15,8 +14,6 @@ class TripdeckBehaviorLeader : public TripdeckBehavior {
 		void run() override;
 	private:
 		std::vector<std::string> _nodeIds;
-		InputThreadedSerial* _serialInput = NULL;
-		SerialInputDelegate* _serialInputDelegate = NULL;
 
 		void _onStateChanged(TripdeckStateChangedArgs& args) override;
 		void _updateFollowers();
