@@ -15,6 +15,7 @@ void TripdeckBehaviorFollower::init() {
 void TripdeckBehaviorFollower::run() {
 	switch (_currentState) {
 		case Startup:
+			TripdeckBehavior::run();
 			_notifyLeader();
 			break;
 		case Wait:
