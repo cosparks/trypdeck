@@ -48,38 +48,38 @@ void TripdeckBehaviorFollower::_notifyLeader() {
 	}
 }
 
-void TripdeckBehaviorFollower::_handleSerialInput(const std::string& buffer) {
+void TripdeckBehaviorFollower::_handleSerialInput(InputArgs& args) {
 	// parse state changed transmission for this ID
-	if (buffer.substr(0, HEADER_LENGTH).compare(STATE_CHANGED_HEADER) == 0 && buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0 ) {
-		TripdeckBehavior::TripdeckStateChangedArgs args = { };
-		args.newState = (TripdeckBehavior::TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+	if (args.buffer.substr(0, HEADER_LENGTH).compare(STATE_CHANGED_HEADER) == 0 && args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0 ) {
+		TripdeckBehavior::TripdeckStateChangedArgs stateChangedArgs = { };
+		stateChangedArgs.newState = (TripdeckBehavior::TripdeckState)std::stoi(args.buffer.substr(HEADER_LENGTH + 2, 1));
 		
 		// parse message data only if we are entering a new state
-		if (args.newState != _currentState) {
+		if (stateChangedArgs.newState != _currentState) {
 			// check for extra data in serial message
-			if (buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0) {
-				std::string mediaHashes = buffer.substr(HEADER_LENGTH + 4);
+			if (args.buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0) {
+				std::string mediaHashes = args.buffer.substr(HEADER_LENGTH + 4);
 				int32_t slashIndex = mediaHashes.find("/");
 				uint32_t videoHash = std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16);
 				uint32_t ledHash = std::stoul(mediaHashes.substr(slashIndex + 1));
 
 				if (videoHash != 0) {
-					args.videoId = videoHash;
-					args.syncVideo = true;
+					stateChangedArgs.videoId = videoHash;
+					stateChangedArgs.syncVideo = true;
 				}
 
 				if (ledHash != 0) {
-					args.ledId = ledHash;
-					args.syncLeds = true;
+					stateChangedArgs.ledId = ledHash;
+					stateChangedArgs.syncLeds = true;
 				}
 			}
 
-			_currentState = args.newState;
-			_onStateChanged(args);
+			_currentState = stateChangedArgs.newState;
+			_onStateChanged(stateChangedArgs);
 		}
 	} else {
 		// if transmission is not for us, pass it on
-		_serial->transmit(buffer);
+		_serial->transmit(args.buffer);
 	}
 }
 

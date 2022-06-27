@@ -14,7 +14,7 @@ class TripdeckBehaviorFollower : public TripdeckBehavior {
 
 		void _onStateChanged(TripdeckStateChangedArgs& args) override;
 		void _notifyLeader();
-		void _handleSerialInput(const std::string& buffer) override;
+		void _handleSerialInput(InputArgs& args) override;
 };
 
 #endif

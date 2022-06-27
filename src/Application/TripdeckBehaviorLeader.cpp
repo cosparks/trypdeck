@@ -9,6 +9,7 @@ void TripdeckBehaviorLeader::init() {
 	TripdeckBehavior::init();
 	_currentState = Startup;
 	// hook up button inputs with callback
+
 	_serialInput = new InputThreadedSerial(5, _serial);
 	_serialInputDelegate = new SerialInputDelegate(this);
 	_inputManager->addInput(_serialInput, _serialInputDelegate);
@@ -58,12 +59,10 @@ void TripdeckBehaviorLeader::_updateFollowers() {
 
 }
 
-void TripdeckBehaviorLeader::_handleSerialInput(const std::string& buffer) {
-	std::cout << "Serial input received: " << buffer << std::endl;
-	TripdeckStateChangedArgs args = { };
-	_onStateChanged(args);
+void TripdeckBehaviorLeader::_handleSerialInput(InputArgs& args) {
+	std::cout << "Serial input received from id " << args.id << ": " << args.buffer << std::endl;
 }
 
-void TripdeckBehaviorLeader::_handleUserInput(InputData* data) {
+void TripdeckBehaviorLeader::_handleUserInput(InputArgs* data) {
 
 }

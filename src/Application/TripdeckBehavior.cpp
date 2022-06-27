@@ -26,5 +26,5 @@ TripdeckBehavior::SerialInputDelegate::SerialInputDelegate(TripdeckBehavior* own
 TripdeckBehavior::SerialInputDelegate::~SerialInputDelegate() { }
 
 void TripdeckBehavior::SerialInputDelegate::execute(CommandArgs args) {
-	_owner->_handleSerialInput(*((std::string*)args));
+	_owner->_handleSerialInput(*((InputArgs*)args));
 }

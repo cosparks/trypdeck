@@ -20,8 +20,8 @@ class TripdeckBehaviorLeader : public TripdeckBehavior {
 
 		void _onStateChanged(TripdeckStateChangedArgs& args) override;
 		void _updateFollowers();
-		void _handleSerialInput(const std::string& buffer) override;
-		void _handleUserInput(InputData* data);
+		void _handleSerialInput(InputArgs& args) override;
+		void _handleUserInput(InputArgs* data);
 		void _syncWithFollowers();
 		void _checkInputs();
 		void _notifyPulled();

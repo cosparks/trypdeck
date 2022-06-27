@@ -14,6 +14,7 @@ bool InputThreadedSerial::read() {
 	}
 
 	if (_dataAvailable) {
+		_dataAvailable = false;
 		_stateMutex.unlock();
 		return true;
 	}

@@ -9,7 +9,7 @@ void InputManager::init() { }
 void InputManager::run() {
 	for (const auto& pair : _inputToCommand) {
 		if (pair.first->read()) {
-			InputData data = InputData { pair.first->getId(), pair.first->getData() };
+			InputArgs data = InputArgs { pair.first->getId(), pair.first->getData() };
 			pair.second->execute((CommandArgs)&data);
 		}
 	}

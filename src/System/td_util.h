@@ -24,7 +24,7 @@ namespace td_util {
 			std::string _data;
 	};
 
-	struct InputData {
+	struct InputArgs {
 		uint32_t id;
 		const std::string& buffer;
 	};

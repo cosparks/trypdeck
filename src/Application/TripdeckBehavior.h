@@ -56,7 +56,7 @@ class TripdeckBehavior : public Runnable {
 		Command* _stateChangedDelegate = NULL;
 
 		virtual void _onStateChanged(TripdeckStateChangedArgs& args) = 0;
-		virtual void _handleSerialInput(const std::string& buffer) = 0;
+		virtual void _handleSerialInput(InputArgs& args) = 0;
 
 		class SerialInputDelegate : public Command {
 			public:
