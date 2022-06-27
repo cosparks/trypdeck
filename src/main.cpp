@@ -10,8 +10,8 @@
 #include "TripdeckBehaviorFollower.h"
 #include "MockButton.h"
 
-const char* VideoFolders[] = { VIDEO_STARTUP_DIRECTORY, VIDEO_WAIT_DIRECTORY, VIDEO_PULLED_DIRECTORY, VIDEO_REVEAL_DIRECTORY };
-const char* LedFolders[] = { LED_STARTUP_DIRECTORY, LED_WAIT_DIRECTORY, LED_PULLED_DIRECTORY, LED_REVEAL_DIRECTORY };
+const char* VideoFolders[] = { VIDEO_CONNECTING_DIRECTORY, VIDEO_WAIT_DIRECTORY, VIDEO_PULLED_DIRECTORY, VIDEO_REVEAL_DIRECTORY };
+const char* LedFolders[] = { LED_CONNECTING_DIRECTORY, LED_WAIT_DIRECTORY, LED_PULLED_DIRECTORY, LED_REVEAL_DIRECTORY };
 
 InputManager inputManager;
 Serial serial("/dev/ttyS0", O_RDWR);
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 	#endif
 
 	// add media folders for different application states
-	for (int32_t state = TripdeckBehavior::TripdeckState::Startup; state <= TripdeckBehavior::TripdeckState::Reveal; state++) {
+	for (int32_t state = TripdeckBehavior::TripdeckState::Connecting; state <= TripdeckBehavior::TripdeckState::Reveal; state++) {
 		application.addVideoFolder(TripdeckBehavior::TripdeckState(state), VideoFolders[state]);
 
 		#if RUN_LEDS

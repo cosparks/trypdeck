@@ -14,9 +14,12 @@ void TripdeckBehaviorFollower::init() {
 
 void TripdeckBehaviorFollower::run() {
 	switch (_currentState) {
-		case Startup:
+		case Connecting:
 			TripdeckBehavior::run();
 			_notifyLeader();
+			break;
+		case Connected:
+			TripdeckBehavior::run();
 			break;
 		case Wait:
 			TripdeckBehavior::run();
@@ -31,6 +34,10 @@ void TripdeckBehaviorFollower::run() {
 			// do nothing
 			break;
 	}
+}
+
+void TripdeckBehaviorFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
+	// do nothing ??
 }
 
 void TripdeckBehaviorFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
@@ -48,33 +55,17 @@ void TripdeckBehaviorFollower::_notifyLeader() {
 }
 
 void TripdeckBehaviorFollower::_handleSerialInput(InputArgs& args) {
-	// parse state changed transmission for this ID
-	if (args.buffer.substr(0, HEADER_LENGTH).compare(STATE_CHANGED_HEADER) == 0 && args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0 ) {
-		TripdeckBehavior::TripdeckStateChangedArgs stateChangedArgs = { };
-		stateChangedArgs.newState = (TripdeckBehavior::TripdeckState)std::stoi(args.buffer.substr(HEADER_LENGTH + 2, 1));
-		
-		// parse message data only if we are entering a new state
-		if (stateChangedArgs.newState != _currentState) {
-			// check for extra data in serial message
-			if (args.buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0) {
-				std::string mediaHashes = args.buffer.substr(HEADER_LENGTH + 4);
-				int32_t slashIndex = mediaHashes.find("/");
-				uint32_t videoHash = std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16);
-				uint32_t ledHash = std::stoul(mediaHashes.substr(slashIndex + 1));
+	// check if message is intended for this follower
+	if (args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0) {
+		const std::string header = args.buffer.substr(0, HEADER_LENGTH);
 
-				if (videoHash != 0) {
-					stateChangedArgs.videoId = videoHash;
-					stateChangedArgs.syncVideo = true;
-				}
+		if (header.compare(STATE_CHANGED_HEADER) == 0) {
+			TripdeckBehavior::TripdeckStateChangedArgs stateChangedArgs = { };
 
-				if (ledHash != 0) {
-					stateChangedArgs.ledId = ledHash;
-					stateChangedArgs.syncLeds = true;
-				}
+			if (_parseStateChangedMessage(args.buffer, stateChangedArgs)) {
+				_currentState = stateChangedArgs.newState;
+				_onStateChanged(stateChangedArgs);
 			}
-
-			_currentState = stateChangedArgs.newState;
-			_onStateChanged(stateChangedArgs);
 		}
 	} else {
 		// if transmission is not for us, pass it on
@@ -82,3 +73,30 @@ void TripdeckBehaviorFollower::_handleSerialInput(InputArgs& args) {
 	}
 }
 
+// returns true and loads StateChangedArgs if entering new state, false otherwise
+bool TripdeckBehaviorFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
+	args.newState = (TripdeckBehavior::TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+
+	// parse message data only if we are entering a new state
+	if (args.newState != _currentState) {
+		// check for extra data in serial message
+		if (buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0) {
+			std::string mediaHashes = buffer.substr(HEADER_LENGTH + 4);
+			int32_t slashIndex = mediaHashes.find("/");
+			uint32_t videoHash = std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16);
+			uint32_t ledHash = std::stoul(mediaHashes.substr(slashIndex + 1));
+
+			if (videoHash != 0) {
+				args.videoId = videoHash;
+				args.syncVideo = true;
+			}
+
+			if (ledHash != 0) {
+				args.ledId = ledHash;
+				args.syncLeds = true;
+			}
+		}
+		return true;
+	}
+	return false;
+}

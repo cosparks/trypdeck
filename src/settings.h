@@ -7,8 +7,9 @@
 // Leader or Follower
 #define Leader
 
-// ID
-#define ID "0"						// each pi on the network MUST have a unique id--change this setting for different pis
+// IDs
+#define LEADER_ID "0"				// do not change this ID
+#define ID "1"						// change this setting for different followers: each follower on the network MUST have a unique id
 
 // Timing (only matters for Leader)
 #define STARTUP_TIME 120000			// duration for pis to sync up and play startup animation
@@ -20,7 +21,7 @@
 #define SPI_BAUD 4000000			// led matrix baud rate
 #define ENABLE_DEBUG 0				// when true, stops all calls to pigpio (this disables leds!)
 #define NUM_INPUTS 3				// number of inputs for pull-chains on sculpture
-#define NETWORK_SIZE 3				// number of pis on Tripdeck network (TODO: evaluate necessity of this)
+#define NUM_FOLLOWERS 2				// number of pis on Tripdeck network (TODO: evaluate necessity of this)
 
 // Led Settings
 // * dont modify these values *
@@ -51,12 +52,14 @@
 #endif // LED_SETTINGS
 
 // Media Folders
-#define VIDEO_STARTUP_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/startup/"
+#define VIDEO_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/"
+#define VIDEO_CONNECTED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connected/"
 #define VIDEO_WAIT_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/wait/"
 #define VIDEO_PULLED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/pulled/"
 #define VIDEO_REVEAL_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/reveal/"
 
-#define LED_STARTUP_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/startup/"
+#define LED_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/connecting/"
+#define LED_CONNECTED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/connected/"
 #define LED_WAIT_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/wait/"
 #define LED_PULLED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/pulled/"
 #define LED_REVEAL_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/reveal/"

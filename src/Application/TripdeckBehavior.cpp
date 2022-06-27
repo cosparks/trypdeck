@@ -10,7 +10,7 @@ void TripdeckBehavior::init() {
 	_serialInput = new InputThreadedSerial(5, _serial);
 	_serialInputDelegate = new SerialInputDelegate(this);
 	_inputManager->addInput(_serialInput, _serialInputDelegate);
-	_currentState = Startup;
+	_currentState = Connecting;
 }
 
 void TripdeckBehavior::run() {

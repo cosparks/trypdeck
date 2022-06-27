@@ -12,15 +12,17 @@ class TripdeckBehaviorLeader : public TripdeckBehavior {
 		~TripdeckBehaviorLeader();
 		void init() override;
 		void run() override;
+		void handleMediaChanged(TripdeckStateChangedArgs& args) override;
 	private:
 		std::vector<std::string> _nodeIds;
+		bool _connected = false;
 
 		void _onStateChanged(TripdeckStateChangedArgs& args) override;
 		void _updateFollowers();
 		void _handleSerialInput(InputArgs& args) override;
 		void _handleUserInput(InputArgs* data);
-		void _syncWithFollowers();
-		void _checkInputs();
+		void _notifyConnected(const std::string& id);
+		void _runStartup();
 		void _notifyPulled();
 		void _notifyReveal();
 };

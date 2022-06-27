@@ -36,7 +36,9 @@ using namespace td_util;
  */
 class TripdeckBehavior : public Runnable {
 	public:
-		enum TripdeckState { Startup, Wait, Pulled, Reveal };
+		// Connecting and Connected == startup phase	// Wait == waiting for user input
+		// Pulled == chain has been pulled				// Reveal == card is being shown
+		enum TripdeckState { Connecting, Connected, Wait, Pulled, Reveal };
 		struct TripdeckStateChangedArgs {
 			TripdeckState newState;
 			uint32_t videoId;
@@ -51,6 +53,8 @@ class TripdeckBehavior : public Runnable {
 		void run() override;
 		TripdeckState getState();
 		void setStateChangedDelegate(Command* delegate);
+		virtual void handleMediaChanged(TripdeckStateChangedArgs& args) = 0;
+
 	protected:
 		class SerialInputDelegate : public Command {
 			public:
