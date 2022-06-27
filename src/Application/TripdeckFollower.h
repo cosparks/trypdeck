@@ -1,12 +1,12 @@
 #ifndef _TRIPDECK_BEHAVIOR_FOLLOWER_H_
 #define _TRIPDECK_BEHAVIOR_FOLLOWER_H_
 
-#include "TripdeckBehavior.h"
+#include "Tripdeck.h"
 
-class TripdeckBehaviorFollower : public TripdeckBehavior {
+class TripdeckFollower : public Tripdeck {
 	public:
-		TripdeckBehaviorFollower(InputManager* inputManager, Serial* serial);
-		~TripdeckBehaviorFollower();
+		TripdeckFollower(InputManager* inputManager, Serial* serial);
+		~TripdeckFollower();
 		void init() override;
 		void run() override;
 		void handleMediaChanged(TripdeckStateChangedArgs& args) override;

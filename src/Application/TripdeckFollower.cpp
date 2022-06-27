@@ -1,34 +1,34 @@
-#include "TripdeckBehaviorFollower.h"
+#include "TripdeckFollower.h"
 
 #include "Clock.h"
 
 #define STARTUP_NOTIFICATION_INTERVAL 1000
 
-TripdeckBehaviorFollower::TripdeckBehaviorFollower(InputManager* inputManager, Serial* serial) : TripdeckBehavior(inputManager, serial) { }
+TripdeckFollower::TripdeckFollower(InputManager* inputManager, Serial* serial) : Tripdeck(inputManager, serial) { }
 
-TripdeckBehaviorFollower::~TripdeckBehaviorFollower() { }
+TripdeckFollower::~TripdeckFollower() { }
 
-void TripdeckBehaviorFollower::init() {
-	TripdeckBehavior::init();
+void TripdeckFollower::init() {
+	Tripdeck::init();
 }
 
-void TripdeckBehaviorFollower::run() {
+void TripdeckFollower::run() {
 	switch (_currentState) {
 		case Connecting:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			_notifyLeader();
 			break;
 		case Connected:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			break;
 		case Wait:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			break;
 		case Pulled:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			break;
 		case Reveal:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			break;
 		default:
 			// do nothing
@@ -36,15 +36,15 @@ void TripdeckBehaviorFollower::run() {
 	}
 }
 
-void TripdeckBehaviorFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
+void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
 	// do nothing ??
 }
 
-void TripdeckBehaviorFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
+void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	_stateChangedDelegate->execute((CommandArgs)&args);
 }
 
-void TripdeckBehaviorFollower::_notifyLeader() {
+void TripdeckFollower::_notifyLeader() {
 	int64_t currentTime = Clock::instance().millis();
 	if (currentTime >= _nextActionMillis) {
 		_nextActionMillis = currentTime + STARTUP_NOTIFICATION_INTERVAL;
@@ -54,13 +54,13 @@ void TripdeckBehaviorFollower::_notifyLeader() {
 	}
 }
 
-void TripdeckBehaviorFollower::_handleSerialInput(InputArgs& args) {
+void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	// check if message is intended for this follower
 	if (args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0) {
 		const std::string header = args.buffer.substr(0, HEADER_LENGTH);
 
 		if (header.compare(STATE_CHANGED_HEADER) == 0) {
-			TripdeckBehavior::TripdeckStateChangedArgs stateChangedArgs = { };
+			Tripdeck::TripdeckStateChangedArgs stateChangedArgs = { };
 
 			if (_parseStateChangedMessage(args.buffer, stateChangedArgs)) {
 				_currentState = stateChangedArgs.newState;
@@ -74,8 +74,8 @@ void TripdeckBehaviorFollower::_handleSerialInput(InputArgs& args) {
 }
 
 // returns true and loads StateChangedArgs if entering new state, false otherwise
-bool TripdeckBehaviorFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
-	args.newState = (TripdeckBehavior::TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
+	args.newState = (Tripdeck::TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
 
 	// parse message data only if we are entering a new state
 	if (args.newState != _currentState) {

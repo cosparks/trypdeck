@@ -5,9 +5,9 @@
 #include "Serial.h"
 #include "VideoPlayer.h"
 #include "LedPlayer.h"
-#include "Tripdeck.h"
-#include "TripdeckBehaviorLeader.h"
-#include "TripdeckBehaviorFollower.h"
+#include "TripdeckMedia.h"
+#include "TripdeckLeader.h"
+#include "TripdeckFollower.h"
 #include "MockButton.h"
 
 const char* VideoFolders[] = { VIDEO_CONNECTING_DIRECTORY, VIDEO_WAIT_DIRECTORY, VIDEO_PULLED_DIRECTORY, VIDEO_REVEAL_DIRECTORY };
@@ -22,9 +22,9 @@ int main(int argc, char** argv) {
 	VideoPlayer videoPlayer;
 
 	#ifdef Leader
-	TripdeckBehaviorLeader behavior(&inputManager, &serial);
+	TripdeckLeader behavior(&inputManager, &serial);
 	#else
-	TripdeckBehaviorFollower behavior(&inputManager, &serial);
+	TripdeckFollower behavior(&inputManager, &serial);
 	#endif
 
 	// set up leds
@@ -35,17 +35,17 @@ int main(int argc, char** argv) {
 	LedController ledController(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT, 0, LED_CONTROLLER_ORIENTATION, LED_GRID_CONFIGURATION_OPTION, Apa102::GridConfigurationOption(0));
 	#endif
 	LedPlayer ledPlayer(&ledController);
-	Tripdeck application(&dataManager, &behavior, &videoPlayer, &ledPlayer);
+	TripdeckMedia application(&dataManager, &behavior, &videoPlayer, &ledPlayer);
 	#else
-	Tripdeck application(&dataManager, &behavior, &videoPlayer);
+	TripdeckMedia application(&dataManager, &behavior, &videoPlayer);
 	#endif
 
 	// add media folders for different application states
-	for (int32_t state = TripdeckBehavior::TripdeckState::Connecting; state <= TripdeckBehavior::TripdeckState::Reveal; state++) {
-		application.addVideoFolder(TripdeckBehavior::TripdeckState(state), VideoFolders[state]);
+	for (int32_t state = Tripdeck::TripdeckState::Connecting; state <= Tripdeck::TripdeckState::Reveal; state++) {
+		application.addVideoFolder(Tripdeck::TripdeckState(state), VideoFolders[state]);
 
 		#if RUN_LEDS
-		application.addLedFolder(TripdeckBehavior::TripdeckState(state), LedFolders[state]);
+		application.addLedFolder(Tripdeck::TripdeckState(state), LedFolders[state]);
 		#endif
 	}
 

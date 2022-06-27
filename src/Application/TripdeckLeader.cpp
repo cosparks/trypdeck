@@ -1,36 +1,36 @@
 #include <iostream>
 #include <algorithm>
 
-#include "TripdeckBehaviorLeader.h"
+#include "TripdeckLeader.h"
 #include "Clock.h"
 
-TripdeckBehaviorLeader::TripdeckBehaviorLeader(InputManager* inputManager, Serial* serial) : TripdeckBehavior(inputManager, serial) { }
+TripdeckLeader::TripdeckLeader(InputManager* inputManager, Serial* serial) : Tripdeck(inputManager, serial) { }
 
-TripdeckBehaviorLeader::~TripdeckBehaviorLeader() { }
+TripdeckLeader::~TripdeckLeader() { }
 
-void TripdeckBehaviorLeader::init() {
-	TripdeckBehavior::init();
+void TripdeckLeader::init() {
+	Tripdeck::init();
 	// hook up button inputs with callback
 }
 
-void TripdeckBehaviorLeader::run() {
+void TripdeckLeader::run() {
 	switch (_currentState) {
 		case Connecting:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			_runStartup();
 			break;
 		case Connected:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			break;
 		case Wait:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			break;
 		case Pulled:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			_notifyPulled();
 			break;
 		case Reveal:
-			TripdeckBehavior::run();
+			Tripdeck::run();
 			_notifyReveal();
 			break;
 		default:
@@ -39,15 +39,15 @@ void TripdeckBehaviorLeader::run() {
 	}
 }
 
-void TripdeckBehaviorLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
+void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
 
 }
 
-void TripdeckBehaviorLeader::_onStateChanged(TripdeckStateChangedArgs& args) {
+void TripdeckLeader::_onStateChanged(TripdeckStateChangedArgs& args) {
 
 }
 
-void TripdeckBehaviorLeader::_runStartup() {
+void TripdeckLeader::_runStartup() {
 	if (_nodeIds.size() < NUM_FOLLOWERS)
 		return;
 
@@ -56,19 +56,19 @@ void TripdeckBehaviorLeader::_runStartup() {
 	}
 }
 
-void TripdeckBehaviorLeader::_notifyPulled() {
+void TripdeckLeader::_notifyPulled() {
 
 }
 
-void TripdeckBehaviorLeader::_notifyReveal() {
+void TripdeckLeader::_notifyReveal() {
 
 }
 
-void TripdeckBehaviorLeader::_updateFollowers() {
+void TripdeckLeader::_updateFollowers() {
 
 }
 
-void TripdeckBehaviorLeader::_handleSerialInput(InputArgs& args) {
+void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	std::cout << "Serial input received from id " << args.id << ": " << args.buffer << std::endl;
 
 	// check header
@@ -94,8 +94,10 @@ void TripdeckBehaviorLeader::_handleSerialInput(InputArgs& args) {
 	}
 }
 
-void TripdeckBehaviorLeader::_notifyConnected(const std::string )
+void TripdeckLeader::_notifyConnected(const std::string& id) { 
 
-void TripdeckBehaviorLeader::_handleUserInput(InputArgs* data) {
+}
+
+void TripdeckLeader::_handleUserInput(InputArgs* data) {
 
 }

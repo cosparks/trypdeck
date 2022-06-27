@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "TripdeckBehavior.h"
+#include "Tripdeck.h"
 
-class TripdeckBehaviorLeader : public TripdeckBehavior {
+class TripdeckLeader : public Tripdeck {
 	public:
-		TripdeckBehaviorLeader(InputManager* inputManager, Serial* serial);
-		~TripdeckBehaviorLeader();
+		TripdeckLeader(InputManager* inputManager, Serial* serial);
+		~TripdeckLeader();
 		void init() override;
 		void run() override;
 		void handleMediaChanged(TripdeckStateChangedArgs& args) override;
