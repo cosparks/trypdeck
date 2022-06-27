@@ -4,7 +4,7 @@
 #include "TripdeckLeader.h"
 #include "Clock.h"
 
-TripdeckLeader::TripdeckLeader(InputManager* inputManager, Serial* serial) : Tripdeck(inputManager, serial) { }
+TripdeckLeader::TripdeckLeader(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 
 TripdeckLeader::~TripdeckLeader() { }
 
@@ -14,23 +14,20 @@ void TripdeckLeader::init() {
 }
 
 void TripdeckLeader::run() {
+	Tripdeck::run();
+
 	switch (_currentState) {
 		case Connecting:
-			Tripdeck::run();
 			_runStartup();
 			break;
 		case Connected:
-			Tripdeck::run();
 			break;
 		case Wait:
-			Tripdeck::run();
 			break;
 		case Pulled:
-			Tripdeck::run();
 			_notifyPulled();
 			break;
 		case Reveal:
-			Tripdeck::run();
 			_notifyReveal();
 			break;
 		default:
@@ -50,9 +47,10 @@ void TripdeckLeader::_onStateChanged(TripdeckStateChangedArgs& args) {
 void TripdeckLeader::_runStartup() {
 	if (_nodeIds.size() < NUM_FOLLOWERS)
 		return;
+	else
 
-	if (Clock::instance().millis() > STARTUP_TIME) {
-		_currentState = Wait;
+	if (Clock::instance().millis() > STARTUP_TIME && _currentState == Connected) {
+		
 	}
 }
 

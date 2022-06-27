@@ -6,6 +6,7 @@
 #include "settings.h"
 #include "td_util.h"
 #include "Runnable.h"
+#include "TripdeckMediaManager.h"
 #include "InputManager.h"
 #include "InputThreadedSerial.h"
 
@@ -21,37 +22,16 @@ using namespace td_util;
 // ID is unique identifier for intended recipient
 #define STATE_CHANGED_HEADER "sc/"
 
-// LEADER MUST:
-//		on startup, listen for startup messages from followers and establish unique IDs for each one
-//		listen for digital input from pins
-//		send out serial messages to followers when application state changes
-// FOLLOWER MUST:
-//		on startup, repeatedly send message to leader with unique identifier
-//		listen for serial messages
-//		change states when message is received
-
 /**
  * @brief Abstract class the children of which will encapsulate the unique behavior for leader and follower
  * @note essentially just manages application state and leader/follower networking behavior
  */
 class Tripdeck : public Runnable {
 	public:
-		// Connecting and Connected == startup phase	// Wait == waiting for user input
-		// Pulled == chain has been pulled				// Reveal == card is being shown
-		enum TripdeckState { Connecting, Connected, Wait, Pulled, Reveal };
-		struct TripdeckStateChangedArgs {
-			TripdeckState newState;
-			uint32_t videoId;
-			uint32_t ledId;
-			bool syncVideo;
-			bool syncLeds;
-		};
-
-		Tripdeck(InputManager* inputManager, Serial* serial);
+		Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
 		virtual ~Tripdeck() { }
 		void init() override;
 		void run() override;
-		TripdeckState getState();
 		void setStateChangedDelegate(Command* delegate);
 		virtual void handleMediaChanged(TripdeckStateChangedArgs& args) = 0;
 
@@ -65,9 +45,10 @@ class Tripdeck : public Runnable {
 				Tripdeck* _owner;
 		};
 		
-		TripdeckState _currentState;
+		TripdeckMediaManager* _mediaManager = NULL;
 		InputManager* _inputManager = NULL;
 		Serial* _serial = NULL;
+		TripdeckState _currentState;
 		Command* _stateChangedDelegate = NULL;
 		InputThreadedSerial* _serialInput = NULL;
 		SerialInputDelegate* _serialInputDelegate = NULL;

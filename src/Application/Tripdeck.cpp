@@ -1,12 +1,15 @@
 #include "Tripdeck.h"
 
 // tripdeck behavior
-Tripdeck::Tripdeck(InputManager* inputManager, Serial* serial) : _inputManager(inputManager), _serial(serial) { }
+Tripdeck::Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : _mediaManager(mediaManager), _inputManager(inputManager), _serial(serial) { }
 
 void Tripdeck::init() {
+	// initialize members
 	_inputManager->init();
+	_mediaManager->init();
 	_serial->init();
 
+	// create delegate to listen for serial input
 	_serialInput = new InputThreadedSerial(5, _serial);
 	_serialInputDelegate = new SerialInputDelegate(this);
 	_inputManager->addInput(_serialInput, _serialInputDelegate);
@@ -15,10 +18,7 @@ void Tripdeck::init() {
 
 void Tripdeck::run() {
 	_inputManager->run();
-}
-
-Tripdeck::TripdeckState Tripdeck::getState() {
-	return _currentState;
+	_mediaManager->run();
 }
 
 void Tripdeck::setStateChangedDelegate(Command* delegate) {

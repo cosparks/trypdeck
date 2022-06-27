@@ -3,19 +3,18 @@
 #include <cstdlib>
 
 #include "Clock.h"
-#include "TripdeckMedia.h"
+#include "TripdeckMediaManager.h"
 
 #define RUN_TIME_MILLIS 330000000
 #define VIDEO_PLAY_INTERVAL 10000
 #define VLC_DELAY 600
 
-TripdeckMedia::TripdeckMedia(DataManager* dataManager, Tripdeck* behavior, MediaPlayer* videoPlayer, MediaPlayer* ledPlayer) :
-	_dataManager(dataManager), _behavior(behavior), _videoPlayer(videoPlayer), _ledPlayer(ledPlayer) {
-		if (!_dataManager || !_behavior)
-			throw std::runtime_error("Error: Neither TripdeckMedia::_dataManager nor TripdeckMedia::_behavior can be NULL");
+TripdeckMediaManager::TripdeckMediaManager(DataManager* dataManager, MediaPlayer* videoPlayer, MediaPlayer* ledPlayer) :
+	_dataManager(dataManager), _videoPlayer(videoPlayer), _ledPlayer(ledPlayer) {
+		if (!_dataManager)
+			throw std::runtime_error("Error: TripdeckMediaManager::_dataManager cannot be null!");
 
 		_runnableObjects.push_back(_dataManager);
-		_runnableObjects.push_back(_behavior);
 
 		if (_ledPlayer)
 			_runnableObjects.push_back(_ledPlayer);
@@ -23,16 +22,13 @@ TripdeckMedia::TripdeckMedia(DataManager* dataManager, Tripdeck* behavior, Media
 			_runnableObjects.push_back(_videoPlayer);
 	}
 
-TripdeckMedia::~TripdeckMedia() { }
+TripdeckMediaManager::~TripdeckMediaManager() { }
 
-void TripdeckMedia::init() {
+void TripdeckMediaManager::init() {
 	// initialize all runnable objects
 	for (Runnable* runnable : _runnableObjects) {
 		runnable->init();
 	}
-	
-	// add state changed listener delegate to TripdeckBehavior
-	_behavior->setStateChangedDelegate(new TripdeckMedia::TripdeckStateChangedDelegate(this));
 
 	// hook up media players to data manager
 	if (_ledPlayer)
@@ -44,7 +40,7 @@ void TripdeckMedia::init() {
 	_onStateChanged();
 }
 
-void TripdeckMedia::run() {
+void TripdeckMediaManager::run() {
 	while (_run) {
 		// check inputs
 		for (Runnable* runnable : _runnableObjects) {
@@ -53,17 +49,17 @@ void TripdeckMedia::run() {
 	}
 }
 
-void TripdeckMedia::addVideoFolder(Tripdeck::TripdeckState state, const char* folder) {
+void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folder) {
 	_videoPlayer->addMediaFolder(folder);
 	_stateToVideoFolder[state] = folder;
 }
 
-void TripdeckMedia::addLedFolder(Tripdeck::TripdeckState state, const char* folder) {
+void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder) {
 	_ledPlayer->addMediaFolder(folder);
 	_stateToLedFolder[state] = folder;
 }
 
-void TripdeckMedia::_stateChanged(Tripdeck::TripdeckStateChangedArgs* args) {
+void TripdeckMediaManager::_stateChanged(TripdeckStateChangedArgs* args) {
 	std::cout << "State changed args received" << std::endl;
 	std::cout << "New state == " << args->newState << std::endl;
 	std::cout << "Synchronize video: " << (args->syncVideo ? "True" : "False") << std::endl;
@@ -72,12 +68,18 @@ void TripdeckMedia::_stateChanged(Tripdeck::TripdeckStateChangedArgs* args) {
 	std::cout << "Led hash: " << args->ledId << std::endl;
 }
 
-void TripdeckMedia::_onStateChanged() {
+void TripdeckMediaManager::_onStateChanged() {
 	srand((uint32_t)Clock::instance().millis());
 	
 	if (_videoPlayer) {
 		// set random video file from folder
-		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[_behavior->getState()]);
+		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[_currentState]);
+
+		if (videoFiles.size() == 0) {
+			std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+			throw std::runtime_error(message);
+		}
+
 		uint32_t randomVideoFile = videoFiles[rand() % videoFiles.size()];
 		_videoPlayer->setCurrentMedia(randomVideoFile, MediaPlayer::MediaPlaybackOption::Loop);
 		_videoPlayer->play();
@@ -85,19 +87,25 @@ void TripdeckMedia::_onStateChanged() {
 
 	if (_ledPlayer) {
 		// set random led file from folder
-		const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_behavior->getState()]);
+		const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
+
+		if (ledFiles.size() == 0) {
+			std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+			throw std::runtime_error(message);
+		}
+
 		uint32_t randomLedFile = ledFiles[rand() % ledFiles.size()];
 		_ledPlayer->setCurrentMedia(randomLedFile, MediaPlayer::MediaPlaybackOption::Loop);
 		_ledPlayer->play();
 	}
 }
 
-TripdeckMedia::TripdeckStateChangedDelegate::TripdeckStateChangedDelegate(TripdeckMedia* owner) {
-	_owner = owner;
-}
+// TripdeckMediaManager::TripdeckStateChangedDelegate::TripdeckStateChangedDelegate(TripdeckMediaManager* owner) {
+// 	_owner = owner;
+// }
 
-TripdeckMedia::TripdeckStateChangedDelegate::~TripdeckStateChangedDelegate() { }
+// TripdeckMediaManager::TripdeckStateChangedDelegate::~TripdeckStateChangedDelegate() { }
 
-void TripdeckMedia::TripdeckStateChangedDelegate::execute(CommandArgs args) {
-	_owner->_stateChanged((Tripdeck::TripdeckStateChangedArgs*)args);
-}
+// void TripdeckMediaManager::TripdeckStateChangedDelegate::execute(CommandArgs args) {
+// 	_owner->_stateChanged((TripdeckStateChangedArgs*)args);
+// }

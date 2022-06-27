@@ -8,8 +8,8 @@
 #define Leader
 
 // IDs
+#define ID "0"						// change this setting for different followers: each follower on the network MUST have a unique id
 #define LEADER_ID "0"				// do not change this ID
-#define ID "1"						// change this setting for different followers: each follower on the network MUST have a unique id
 
 // Timing (only matters for Leader)
 #define STARTUP_TIME 120000			// duration for pis to sync up and play startup animation
@@ -21,7 +21,7 @@
 #define SPI_BAUD 4000000			// led matrix baud rate
 #define ENABLE_DEBUG 0				// when true, stops all calls to pigpio (this disables leds!)
 #define NUM_INPUTS 3				// number of inputs for pull-chains on sculpture
-#define NUM_FOLLOWERS 2				// number of pis on TripdeckMedia network (TODO: evaluate necessity of this)
+#define NUM_FOLLOWERS 2				// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
 
 // Led Settings
 // * dont modify these values *

@@ -8,7 +8,7 @@
 
 class TripdeckLeader : public Tripdeck {
 	public:
-		TripdeckLeader(InputManager* inputManager, Serial* serial);
+		TripdeckLeader(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
 		~TripdeckLeader();
 		void init() override;
 		void run() override;

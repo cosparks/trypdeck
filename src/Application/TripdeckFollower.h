@@ -5,7 +5,7 @@
 
 class TripdeckFollower : public Tripdeck {
 	public:
-		TripdeckFollower(InputManager* inputManager, Serial* serial);
+		TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
 		~TripdeckFollower();
 		void init() override;
 		void run() override;
