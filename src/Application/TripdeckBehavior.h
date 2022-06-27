@@ -11,12 +11,14 @@
 
 using namespace td_util;
 
+// lendth of any and all headers used for communication on the Serial network
 #define HEADER_LENGTH 3
 // startup notification structure: "sn/ID"
-// ID is unqiue identifier for another pi on network
+// ID is unqiue identifier for sender
 #define STARTUP_NOTIFICATION_HEADER "sn/"
 // startup notification structure: "sc/ID/STATE(/VIDEOHASH/LEDHASH)"
 // STATE is TripdeckState to change to and (/VIDEOHASH/LEDHASH) are optional arguments for video and led file IDs
+// ID is unique identifier for intended recipient
 #define STATE_CHANGED_HEADER "sc/"
 
 // LEADER MUST:
