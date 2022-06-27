@@ -177,7 +177,7 @@ void DataManager::_addFilesFromFolder(const std::string& path) {
 	dirent *ent;
 	class stat st;
 
-	dir = opendir(path.c_str());
+	dir = opendir(path.c_str()); 
 
 	if (dir == nullptr)
 		throw std::runtime_error("Error: folder does not exist: " + path);

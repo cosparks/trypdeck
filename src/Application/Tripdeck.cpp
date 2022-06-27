@@ -13,7 +13,9 @@ void Tripdeck::init() {
 	_serialInput = new InputThreadedSerial(5, _serial);
 	_serialInputDelegate = new SerialInputDelegate(this);
 	_inputManager->addInput(_serialInput, _serialInputDelegate);
+	
 	_currentState = Connecting;
+	_run = true;
 }
 
 void Tripdeck::run() {

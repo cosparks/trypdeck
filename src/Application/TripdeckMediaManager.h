@@ -25,7 +25,7 @@ class TripdeckMediaManager : public Runnable {
 		void handleKeyboardInput(int32_t input);
 
 	private:
-		TripdeckState _currentState;
+		TripdeckState _currentState = Inactive;
 		DataManager* _dataManager = NULL;
 		MediaPlayer* _videoPlayer = NULL;
 		MediaPlayer* _ledPlayer = NULL;

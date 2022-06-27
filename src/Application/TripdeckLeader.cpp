@@ -9,31 +9,36 @@ TripdeckLeader::TripdeckLeader(TripdeckMediaManager* mediaManager, InputManager*
 TripdeckLeader::~TripdeckLeader() { }
 
 void TripdeckLeader::init() {
+	// sets state to Connecting and _run to true
 	Tripdeck::init();
+
 	// hook up button inputs with callback
 }
 
 void TripdeckLeader::run() {
-	Tripdeck::run();
+	while (_run) {
+		Tripdeck::run();
 
-	switch (_currentState) {
-		case Connecting:
-			_runStartup();
-			break;
-		case Connected:
-			break;
-		case Wait:
-			break;
-		case Pulled:
-			_notifyPulled();
-			break;
-		case Reveal:
-			_notifyReveal();
-			break;
-		default:
-			// do nothing
-			break;
+		switch (_currentState) {
+			case Connecting:
+				_runStartup();
+				break;
+			case Connected:
+				break;
+			case Wait:
+				break;
+			case Pulled:
+				_notifyPulled();
+				break;
+			case Reveal:
+				_notifyReveal();
+				break;
+			default:
+				// do nothing
+				break;
+		}
 	}
+
 }
 
 void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {

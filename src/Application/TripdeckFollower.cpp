@@ -9,27 +9,30 @@ TripdeckFollower::TripdeckFollower(TripdeckMediaManager* mediaManager, InputMana
 TripdeckFollower::~TripdeckFollower() { }
 
 void TripdeckFollower::init() {
+	// sets state to Connecting and _run to true
 	Tripdeck::init();
 }
 
 void TripdeckFollower::run() {
-	Tripdeck::run();
+	while (_run) {
+		Tripdeck::run();
 
-	switch (_currentState) {
-		case Connecting:
-			_notifyLeader();
-			break;
-		case Connected:
-			break;
-		case Wait:
-			break;
-		case Pulled:
-			break;
-		case Reveal:
-			break;
-		default:
-			// do nothing
-			break;
+		switch (_currentState) {
+			case Connecting:
+				_notifyLeader();
+				break;
+			case Connected:
+				break;
+			case Wait:
+				break;
+			case Pulled:
+				break;
+			case Reveal:
+				break;
+			default:
+				// do nothing
+				break;
+		}
 	}
 }
 
@@ -38,7 +41,8 @@ void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
-	_stateChangedDelegate->execute((CommandArgs)&args);
+	// if (_stateChangedDelegate)
+	// 	_stateChangedDelegate->execute((CommandArgs)&args);
 }
 
 void TripdeckFollower::_notifyLeader() {

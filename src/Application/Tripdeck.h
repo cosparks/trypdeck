@@ -52,6 +52,7 @@ class Tripdeck : public Runnable {
 		Command* _stateChangedDelegate = NULL;
 		InputThreadedSerial* _serialInput = NULL;
 		SerialInputDelegate* _serialInputDelegate = NULL;
+		bool _run;
 
 		virtual void _onStateChanged(TripdeckStateChangedArgs& args) = 0;
 		virtual void _handleSerialInput(InputArgs& args) = 0;

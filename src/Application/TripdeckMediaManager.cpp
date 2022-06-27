@@ -35,17 +35,11 @@ void TripdeckMediaManager::init() {
 		_dataManager->addMediaListener(_ledPlayer);
 	if (_videoPlayer)
 		_dataManager->addMediaListener(_videoPlayer);
-	
-	_run = true;
-	_onStateChanged();
 }
 
 void TripdeckMediaManager::run() {
-	while (_run) {
-		// check inputs
-		for (Runnable* runnable : _runnableObjects) {
+	for (Runnable* runnable : _runnableObjects) {
 			runnable->run();
-		}
 	}
 }
 
