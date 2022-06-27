@@ -6,6 +6,11 @@ TripdeckBehavior::TripdeckBehavior(InputManager* inputManager, Serial* serial) :
 void TripdeckBehavior::init() {
 	_inputManager->init();
 	_serial->init();
+
+	_serialInput = new InputThreadedSerial(5, _serial);
+	_serialInputDelegate = new SerialInputDelegate(this);
+	_inputManager->addInput(_serialInput, _serialInputDelegate);
+	_currentState = Startup;
 }
 
 void TripdeckBehavior::run() {

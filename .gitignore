@@ -10,3 +10,5 @@ bin/
 *.o
 *.pdf
 snapshots/
+# temp
+src/settings.h

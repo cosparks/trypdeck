@@ -7,7 +7,7 @@
 #include "td_util.h"
 #include "Runnable.h"
 #include "InputManager.h"
-#include "Serial.h"
+#include "InputThreadedSerial.h"
 
 using namespace td_util;
 
@@ -52,14 +52,6 @@ class TripdeckBehavior : public Runnable {
 		TripdeckState getState();
 		void setStateChangedDelegate(Command* delegate);
 	protected:
-		TripdeckState _currentState;
-		InputManager* _inputManager = NULL;
-		Serial* _serial = NULL;
-		Command* _stateChangedDelegate = NULL;
-
-		virtual void _onStateChanged(TripdeckStateChangedArgs& args) = 0;
-		virtual void _handleSerialInput(InputArgs& args) = 0;
-
 		class SerialInputDelegate : public Command {
 			public:
 				SerialInputDelegate(TripdeckBehavior* owner);
@@ -68,6 +60,16 @@ class TripdeckBehavior : public Runnable {
 			private:
 				TripdeckBehavior* _owner;
 		};
+		
+		TripdeckState _currentState;
+		InputManager* _inputManager = NULL;
+		Serial* _serial = NULL;
+		Command* _stateChangedDelegate = NULL;
+		InputThreadedSerial* _serialInput = NULL;
+		SerialInputDelegate* _serialInputDelegate = NULL;
+
+		virtual void _onStateChanged(TripdeckStateChangedArgs& args) = 0;
+		virtual void _handleSerialInput(InputArgs& args) = 0;
 };
 
 #endif

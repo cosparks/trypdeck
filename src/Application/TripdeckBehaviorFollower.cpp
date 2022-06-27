@@ -10,8 +10,6 @@ TripdeckBehaviorFollower::~TripdeckBehaviorFollower() { }
 
 void TripdeckBehaviorFollower::init() {
 	TripdeckBehavior::init();
-	_currentState = Startup;
-	// hook up serial inputs with callbacks
 }
 
 void TripdeckBehaviorFollower::run() {

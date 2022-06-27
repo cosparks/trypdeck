@@ -7,12 +7,7 @@ TripdeckBehaviorLeader::~TripdeckBehaviorLeader() { }
 
 void TripdeckBehaviorLeader::init() {
 	TripdeckBehavior::init();
-	_currentState = Startup;
 	// hook up button inputs with callback
-
-	_serialInput = new InputThreadedSerial(5, _serial);
-	_serialInputDelegate = new SerialInputDelegate(this);
-	_inputManager->addInput(_serialInput, _serialInputDelegate);
 }
 
 void TripdeckBehaviorLeader::run() {
