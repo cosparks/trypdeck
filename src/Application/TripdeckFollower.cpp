@@ -1,3 +1,6 @@
+#include <thread>
+#include <chrono>
+
 #include "TripdeckFollower.h"
 #include "Clock.h"
 
@@ -74,6 +77,7 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 		}
 	} else {
 		// if transmission is not for us, pass it on
+		this_thread::sleep_for(std::chrono::milliseconds(10));
 		_serial->transmit(args.buffer);
 	}
 }
