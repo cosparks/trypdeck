@@ -49,7 +49,7 @@ void Serial::init() {
 	tty.c_cc[VMIN] = _bufferSize;		// Minimum serial message length is same as buffer size
 
 	// Set baud rate
-	cfsetspeed(&tty, B19200);
+	cfsetspeed(&tty, B9600);
 
 	// Save tty settings
 	if (tcsetattr(_portNum, TCSANOW, &tty) != 0) {
