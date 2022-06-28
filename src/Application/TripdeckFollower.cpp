@@ -56,9 +56,12 @@ void TripdeckFollower::_notifyLeader() {
 }
 
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {
-	// TODO: Remove debug code
 	if (args.buffer.length() < HEADER_LENGTH + 2) {
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
 		std::cout << "Warning: Invalid message received -- length: " << args.buffer.length() << std::endl;
+		#endif
+		
 		return;
 	}
 	

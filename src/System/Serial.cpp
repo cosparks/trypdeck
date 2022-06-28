@@ -67,7 +67,7 @@ void Serial::transmit(const std::string& data) {
 	
 	int32_t length = data.length();
 
-	if (_buf[length] != '\n')
+	if (_buf[length - 1] != '\n')
 		_buf[length++] = '\n';
 
 	int32_t ret = write(_portNum, _buf, length);
@@ -75,7 +75,10 @@ void Serial::transmit(const std::string& data) {
 	if (ret < 0)
 		throw std::runtime_error("unistd write error! Unable to write to serial port: " + std::string(strerror(errno)));
 
+	#if ENABLE_SERIAL_DEBUG
+	// TODO: Remove debug code
 	std::cout << "Write complete -- wrote " << ret << " / " << data.length() + 1 <<  " Bytes requested from buffer: " << _buf << std::endl;
+	#endif
 }
 
 std::string Serial::receive() {
@@ -85,8 +88,10 @@ std::string Serial::receive() {
 		throw std::runtime_error("unistd read error! Unable to read from serial port: " + std::string(strerror(errno)));
 	}
 
+	#if ENABLE_SERIAL_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Read complete -- read " << ret << " bytes from buffer: " << buf << std::endl;
+	#endif
 
 	return std::string(buf);
 }

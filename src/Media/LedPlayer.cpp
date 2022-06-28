@@ -8,21 +8,21 @@
 LedPlayer::LedPlayer(LedController* ledController) : _ledController(ledController) { }
 
 LedPlayer::~LedPlayer() {
-	#if not ENABLE_DEBUG
+	#if not ENABLE_VISUAL_DEBUG
 	_ledController->clear();
 	_ledController->show();
 	#endif
 }
 
 void LedPlayer::init() {
-	#if not ENABLE_DEBUG
+	#if not ENABLE_VISUAL_DEBUG
 	if (gpioInitialise() < 0)
 		throw std::runtime_error("Error: PI GPIO Initialization failed");
 	#endif
 	
 	_ledController->init(SPI_BAUD);
 
-	#if not ENABLE_DEBUG
+	#if not ENABLE_VISUAL_DEBUG
 	_ledController->clear();
 	_ledController->show();
 	#endif
@@ -100,7 +100,7 @@ void LedPlayer::stop() {
 
 	_state = Stop;
 
-	#if not ENABLE_DEBUG
+	#if not ENABLE_VISUAL_DEBUG
 	_ledController->clear();
 	_ledController->show();
 	#endif
@@ -150,7 +150,7 @@ void LedPlayer::_updateMedia(uint32_t fileId) {
 }
 
 // TODO: DEBUG CODE REMOVE LATER
-#if ENABLE_DEBUG
+#if ENABLE_VISUAL_DEBUG
 int32_t printDebug = 0;
 int32_t i = 0;
 #endif
@@ -173,7 +173,7 @@ int32_t LedPlayer::_getNextFrame() {
 				_streamRestarted = true;
 				
 				// TODO: REMOVE DEBUGGING CODE
-				#if ENABLE_DEBUG
+				#if ENABLE_VISUAL_DEBUG
 				i = 0;
 				printDebug = 1;
 				#endif
@@ -215,7 +215,7 @@ int32_t LedPlayer::_getNextFrame() {
 
 		_nextFrameTimeMicros = _playStartTimeMicros + _frame->best_effort_timestamp * (1000000L / _streamTimeBase.den);
 
-		#if ENABLE_DEBUG
+		#if ENABLE_VISUAL_DEBUG
 		if (_streamRestarted) {
 			std::cout << "----frame restarted----" << std::endl;
 		}
@@ -252,7 +252,7 @@ void LedPlayer::_showNextFrame() {
 		}
 	}
 
-	#if not ENABLE_DEBUG
+	#if not ENABLE_VISUAL_DEBUG
 	_ledController->show();
 	#endif
 }

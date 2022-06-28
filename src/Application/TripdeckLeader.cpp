@@ -72,7 +72,11 @@ void TripdeckLeader::_updateFollowers() {
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	if (args.buffer.length() < HEADER_LENGTH + 2) {
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
 		std::cout << "Warning: Invalid message received -- length: " << args.buffer.length() << std::endl;
+		#endif
+
 		return;
 	}
 
@@ -109,8 +113,10 @@ void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChange
 	if (args.syncLeds)
 		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
 
+	#if ENABLE_SERIAL_DEBUG
 	// TODO: Remove debug code
-	// std::cout << "Startup message received!  Updating node state with UART message: " << message << std::endl;
+	std::cout << "Startup message received!  Updating node state with UART message: " << message << std::endl;
+	#endif
 
 	_serial->transmit(message);
 }

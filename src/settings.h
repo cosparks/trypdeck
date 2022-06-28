@@ -24,8 +24,9 @@
 #define NUM_INPUTS 3				// number of inputs for pull-chains on sculpture
 #define NUM_FOLLOWERS 2				// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
 
-// misc
-#define ENABLE_DEBUG 0				// when true, stops all calls to pigpio (this disables leds!)
+// debug
+#define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (this disables leds!)
+#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
 
 // Led Settings
 // * dont modify these values *
