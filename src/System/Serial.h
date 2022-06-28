@@ -8,7 +8,7 @@
 
 class Serial {
 	public:
-		Serial(std::string portName, int32_t flag, int32_t bufferSize = 64);
+		Serial(std::string portName, int32_t flag);
 		~Serial();
 		void init();
 		void transmit(const std::string& data);
@@ -17,7 +17,6 @@ class Serial {
 		std::string _portName;
 		int32_t _flag;
 		int32_t _portNum = -1;
-		int32_t _bufferSize;
 		char _buf[SERIAL_BUFFER_SIZE];
 };
 

@@ -14,7 +14,7 @@
 #define SERIAL_BAUD B9600
 #endif
 
-Serial::Serial(std::string portName, int flag, int bufferSize) : _portName(portName), _flag(flag), _bufferSize(bufferSize) { }
+Serial::Serial(std::string portName, int flag) : _portName(portName), _flag(flag){ }
 
 Serial::~Serial() { }
 
@@ -59,24 +59,28 @@ void Serial::init() {
 }
 
 void Serial::transmit(const std::string& data) {
-	if (data.length() > (uint32_t)(_bufferSize - 1))
+	if (data.length() >= SERIAL_BUFFER_SIZE)
 		throw std::runtime_error("Error: Data string is greater than maximum UART message size (including newline character)");
 
-	memset(_buf, '\0', _bufferSize);
+	memset(_buf, '\0', SERIAL_BUFFER_SIZE);
 	strcpy(_buf, data.c_str());
-	_buf[data.length()] = '\n';
+	
+	int32_t length = data.length();
 
-	int32_t ret = write(_portNum, _buf, data.length() + 1);
+	if (_buf[length] != '\n')
+		_buf[length++] = '\n';
+
+	int32_t ret = write(_portNum, _buf, length);
 
 	if (ret < 0)
 		throw std::runtime_error("unistd write error! Unable to write to serial port: " + std::string(strerror(errno)));
 
-	std::cout << "Write complete -- wrote " << ret << " Bytes / " << data.length() + 1 <<  " Bytes requested from buffer: " << _buf << std::endl;
+	std::cout << "Write complete -- wrote " << ret << " / " << data.length() + 1 <<  " Bytes requested from buffer: " << _buf << std::endl;
 }
 
 std::string Serial::receive() {
-	char buf[_bufferSize] = { };
-	int32_t ret = read(_portNum, buf, _bufferSize);
+	char buf[SERIAL_BUFFER_SIZE] = { };
+	int32_t ret = read(_portNum, buf, SERIAL_BUFFER_SIZE);
 	if (ret < 0) {
 		throw std::runtime_error("unistd read error! Unable to read from serial port: " + std::string(strerror(errno)));
 	}
