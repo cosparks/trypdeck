@@ -72,7 +72,11 @@ void TripdeckLeader::_updateFollowers() {
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	// TODO: Remove debug code
-	std::cout << "Serial input received: " << args.buffer << std::endl;
+	std::cout << "Leader has received message: " << args.buffer << std::endl;
+	if (args.buffer.length() < HEADER_LENGTH) {
+		std::cout << "Invalid Message" << std::endl;
+		return;
+	}
 
 	// check header
 	if (args.buffer.substr(0, HEADER_LENGTH).compare(STARTUP_NOTIFICATION_HEADER) == 0) {
@@ -86,12 +90,12 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 			}
 		}
 		
-		if (!containsId) {
+		if (!containsId)
 			_nodeIds.push_back(id);
-			TripdeckStateChangedArgs args = { };
-			args.newState = Connected;
-			_updateNodeState(id, args);
-		}
+
+		TripdeckStateChangedArgs args = { };
+		args.newState = Connected;
+		_updateNodeState(id, args);
 	} else {
 		// if transmission is not for us, pass it on
 		// _serial->transmit(args.buffer);

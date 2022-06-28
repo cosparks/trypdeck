@@ -35,6 +35,6 @@ void InputThreadedSerial::_readInternal() {
 
 	_stateMutex.lock();
 	_currentlyReading = false;
-	_dataAvailable = true;
+	_dataAvailable = !_data.empty();
 	_stateMutex.unlock();
 }

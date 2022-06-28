@@ -18,7 +18,7 @@ namespace td_util {
 			virtual ~Input();
 			virtual bool read() = 0;
 			uint32_t getId();
-			const std::string& getData();
+			const std::string getData();
 		protected:
 			uint32_t _id;
 			std::string _data;

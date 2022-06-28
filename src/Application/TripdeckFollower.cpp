@@ -56,6 +56,13 @@ void TripdeckFollower::_notifyLeader() {
 }
 
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {
+	// TODO: Remove debug code
+	std::cout << "Follower has received message: " << args.buffer << std::endl;
+	if (args.buffer.length() < HEADER_LENGTH) {
+		std::cout << "Invalid Message" << std::endl;
+		return;
+	}
+	
 	// check if message is intended for this follower
 	if (args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0) {
 		const std::string header = args.buffer.substr(0, HEADER_LENGTH);
@@ -80,9 +87,6 @@ bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, Trip
 		throw std::runtime_error("Error: Invalid state changed message.  State message length must be >= 6");
 
 	args.newState = (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
-
-	// TODO: Remove debug code
-	std::cout << "Follower has received message: " << buffer << std::endl;
 
 	// parse message data only if we are entering a new state
 	if (args.newState != _currentState) {

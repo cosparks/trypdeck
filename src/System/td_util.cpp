@@ -8,6 +8,6 @@ uint32_t td_util::Input::getId() {
 	return _id;
 }
 
-const std::string& td_util::Input::getData() {
+const std::string td_util::Input::getData() {
 	return _data;
 }
