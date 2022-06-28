@@ -26,12 +26,12 @@ void Serial::init() {
 	}
 
 	// Set all flags
-	// tty.c_cflag &= ~PARENB;			// Clear parity bit
-	// tty.c_cflag &= ~CSTOPB;			// Clear stop field
-	// tty.c_cflag &= ~CSIZE;			// Clear size bits
-	// tty.c_cflag |= CS8; 			// 8 bits per byte
-	// tty.c_cflag &= ~CRTSCTS;		// Disable RTS/CTS hardware flow control
-	// tty.c_cflag |= CREAD | CLOCAL;	// Turn on READ & ignore ctrl lines
+	tty.c_cflag &= ~PARENB;			// Clear parity bit
+	tty.c_cflag &= ~CSTOPB;			// Clear stop field -- Makes it so there is only one stop bit
+	tty.c_cflag &= ~CSIZE;			// Clear size bits
+	tty.c_cflag |= CS8; 				// 8 bits per byte
+	tty.c_cflag &= ~CRTSCTS;			// Disable RTS/CTS hardware flow control
+	tty.c_cflag |= CREAD | CLOCAL;	// Turn on READ & ignore ctrl lines
 
 	// tty.c_lflag &= ~ICANON;			// disable canonical mode (\n not needed)
 	tty.c_lflag &= ~ECHO;			// Disable echo
@@ -46,7 +46,7 @@ void Serial::init() {
 	// tty.c_oflag &= ~ONLCR;		// Prevent conversion of newline to carriage return/line feed
 
 	tty.c_cc[VTIME] = 50;				// Wait for up to 5s (50 deciseconds), returning as soon as any data is received.
-	tty.c_cc[VMIN] = _bufferSize;		// Minimum serial message length is same as buffer size
+	tty.c_cc[VMIN] = 1;					// return with minimum of one byte read
 
 	// Set baud rate
 	cfsetspeed(&tty, B19200);
@@ -73,13 +73,14 @@ void Serial::transmit(const std::string& data) {
 
 std::string Serial::receive() {
 	char buf[_bufferSize] = { };
-	if (read(_portNum, buf, _bufferSize) < 0) {
+	int32_t ret = read(_portNum, buf, _bufferSize);
+	if (ret < 0) {
 		std::string error = _getSerialError(errno);
 		throw std::runtime_error("unistd read " + error +  ": unable to read from serial port");
 	}
 
 	// TODO: Remove debug code
-	std::cout << "Read complete -- buffer: " << buf << std::endl;
+	std::cout << "Read complete -- read " << ret << " bytes from buffer: " << buf << std::endl;
 
 	return std::string(buf);
 }
