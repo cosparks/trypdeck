@@ -43,7 +43,7 @@ void Serial::init() {
 	tty.c_oflag &= ~OPOST;		// Prevent special interpretation of output bytes (e.g. newline chars)
 	tty.c_oflag &= ~ONLCR;		// Prevent conversion of newline to carriage return/line feed
 
-	tty.c_cc[VTIME] = 0;				// Wait for up to 0.1s (1 decisecond), returning as soon as any data is received.
+	tty.c_cc[VTIME] = 50;				// Wait for up to 5s (50 deciseconds), returning as soon as any data is received.
 	tty.c_cc[VMIN] = _bufferSize;		// Minimum serial message length is same as buffer size
 
 	// Set baud rate
