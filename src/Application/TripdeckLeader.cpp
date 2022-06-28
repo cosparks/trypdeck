@@ -90,8 +90,11 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 			}
 		}
 		
-		if (!containsId)
+		if (!containsId) {
+			// TODO: Remove debug code
+			std::cout << "Node added with id: " << id << std::endl;
 			_nodeIds.push_back(id);
+		}
 
 		TripdeckStateChangedArgs args = { };
 		args.newState = Connected;
@@ -112,7 +115,7 @@ void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChange
 		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
 
 	// TODO: Remove debug code
-	std::cout << "Node added!  Updating node state with UART message: " << message << std::endl;
+	std::cout << "Startup message received!  Updating node state with UART message: " << message << std::endl;
 
 	_serial->transmit(message);
 }
