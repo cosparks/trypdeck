@@ -65,7 +65,7 @@ void Serial::transmit(const std::string& data) {
 	_buf[data.length()] = '\n';
 	_buf[data.length() + 1] = '\0';
 
-	if (write(_portNum, _buf, _bufferSize) < 0)
+	if (write(_portNum, _buf, data.length() + 1) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
 
 	std::cout << "Write complete -- buffer: " << _buf << std::endl;
