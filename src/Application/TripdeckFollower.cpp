@@ -71,8 +71,8 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 			TripdeckStateChangedArgs stateChangedArgs = { };
 
 			if (_parseStateChangedMessage(args.buffer, stateChangedArgs)) {
-				_currentState = stateChangedArgs.newState;
-				_onStateChanged(stateChangedArgs);
+				// _currentState = stateChangedArgs.newState;
+				// _onStateChanged(stateChangedArgs);
 			}
 		}
 	} else {
