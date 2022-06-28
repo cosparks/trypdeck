@@ -4,6 +4,8 @@
 #include <string>
 #include <fcntl.h> // Contains file controls like O_RDWR
 
+#include "settings.h"
+
 class Serial {
 	public:
 		Serial(std::string portName, int32_t flag, int32_t bufferSize = 64);
@@ -16,9 +18,7 @@ class Serial {
 		int32_t _flag;
 		int32_t _portNum = -1;
 		int32_t _bufferSize;
-		char* _buf;
-
-		const std::string _getSerialError(int32_t error);
+		char _buf[SERIAL_BUFFER_SIZE];
 };
 
 #endif

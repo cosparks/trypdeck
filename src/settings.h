@@ -1,6 +1,7 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
+#include <termios.h>
 #include "Apa102.h"
 #include "LedController.h"
 
@@ -17,11 +18,14 @@
 #define REVEAL_TIME 20000			// duration for which tarot cards will be displayed before returning to wait state
 
 // GPIO Settings
-#define SERIAL_BAUD 9600			// networking baud rate
+#define SERIAL_BAUD B9600			// networking baud rate
+#define SERIAL_BUFFER_SIZE 64		// largest possible serial message size
 #define SPI_BAUD 4000000			// led matrix baud rate
-#define ENABLE_DEBUG 0				// when true, stops all calls to pigpio (this disables leds!)
 #define NUM_INPUTS 3				// number of inputs for pull-chains on sculpture
 #define NUM_FOLLOWERS 2				// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
+
+// misc
+#define ENABLE_DEBUG 0				// when true, stops all calls to pigpio (this disables leds!)
 
 // Led Settings
 // * dont modify these values *

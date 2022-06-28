@@ -46,7 +46,6 @@ class DataManager : public Runnable {
 		void _handleFolderChangedEvent(inotify_event* event);
 		void _removeFileIdFromFolder(uint32_t id, const std::string folder);
 		int32_t _getWatchDescriptorForFolder(const std::string& folder);
-		const std::string _getWatchDescriptorError(int32_t error);
 };
 
 #endif

@@ -10,15 +10,16 @@
 
 #include "Serial.h"
 
+#ifndef SERIAL_BAUD
+#define SERIAL_BAUD B9600
+#endif
+
 Serial::Serial(std::string portName, int flag, int bufferSize) : _portName(portName), _flag(flag), _bufferSize(bufferSize) { }
 
-Serial::~Serial() {
-	delete[] _buf;
-}
+Serial::~Serial() { }
 
 void Serial::init() {
 	_portNum = open(_portName.c_str(), _flag);
-	_buf = new char[_bufferSize]();
 	struct termios tty;
 	
 	if (tcgetattr(_portNum, &tty) != 0) {
@@ -49,7 +50,7 @@ void Serial::init() {
 	tty.c_cc[VMIN] = 1;					// return with minimum of one byte read
 
 	// Set baud rate
-	cfsetspeed(&tty, B19200);
+	cfsetspeed(&tty, SERIAL_BAUD);
 
 	// Save tty settings
 	if (tcsetattr(_portNum, TCSANOW, &tty) != 0) {
@@ -65,45 +66,23 @@ void Serial::transmit(const std::string& data) {
 	strcpy(_buf, data.c_str());
 	_buf[data.length()] = '\n';
 
-	if (write(_portNum, _buf, data.length() + 1) < 0)
-		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
+	int32_t ret = write(_portNum, _buf, data.length() + 1);
 
-	std::cout << "Write complete -- buffer: " << _buf << std::endl;
+	if (ret < 0)
+		throw std::runtime_error("unistd write error! Unable to write to serial port: " + std::string(strerror(errno)));
+
+	std::cout << "Write complete -- wrote " << ret << " Bytes / " << data.length() + 1 <<  " Bytes requested from buffer: " << _buf << std::endl;
 }
 
 std::string Serial::receive() {
 	char buf[_bufferSize] = { };
 	int32_t ret = read(_portNum, buf, _bufferSize);
 	if (ret < 0) {
-		std::string error = _getSerialError(errno);
-		throw std::runtime_error("unistd read " + error +  ": unable to read from serial port");
+		throw std::runtime_error("unistd read error! Unable to read from serial port: " + std::string(strerror(errno)));
 	}
 
 	// TODO: Remove debug code
 	std::cout << "Read complete -- read " << ret << " bytes from buffer: " << buf << std::endl;
 
 	return std::string(buf);
-}
-
-const std::string Serial::_getSerialError(int32_t error) {
-	const char* ret;
-	switch (error) {
-		case EAGAIN:
-			ret = "EAGAIN | EWOULDBLOCK";
-		case EBADF:
-			ret = "EBADF";
-		case EFAULT:
-			ret = "EFAULT";
-		case EINTR:
-			ret = "EINTR";
-		case EINVAL:
-			ret = "EINVAL";
-		case EIO:
-			ret = "EIO";
-		case EISDIR:
-			ret = "EISDIR";
-		default:
-			return std::to_string(error);
-	}
-	return std::string(ret);
 }
