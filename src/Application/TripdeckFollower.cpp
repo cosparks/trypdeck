@@ -43,12 +43,7 @@ void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
 
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	// _mediaManager->updateState(args);
-	std::cout << "Follower: state changed args received!" << std::endl;
 	std::cout << "New state == " << args.newState << std::endl;
-	std::cout << "Synchronize video: " << (args.syncVideo ? "True" : "False") << std::endl;
-	std::cout << "Synchronize led: " << (args.syncLeds ? "True" : "False") << std::endl;
-	std::cout << "Video hash: " << args.videoId << std::endl;
-	std::cout << "Led hash: " << args.ledId << std::endl;
 }
 
 void TripdeckFollower::_notifyLeader() {
