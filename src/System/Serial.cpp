@@ -18,7 +18,7 @@ Serial::~Serial() {
 
 void Serial::init() {
 	_portNum = open(_portName.c_str(), _flag);
-	_buf = new char[_bufferSize];
+	_buf = new char[_bufferSize]();
 	struct termios tty;
 	
 	if (tcgetattr(_portNum, &tty) != 0) {
@@ -61,14 +61,14 @@ void Serial::transmit(const std::string& data) {
 	if (data.length() > (uint32_t)(_bufferSize - 1))
 		throw std::runtime_error("Error: Data string is greater than maximum UART message size (including newline character)");
 
-	char buf[_bufferSize] = { };
-	strcpy(buf, data.c_str());
-	buf[data.length()] = '\n';
+	strcpy(_buf, data.c_str());
+	_buf[data.length()] = '\n';
+	_buf[data.length() + 1] = '\0';
 
-	if (write(_portNum, buf, _bufferSize) < 0)
+	if (write(_portNum, _buf, _bufferSize) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
 
-	std::cout << "Write complete -- buffer: " << buf << std::endl;
+	std::cout << "Write complete -- buffer: " << _buf << std::endl;
 }
 
 std::string Serial::receive() {
