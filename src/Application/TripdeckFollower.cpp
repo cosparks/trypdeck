@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "TripdeckFollower.h"
 #include "Clock.h"
 
@@ -43,7 +41,6 @@ void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
 
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	// _mediaManager->updateState(args);
-	std::cout << "New state == " << args.newState << std::endl;
 }
 
 void TripdeckFollower::_notifyLeader() {
@@ -58,9 +55,8 @@ void TripdeckFollower::_notifyLeader() {
 
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	// TODO: Remove debug code
-	std::cout << "Follower has received message: " << args.buffer << std::endl;
 	if (args.buffer.length() < HEADER_LENGTH) {
-		std::cout << "Invalid Message" << std::endl;
+		throw std::runtime_error("Error: Invalid message received");
 		return;
 	}
 	
