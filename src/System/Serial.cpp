@@ -31,7 +31,7 @@ void Serial::init() {
 	tty.c_cflag &= ~CRTSCTS;		// Disable RTS/CTS hardware flow control
 	tty.c_cflag |= CREAD | CLOCAL;	// Turn on READ & ignore ctrl lines
 
-	// tty.c_lflag &= ~ICANON;		// disable canonical mode (\n not needed)
+	// tty.c_lflag &= ~ICANON;			// disable canonical mode (\n not needed)
 	tty.c_lflag &= ~ECHO;			// Disable echo
 	tty.c_lflag &= ~ECHOE;			// Disable erasure
 	tty.c_lflag &= ~ECHONL;			// Disable new-line echo
@@ -56,13 +56,12 @@ void Serial::init() {
 }
 
 void Serial::transmit(const std::string& data) {
-	int32_t padding = _bufferSize - data.length();
-
-	if (padding < 0)
-		throw std::runtime_error("Error: Data string is greater than maximum UART message size");
+	if (data.length() > (uint32_t)(_bufferSize - 1))
+		throw std::runtime_error("Error: Data string is greater than maximum UART message size (including newline character)");
 
 	char buf[_bufferSize] = { };
 	strcpy(buf, data.c_str());
+	buf[data.length()] = '\n';
 
 	if (write(_portNum, buf, _bufferSize) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));

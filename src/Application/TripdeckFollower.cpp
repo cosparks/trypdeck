@@ -76,6 +76,9 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 
 // returns true and loads StateChangedArgs if entering new state, false otherwise
 bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
+	if (buffer.length() < 6)
+		throw std::runtime_error("Error: Invalid state changed message.  State message length must be >= 6");
+
 	args.newState = (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
 
 	// TODO: Remove debug code
