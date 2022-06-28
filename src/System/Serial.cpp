@@ -1,3 +1,5 @@
+#include <iostream> // TODO: Remove debug code
+
 #include <stdio.h>
 #include <string.h>
 #include <stdexcept>
@@ -63,6 +65,9 @@ void Serial::transmit(const std::string& data) {
 	strcpy(buf, data.c_str());
 	buf[data.length()] = '\n';
 
+	// TODO: Remove debug code
+	std::cout << "Serial::transmitting message: " << buf << std::endl;
+
 	if (write(_portNum, buf, _bufferSize) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
 }
@@ -70,5 +75,9 @@ void Serial::transmit(const std::string& data) {
 std::string Serial::receive() {
 	char buf[_bufferSize] = { };
 	read(_portNum, buf, _bufferSize);
+
+	// TODO: Remove debug code
+	std::cout << "Serial::received message: " << buf << std::endl;
+
 	return std::string(buf);
 }
