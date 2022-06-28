@@ -14,7 +14,7 @@ const char* VideoFolders[] = { VIDEO_CONNECTING_DIRECTORY, VIDEO_CONNECTED_DIREC
 const char* LedFolders[] = { LED_CONNECTING_DIRECTORY, LED_CONNECTED_DIRECTORY, LED_WAIT_DIRECTORY, LED_PULLED_DIRECTORY, LED_REVEAL_DIRECTORY };
 
 InputManager inputManager;
-Serial serial("/dev/ttyS0", O_RDWR);
+Serial serial("/dev/ttyAMA0", O_RDWR);
 
 int main(int argc, char** argv) {
 	system("sudo sh -c \"TERM=linux setterm -foreground black -clear all >/dev/tty0\"");
