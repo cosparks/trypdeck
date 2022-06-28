@@ -22,6 +22,13 @@ using namespace td_util;
 // if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
 // ID is unique identifier for intended recipient
 #define STATE_CHANGED_HEADER "sc/"
+// follower synced message header: fs/ID/STATE
+// sent during Follower's connected phase
+#define STATUS_UPDATE_HEADER "su/"
+// message dictating that follower stop playing media: "sm/ID"
+#define STOP_MEDIA_HEADER "sm/"
+// message dictating that follower start playing media: "pm/ID"
+#define PLAY_MEDIA_HEADER "pm/"
 
 /**
  * @brief Abstract class the children of which will encapsulate the unique behavior for leader and follower
@@ -45,6 +52,11 @@ class Tripdeck : public Runnable {
 			private:
 				Tripdeck* _owner;
 		};
+
+		struct MediaHashes {
+			uint32_t videoHash;
+			uint32_t ledHash;
+		};
 		
 		TripdeckMediaManager* _mediaManager = NULL;
 		InputManager* _inputManager = NULL;
@@ -53,10 +65,28 @@ class Tripdeck : public Runnable {
 		Command* _stateChangedDelegate = NULL;
 		InputThreadedSerial* _serialInput = NULL;
 		SerialInputDelegate* _serialInputDelegate = NULL;
+		TripdeckStatus _status;
 		bool _run;
 
-		virtual void _onStateChanged(TripdeckStateChangedArgs& args) = 0;
 		virtual void _handleSerialInput(InputArgs& args) = 0;
+		MediaHashes _parseMediaHashes(const std::string& buffer);
+		const std::string _hashToHexString(uint32_t hash);
+
+		inline const std::string _parseHeader(const std::string& buffer) {
+			return buffer.substr(0, HEADER_LENGTH);
+		}
+
+		inline const std::string _parseId(const std::string& buffer) {
+			return buffer.substr(HEADER_LENGTH, 1);
+		}
+
+		inline TripdeckState _parseState(const std::string& buffer) {
+			return (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+		}
+
+		inline bool _containsMediaHashes(const std::string& buffer) {
+			return buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0;
+		}
 };
 
 #endif

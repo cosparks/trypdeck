@@ -13,8 +13,9 @@ class TripdeckFollower : public Tripdeck {
 	private:
 		int64_t _nextActionMillis = 0;
 
-		void _onStateChanged(TripdeckStateChangedArgs& args) override;
-		void _notifyLeader();
+		void _onStateChanged(TripdeckStateChangedArgs& args);
+		void _sendConnectingMessage();
+		void _sendStatusUpdate();
 		void _handleSerialInput(InputArgs& args) override;
 		bool _parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args);
 };

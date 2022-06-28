@@ -44,17 +44,44 @@ void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
 
 }
 
-void TripdeckLeader::_onStateChanged(TripdeckStateChangedArgs& args) {
-	
+void TripdeckLeader::_onStateChanged() {
+	switch (_currentState) {
+		case Connecting:
+			
+			break;
+		case Connected:
+			break;
+		case Wait:
+			break;
+		case Pulled:
+			_notifyPulled();
+			break;
+		case Reveal:
+			_notifyReveal();
+			break;
+		default:
+			// do nothing
+			break;
+	}
 }
 
 void TripdeckLeader::_runStartup() {
-	if (_nodeIds.size() < NUM_FOLLOWERS)
+	if (_nodeIdToStatus.size() < NUM_FOLLOWERS)
 		return;
 	
+	if (!_followersSynced) {
+		if (_verifySynced()) {
+			_followersSynced = true;
+			_currentState = Connected;
+			_onStateChanged();
+		}
 
-	if (Clock::instance().millis() > STARTUP_TIME && _currentState == Connected) {
-		
+		return;
+	}
+
+	if (Clock::instance().millis() > STARTUP_TIME) {
+		_currentState = Wait;
+		_onStateChanged();
 	}
 }
 
@@ -80,31 +107,35 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 		return;
 	}
 
+	const std::string header = _parseHeader(args.buffer);
+	const std::string id = _parseId(args.buffer);
+
 	// check header
-	if (args.buffer.substr(0, HEADER_LENGTH).compare(STARTUP_NOTIFICATION_HEADER) == 0) {
-		std::string id = args.buffer.substr(HEADER_LENGTH, 1);
-		bool containsId = false;
+	if (header.compare(STARTUP_NOTIFICATION_HEADER) == 0) {
+		// add node to map and send state update message
+		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
+			_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, Unknown, false };
 
-		for (const std::string& nodeId : _nodeIds) {
-			if (nodeId.compare(id) == 0) {
-				containsId = true;
-				break;
-			}
+		TripdeckStateChangedArgs stateChangedArgs = { };
+		stateChangedArgs.newState = Connected;
+
+		_sendNodeUpdate(id, stateChangedArgs);
+	} else if (header.compare(STATUS_UPDATE_HEADER) == 0) {
+		// update internal representation of node's state
+		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
+			_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseState(args.buffer), true };
+		else
+			_nodeIdToStatus[id].state = _parseState(args.buffer);
+
+		if (_containsMediaHashes(args.buffer)) {
+			MediaHashes hashes = _parseMediaHashes(args.buffer);
+			_nodeIdToStatus[id].videoMedia = hashes.videoHash;
+			_nodeIdToStatus[id].ledMedia = hashes.ledHash;
 		}
-		
-		if (!containsId)
-			_nodeIds.push_back(id);
-
-		TripdeckStateChangedArgs args = { };
-		args.newState = Connected;
-		_updateNodeState(id, args);
-	} else {
-		// if transmission is not for us, pass it on
-		// _serial->transmit(args.buffer);
 	}
 }
 
-void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChangedArgs& args) { 
+void TripdeckLeader::_sendNodeUpdate(const std::string& id, TripdeckStateChangedArgs& args) { 
 	std::string message(STATE_CHANGED_HEADER);
 	message.append(id + "/" + std::to_string(args.newState));
 	
@@ -119,6 +150,15 @@ void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChange
 	#endif
 
 	_serial->transmit(message);
+}
+
+bool TripdeckLeader::_verifySynced() {
+	for (auto const& pair : _nodeIdToStatus) {
+		if (!pair.second.connected)
+			return false;
+	}
+
+	return true;
 }
 
 void TripdeckLeader::_handleUserInput(InputArgs* data) {

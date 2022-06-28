@@ -5,7 +5,7 @@
 
 // Connecting and Connected == startup phase	// Wait == waiting for user input
 // Pulled == chain has been pulled				// Reveal == card is being shown
-enum TripdeckState { Connecting, Connected, Wait, Pulled, Reveal, Inactive };
+enum TripdeckState { Connecting, Connected, Wait, Pulled, Reveal, Unknown };
 
 struct TripdeckStateChangedArgs {
 	TripdeckState newState;
@@ -13,6 +13,14 @@ struct TripdeckStateChangedArgs {
 	uint32_t ledId;
 	bool syncVideo;
 	bool syncLeds;
+	bool loop;
+};
+
+struct TripdeckStatus {
+	uint32_t videoMedia;
+	uint32_t ledMedia;
+	TripdeckState state;
+	bool connected;
 };
 
 #endif

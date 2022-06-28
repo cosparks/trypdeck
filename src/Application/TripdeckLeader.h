@@ -2,7 +2,7 @@
 #define _TRIPDECK_BEHAVIOR_LEADER_H_
 
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include "Tripdeck.h"
 
@@ -14,14 +14,15 @@ class TripdeckLeader : public Tripdeck {
 		void run() override;
 		void handleMediaChanged(TripdeckStateChangedArgs& args) override;
 	private:
-		std::vector<std::string> _nodeIds;
-		bool _connected = false;
+		std::unordered_map<std::string, TripdeckStatus> _nodeIdToStatus;
+		bool _followersSynced = false;
 
-		void _onStateChanged(TripdeckStateChangedArgs& args) override;
+		void _onStateChanged();
 		void _updateFollowers();
 		void _handleSerialInput(InputArgs& args) override;
 		void _handleUserInput(InputArgs* data);
-		void _updateNodeState(const std::string& id, TripdeckStateChangedArgs& args);
+		void _sendNodeUpdate(const std::string& id, TripdeckStateChangedArgs& args);
+		bool _verifySynced();
 		void _runStartup();
 		void _notifyPulled();
 		void _notifyReveal();

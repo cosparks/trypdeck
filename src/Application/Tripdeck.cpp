@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "Tripdeck.h"
 
 // tripdeck behavior
@@ -23,15 +25,27 @@ void Tripdeck::run() {
 	_mediaManager->run();
 }
 
+Tripdeck::MediaHashes Tripdeck::_parseMediaHashes(const std::string& buffer) {
+	std::string mediaHashes = buffer.substr(HEADER_LENGTH + 4);
+	int32_t slashIndex = mediaHashes.find("/");
+	return MediaHashes { std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16), std::stoul(mediaHashes.substr(slashIndex + 1), NULL, 16) };
+}
+
+const std::string Tripdeck::_hashToHexString(uint32_t hash) {
+	std::stringstream stream;
+	stream << std::hex << hash;
+	return stream.str();
+}
+
 void Tripdeck::setStateChangedDelegate(Command* delegate) {
 	_stateChangedDelegate = delegate;
+}
+
+void Tripdeck::SerialInputDelegate::execute(CommandArgs args) {
+	_owner->_handleSerialInput(*((InputArgs*)args));
 }
 
 // serial input delegate
 Tripdeck::SerialInputDelegate::SerialInputDelegate(Tripdeck* owner) : _owner(owner) { }
 
 Tripdeck::SerialInputDelegate::~SerialInputDelegate() { }
-
-void Tripdeck::SerialInputDelegate::execute(CommandArgs args) {
-	_owner->_handleSerialInput(*((InputArgs*)args));
-}

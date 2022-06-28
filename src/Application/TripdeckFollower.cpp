@@ -3,7 +3,7 @@
 #include "TripdeckFollower.h"
 #include "Clock.h"
 
-#define STARTUP_NOTIFICATION_INTERVAL 5000
+#define STARTUP_NOTIFICATION_INTERVAL 2000
 
 TripdeckFollower::TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 
@@ -18,9 +18,10 @@ void TripdeckFollower::run() {
 	while (_run) {
 		switch (_currentState) {
 			case Connecting:
-				_notifyLeader();
+				_sendConnectingMessage();
 				break;
 			case Connected:
+				_sendStatusUpdate();
 				break;
 			case Wait:
 				break;
@@ -45,7 +46,7 @@ void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	// _mediaManager->updateState(args);
 }
 
-void TripdeckFollower::_notifyLeader() {
+void TripdeckFollower::_sendConnectingMessage() {
 	int64_t currentTime = Clock::instance().millis();
 	if (currentTime >= _nextActionMillis) {
 		_nextActionMillis = currentTime + STARTUP_NOTIFICATION_INTERVAL;
@@ -53,6 +54,17 @@ void TripdeckFollower::_notifyLeader() {
 		data += ID;
 		_serial->transmit(data);
 	}
+}
+
+void TripdeckFollower::_sendStatusUpdate() {
+	std::string message = STATUS_UPDATE_HEADER;
+	message += ID;
+	message.append(std::to_string(_currentState));
+
+	if (_status.videoMedia != 0)
+		message.append("/" + _hashToHexString(_status.videoMedia));
+	if (_status.ledMedia != 0)
+		message.append("/" + _hashToHexString(_status.ledMedia));
 }
 
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {
@@ -67,7 +79,7 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	
 	// check if message is intended for this follower
 	if (args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0) {
-		const std::string header = args.buffer.substr(0, HEADER_LENGTH);
+		const std::string header = _parseHeader(args.buffer);
 
 		if (header.compare(STATE_CHANGED_HEADER) == 0) {
 			TripdeckStateChangedArgs stateChangedArgs = { };
@@ -88,24 +100,21 @@ bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, Trip
 	if (buffer.length() < 6)
 		throw std::runtime_error("Error: Invalid state changed message.  State message length must be >= 6");
 
-	args.newState = (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+	args.newState = _parseState(buffer);
 
 	// parse message data only if we are entering a new state
 	if (args.newState != _currentState) {
 		// check for extra data in serial message
-		if (buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0) {
-			std::string mediaHashes = buffer.substr(HEADER_LENGTH + 4);
-			int32_t slashIndex = mediaHashes.find("/");
-			uint32_t videoHash = std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16);
-			uint32_t ledHash = std::stoul(mediaHashes.substr(slashIndex + 1));
+		if (_containsMediaHashes(buffer)) {
+			MediaHashes hashes = _parseMediaHashes(buffer);
 
-			if (videoHash != 0) {
-				args.videoId = videoHash;
+			if (hashes.videoHash != 0) {
+				args.videoId = hashes.videoHash;
 				args.syncVideo = true;
 			}
 
-			if (ledHash != 0) {
-				args.ledId = ledHash;
+			if (hashes.ledHash != 0) {
+				args.ledId = hashes.ledHash;
 				args.syncLeds = true;
 			}
 		}

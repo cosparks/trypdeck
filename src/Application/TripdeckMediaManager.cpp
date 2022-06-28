@@ -43,18 +43,95 @@ void TripdeckMediaManager::run() {
 	}
 }
 
+void TripdeckMediaManager::play(TripdeckMediaPlaybackOption option) {
+	switch (option) {
+		case Video:
+			if (_videoPlayer)
+				_videoPlayer->play();
+			break;
+		case Led:
+			if (_ledPlayer)
+				_ledPlayer->play();
+			break;
+		default:
+			if (_videoPlayer)
+				_videoPlayer->play();
+			if (_ledPlayer)
+				_ledPlayer->play();
+			break;
+	} 
+}
+
+void TripdeckMediaManager::stop(TripdeckMediaPlaybackOption option) {
+	switch (option) {
+		case Video:
+			if (_videoPlayer)
+				_videoPlayer->stop();
+			break;
+		case Led:
+			if (_ledPlayer)
+				_ledPlayer->stop();
+			break;
+		default:
+			if (_videoPlayer)
+				_videoPlayer->stop();
+			if (_ledPlayer)
+				_ledPlayer->stop();
+			break;
+	}
+}
+
+void TripdeckMediaManager::pause(TripdeckMediaPlaybackOption option) {
+	switch (option) {
+		case Video:
+			if (_videoPlayer)
+				_videoPlayer->pause();
+			break;
+		case Led:
+			if (_ledPlayer)
+				_ledPlayer->pause();
+			break;
+		default:
+			if (_videoPlayer)
+				_videoPlayer->pause();
+			if (_ledPlayer)
+				_ledPlayer->pause();
+			break;
+	} 
+}
+
 void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 	_currentState = args.newState;
 
-	std::cout << "State changed args received" << std::endl;
-	std::cout << "New state == " << args.newState << std::endl;
-	std::cout << "Synchronize video: " << (args.syncVideo ? "True" : "False") << std::endl;
-	std::cout << "Synchronize led: " << (args.syncLeds ? "True" : "False") << std::endl;
-	std::cout << "Video hash: " << args.videoId << std::endl;
-	std::cout << "Led hash: " << args.ledId << std::endl;
+	if (_videoPlayer) {
+		uint32_t videoId = 0;
+		if (args.videoId == 0) {
+			srand((uint32_t)Clock::instance().millis());
+			videoId = getRandomVideoId(_currentState);
+		} else {
+			videoId = args.videoId;
+		}
 
-	// TODO: specify state behavior based on state changed args
-	_onStateChanged();
+		_videoPlayer->setCurrentMedia(videoId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
+
+		if (!args.syncVideo)
+			_videoPlayer->play();
+	}
+
+	if (_ledPlayer) {
+		uint32_t ledId = 0;
+		if (args.ledId == 0) {
+			srand((uint32_t)Clock::instance().millis());
+			ledId = getRandomVideoId(_currentState);
+		} else {
+			ledId = args.ledId;
+		}
+
+		_ledPlayer->setCurrentMedia(ledId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
+
+		if (!args.syncLeds)
+			_ledPlayer->play();
+	}
 }
 
 void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folder) {
@@ -88,33 +165,3 @@ uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
 
 	return ledFiles[rand() % ledFiles.size()];
 }
-
-void TripdeckMediaManager::_stateChanged(TripdeckStateChangedArgs* args) {
-
-}
-
-void TripdeckMediaManager::_onStateChanged() {
-	srand((uint32_t)Clock::instance().millis());
-	
-	if (_videoPlayer) {
-		uint32_t randomVideoFile = getRandomVideoId(_currentState);
-		_videoPlayer->setCurrentMedia(randomVideoFile, MediaPlayer::MediaPlaybackOption::Loop);
-		_videoPlayer->play();
-	}
-
-	if (_ledPlayer) {
-		uint32_t randomLedFile = getRandomLedId(_currentState);
-		_ledPlayer->setCurrentMedia(randomLedFile, MediaPlayer::MediaPlaybackOption::Loop);
-		_ledPlayer->play();
-	}
-}
-
-// TripdeckMediaManager::TripdeckStateChangedDelegate::TripdeckStateChangedDelegate(TripdeckMediaManager* owner) {
-// 	_owner = owner;
-// }
-
-// TripdeckMediaManager::TripdeckStateChangedDelegate::~TripdeckStateChangedDelegate() { }
-
-// void TripdeckMediaManager::TripdeckStateChangedDelegate::execute(CommandArgs args) {
-// 	_owner->_stateChanged((TripdeckStateChangedArgs*)args);
-// }
