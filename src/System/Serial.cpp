@@ -61,9 +61,9 @@ void Serial::transmit(const std::string& data) {
 	if (data.length() > (uint32_t)(_bufferSize - 1))
 		throw std::runtime_error("Error: Data string is greater than maximum UART message size (including newline character)");
 
+	memset(_buf, '\0', _bufferSize);
 	strcpy(_buf, data.c_str());
 	_buf[data.length()] = '\n';
-	_buf[data.length() + 1] = '\0';
 
 	if (write(_portNum, _buf, data.length() + 1) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
