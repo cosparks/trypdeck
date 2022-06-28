@@ -71,7 +71,11 @@ void TripdeckLeader::_updateFollowers() {
 }
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
-
+	if (args.buffer.length() < HEADER_LENGTH) {
+		std::cout << "Warning: Invalid message received" << std::endl;
+		return;
+	}
+	
 	// check header
 	if (args.buffer.substr(0, HEADER_LENGTH).compare(STARTUP_NOTIFICATION_HEADER) == 0) {
 		std::string id = args.buffer.substr(HEADER_LENGTH, 1);

@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "TripdeckFollower.h"
 #include "Clock.h"
 
@@ -56,7 +58,7 @@ void TripdeckFollower::_notifyLeader() {
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	// TODO: Remove debug code
 	if (args.buffer.length() < HEADER_LENGTH) {
-		throw std::runtime_error("Error: Invalid message received");
+		std::cout << "Warning: Invalid message received" << std::endl;
 		return;
 	}
 	
