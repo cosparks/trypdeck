@@ -17,6 +17,8 @@ class Serial {
 		int32_t _portNum = -1;
 		int32_t _bufferSize;
 		char* _buf;
+
+		const std::string _getSerialError(int32_t error);
 };
 
 #endif

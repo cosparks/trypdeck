@@ -65,19 +65,39 @@ void Serial::transmit(const std::string& data) {
 	strcpy(buf, data.c_str());
 	buf[data.length()] = '\n';
 
-	// TODO: Remove debug code
-	std::cout << "Serial::transmitting message: " << buf << std::endl;
-
 	if (write(_portNum, buf, _bufferSize) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
 }
 
 std::string Serial::receive() {
 	char buf[_bufferSize] = { };
-	read(_portNum, buf, _bufferSize);
-
-	// TODO: Remove debug code
-	std::cout << "Serial::received message: " << buf << std::endl;
+	if (read(_portNum, buf, _bufferSize) < 0) {
+		std::string error = _getSerialError(errno);
+		throw std::runtime_error("unistd read " + error +  ": unable to read from serial port");
+	}
 
 	return std::string(buf);
+}
+
+const std::string Serial::_getSerialError(int32_t error) {
+	const char* ret;
+	switch (error) {
+		case EAGAIN:
+			ret = "EAGAIN | EWOULDBLOCK";
+		case EBADF:
+			ret = "EBADF";
+		case EFAULT:
+			ret = "EFAULT";
+		case EINTR:
+			ret = "EINTR";
+		case EINVAL:
+			ret = "EINVAL";
+		case EIO:
+			ret = "EIO";
+		case EISDIR:
+			ret = "EISDIR";
+		default:
+			return std::to_string(error);
+	}
+	return std::string(ret);
 }
