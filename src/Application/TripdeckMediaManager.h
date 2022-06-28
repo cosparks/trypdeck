@@ -20,9 +20,11 @@ class TripdeckMediaManager : public Runnable {
 		~TripdeckMediaManager();
 		void init() override;
 		void run() override;
+		void updateState(TripdeckStateChangedArgs& args);
 		void addVideoFolder(TripdeckState state, const char* folder);
 		void addLedFolder(TripdeckState state, const char* folder);
-		void handleKeyboardInput(int32_t input);
+		uint32_t getRandomVideoId(TripdeckState state);
+		uint32_t getRandomLedId(TripdeckState state);
 
 	private:
 		TripdeckState _currentState = Inactive;

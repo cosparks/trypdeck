@@ -1,8 +1,9 @@
-#include "TripdeckFollower.h"
+#include <iostream>
 
+#include "TripdeckFollower.h"
 #include "Clock.h"
 
-#define STARTUP_NOTIFICATION_INTERVAL 1000
+#define STARTUP_NOTIFICATION_INTERVAL 5000
 
 TripdeckFollower::TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 
@@ -41,8 +42,7 @@ void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
-	// if (_stateChangedDelegate)
-	// 	_stateChangedDelegate->execute((CommandArgs)&args);
+	_mediaManager->updateState(args);
 }
 
 void TripdeckFollower::_notifyLeader() {
@@ -77,6 +77,9 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 // returns true and loads StateChangedArgs if entering new state, false otherwise
 bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
 	args.newState = (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+
+	// TODO: Remove debug code
+	std::cout << "Follower has received message: " << buffer << std::endl;
 
 	// parse message data only if we are entering a new state
 	if (args.newState != _currentState) {

@@ -19,6 +19,7 @@ using namespace td_util;
 #define STARTUP_NOTIFICATION_HEADER "sn/"
 // startup notification structure: "sc/ID/STATE(/VIDEOHASH/LEDHASH)"
 // STATE is TripdeckState to change to and (/VIDEOHASH/LEDHASH) are optional arguments for video and led file IDs
+// if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
 // ID is unique identifier for intended recipient
 #define STATE_CHANGED_HEADER "sc/"
 

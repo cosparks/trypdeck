@@ -11,16 +11,16 @@
 
 TripdeckMediaManager::TripdeckMediaManager(DataManager* dataManager, MediaPlayer* videoPlayer, MediaPlayer* ledPlayer) :
 	_dataManager(dataManager), _videoPlayer(videoPlayer), _ledPlayer(ledPlayer) {
-		if (!_dataManager)
-			throw std::runtime_error("Error: TripdeckMediaManager::_dataManager cannot be null!");
+	if (!_dataManager)
+		throw std::runtime_error("Error: TripdeckMediaManager::_dataManager cannot be null!");
 
-		_runnableObjects.push_back(_dataManager);
+	_runnableObjects.push_back(_dataManager);
 
-		if (_ledPlayer)
-			_runnableObjects.push_back(_ledPlayer);
-		if (_videoPlayer)
-			_runnableObjects.push_back(_videoPlayer);
-	}
+	if (_ledPlayer)
+		_runnableObjects.push_back(_ledPlayer);
+	if (_videoPlayer)
+		_runnableObjects.push_back(_videoPlayer);
+}
 
 TripdeckMediaManager::~TripdeckMediaManager() { }
 
@@ -43,6 +43,20 @@ void TripdeckMediaManager::run() {
 	}
 }
 
+void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
+	_currentState = args.newState;
+
+	std::cout << "State changed args received" << std::endl;
+	std::cout << "New state == " << args.newState << std::endl;
+	std::cout << "Synchronize video: " << (args.syncVideo ? "True" : "False") << std::endl;
+	std::cout << "Synchronize led: " << (args.syncLeds ? "True" : "False") << std::endl;
+	std::cout << "Video hash: " << args.videoId << std::endl;
+	std::cout << "Led hash: " << args.ledId << std::endl;
+
+	// TODO: specify state behavior based on state changed args
+	_onStateChanged();
+}
+
 void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folder) {
 	_videoPlayer->addMediaFolder(folder);
 	_stateToVideoFolder[state] = folder;
@@ -53,42 +67,43 @@ void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder)
 	_stateToLedFolder[state] = folder;
 }
 
+uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
+	const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
+
+	if (videoFiles.size() == 0) {
+		std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+		throw std::runtime_error(message);
+	}
+
+	return videoFiles[rand() % videoFiles.size()];
+}
+
+uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
+	const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
+
+	if (ledFiles.size() == 0) {
+		std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+		throw std::runtime_error(message);
+	}
+
+	return ledFiles[rand() % ledFiles.size()];
+}
+
 void TripdeckMediaManager::_stateChanged(TripdeckStateChangedArgs* args) {
-	std::cout << "State changed args received" << std::endl;
-	std::cout << "New state == " << args->newState << std::endl;
-	std::cout << "Synchronize video: " << (args->syncVideo ? "True" : "False") << std::endl;
-	std::cout << "Synchronize led: " << (args->syncLeds ? "True" : "False") << std::endl;
-	std::cout << "Video hash: " << args->videoId << std::endl;
-	std::cout << "Led hash: " << args->ledId << std::endl;
+
 }
 
 void TripdeckMediaManager::_onStateChanged() {
 	srand((uint32_t)Clock::instance().millis());
 	
 	if (_videoPlayer) {
-		// set random video file from folder
-		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[_currentState]);
-
-		if (videoFiles.size() == 0) {
-			std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
-			throw std::runtime_error(message);
-		}
-
-		uint32_t randomVideoFile = videoFiles[rand() % videoFiles.size()];
+		uint32_t randomVideoFile = getRandomVideoId(_currentState);
 		_videoPlayer->setCurrentMedia(randomVideoFile, MediaPlayer::MediaPlaybackOption::Loop);
 		_videoPlayer->play();
 	}
 
 	if (_ledPlayer) {
-		// set random led file from folder
-		const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
-
-		if (ledFiles.size() == 0) {
-			std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
-			throw std::runtime_error(message);
-		}
-
-		uint32_t randomLedFile = ledFiles[rand() % ledFiles.size()];
+		uint32_t randomLedFile = getRandomLedId(_currentState);
 		_ledPlayer->setCurrentMedia(randomLedFile, MediaPlayer::MediaPlaybackOption::Loop);
 		_ledPlayer->play();
 	}

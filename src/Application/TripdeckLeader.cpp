@@ -38,7 +38,6 @@ void TripdeckLeader::run() {
 				break;
 		}
 	}
-
 }
 
 void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
@@ -46,13 +45,13 @@ void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckLeader::_onStateChanged(TripdeckStateChangedArgs& args) {
-
+	
 }
 
 void TripdeckLeader::_runStartup() {
 	if (_nodeIds.size() < NUM_FOLLOWERS)
 		return;
-	else
+	
 
 	if (Clock::instance().millis() > STARTUP_TIME && _currentState == Connected) {
 		
@@ -72,6 +71,7 @@ void TripdeckLeader::_updateFollowers() {
 }
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
+	// TODO: Remove debug code
 	std::cout << "Serial input received from id " << args.id << ": " << args.buffer << std::endl;
 
 	// check header
@@ -85,11 +85,12 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 				break;
 			}
 		}
-
+		
 		if (!containsId) {
 			_nodeIds.push_back(id);
 			TripdeckStateChangedArgs args = { };
 			args.newState = Connected;
+			_updateNodeState(id, args);
 		}
 	} else {
 		// if transmission is not for us, pass it on
@@ -97,8 +98,16 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	}
 }
 
-void TripdeckLeader::_notifyConnected(const std::string& id) { 
+void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChangedArgs& args) { 
+	std::string message(STATE_CHANGED_HEADER);
+	message.append("/" + id + "/" + std::to_string(args.newState));
+	
+	if (args.syncVideo)
+		message.append("/" + std::to_string(_mediaManager->getRandomVideoId(args.newState)));
+	if (args.syncLes)
+		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
 
+	_serial->transmit(message);
 }
 
 void TripdeckLeader::_handleUserInput(InputArgs* data) {
