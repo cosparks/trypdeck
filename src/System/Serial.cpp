@@ -31,7 +31,7 @@ void Serial::init() {
 	tty.c_cflag &= ~CRTSCTS;		// Disable RTS/CTS hardware flow control
 	tty.c_cflag |= CREAD | CLOCAL;	// Turn on READ & ignore ctrl lines
 
-	tty.c_lflag &= ~ICANON;			// disable canonical mode (\n not needed)
+	// tty.c_lflag &= ~ICANON;		// disable canonical mode (\n not needed)
 	tty.c_lflag &= ~ECHO;			// Disable echo
 	tty.c_lflag &= ~ECHOE;			// Disable erasure
 	tty.c_lflag &= ~ECHONL;			// Disable new-line echo
@@ -43,8 +43,8 @@ void Serial::init() {
 	tty.c_oflag &= ~OPOST;		// Prevent special interpretation of output bytes (e.g. newline chars)
 	tty.c_oflag &= ~ONLCR;		// Prevent conversion of newline to carriage return/line feed
 
-	tty.c_cc[VTIME] = 0;		// Wait for up to 0.1s (1 decisecond), returning as soon as any data is received.
-	tty.c_cc[VMIN] = 4;			// Minimum serial message length is 4 bytes
+	tty.c_cc[VTIME] = 0;				// Wait for up to 0.1s (1 decisecond), returning as soon as any data is received.
+	tty.c_cc[VMIN] = _bufferSize;		// Minimum serial message length is same as buffer size
 
 	// Set baud rate
 	cfsetspeed(&tty, B19200);
@@ -56,9 +56,16 @@ void Serial::init() {
 }
 
 void Serial::transmit(const std::string& data) {
-	if (write(_portNum, data.c_str(), data.length()) < 0) {
+	int32_t padding = _bufferSize - data.length();
+
+	if (padding < 0)
+		throw std::runtime_error("Error: Data string is greater than maximum UART message size");
+
+	char buf[_bufferSize] = { };
+	strcpy(buf, data.c_str());
+
+	if (write(_portNum, buf, _bufferSize) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
-	}
 }
 
 std::string Serial::receive() {

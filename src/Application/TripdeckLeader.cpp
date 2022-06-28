@@ -72,7 +72,7 @@ void TripdeckLeader::_updateFollowers() {
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	// TODO: Remove debug code
-	std::cout << "Serial input received from id " << args.id << ": " << args.buffer << std::endl;
+	std::cout << "Serial input received: " << args.buffer << std::endl;
 
 	// check header
 	if (args.buffer.substr(0, HEADER_LENGTH).compare(STARTUP_NOTIFICATION_HEADER) == 0) {
@@ -94,18 +94,21 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 		}
 	} else {
 		// if transmission is not for us, pass it on
-		_serial->transmit(args.buffer);
+		// _serial->transmit(args.buffer);
 	}
 }
 
 void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChangedArgs& args) { 
 	std::string message(STATE_CHANGED_HEADER);
-	message.append("/" + id + "/" + std::to_string(args.newState));
+	message.append(id + "/" + std::to_string(args.newState));
 	
 	if (args.syncVideo)
 		message.append("/" + std::to_string(_mediaManager->getRandomVideoId(args.newState)));
 	if (args.syncLeds)
 		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
+
+	// TODO: Remove debug code
+	std::cout << "Node added!  Updating node state with UART message: " << message << std::endl;
 
 	_serial->transmit(message);
 }
