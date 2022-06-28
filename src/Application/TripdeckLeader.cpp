@@ -104,7 +104,7 @@ void TripdeckLeader::_updateNodeState(const std::string& id, TripdeckStateChange
 	
 	if (args.syncVideo)
 		message.append("/" + std::to_string(_mediaManager->getRandomVideoId(args.newState)));
-	if (args.syncLes)
+	if (args.syncLeds)
 		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
 
 	_serial->transmit(message);

@@ -21,7 +21,7 @@ class TripdeckLeader : public Tripdeck {
 		void _updateFollowers();
 		void _handleSerialInput(InputArgs& args) override;
 		void _handleUserInput(InputArgs* data);
-		void updateNode(const std::string& id, TripdeckStateChangedArgs& args);
+		void _updateNodeState(const std::string& id, TripdeckStateChangedArgs& args);
 		void _runStartup();
 		void _notifyPulled();
 		void _notifyReveal();
