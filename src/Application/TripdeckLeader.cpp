@@ -71,12 +71,6 @@ void TripdeckLeader::_updateFollowers() {
 }
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
-	// TODO: Remove debug code
-	std::cout << "Leader has received message: " << args.buffer << std::endl;
-	if (args.buffer.length() < HEADER_LENGTH) {
-		std::cout << "Invalid Message" << std::endl;
-		return;
-	}
 
 	// check header
 	if (args.buffer.substr(0, HEADER_LENGTH).compare(STARTUP_NOTIFICATION_HEADER) == 0) {
@@ -90,11 +84,8 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 			}
 		}
 		
-		if (!containsId) {
-			// TODO: Remove debug code
-			std::cout << "Node added with id: " << id << std::endl;
+		if (!containsId)
 			_nodeIds.push_back(id);
-		}
 
 		TripdeckStateChangedArgs args = { };
 		args.newState = Connected;

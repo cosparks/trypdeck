@@ -67,6 +67,8 @@ void Serial::transmit(const std::string& data) {
 
 	if (write(_portNum, buf, _bufferSize) < 0)
 		throw std::runtime_error(std::string("Error: Unable to write to serial port"));
+
+	std::cout << "Write complete -- buffer: " << buf << std::endl;
 }
 
 std::string Serial::receive() {
@@ -75,6 +77,9 @@ std::string Serial::receive() {
 		std::string error = _getSerialError(errno);
 		throw std::runtime_error("unistd read " + error +  ": unable to read from serial port");
 	}
+
+	// TODO: Remove debug code
+	std::cout << "Read complete -- buffer: " << buf << std::endl;
 
 	return std::string(buf);
 }
