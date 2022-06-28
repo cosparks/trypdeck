@@ -68,6 +68,7 @@ void Serial::transmit(const std::string& data) {
 }
 
 std::string Serial::receive() {
-	read(_portNum, _buf, _bufferSize);
-	return std::string(_buf);
+	char buf[_bufferSize] = { };
+	read(_portNum, buf, _bufferSize);
+	return std::string(buf);
 }
