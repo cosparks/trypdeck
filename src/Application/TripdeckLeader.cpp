@@ -48,6 +48,7 @@ void TripdeckLeader::_onStateChanged() {
 			// same as Connected
 		case Connected:
 			args.loop = true;
+			args.mediaOption = Both;
 			break;
 		case Wait:
 			args.videoId = _mediaManager->getRandomVideoId(_status.state);

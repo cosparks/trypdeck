@@ -12,6 +12,7 @@ void TripdeckFollower::init() {
 
 	TripdeckStateChangedArgs args = { };
 	args.newState = _status.state;
+	args.mediaOption = Both;
 	_onStateChanged(args);
 }
 
