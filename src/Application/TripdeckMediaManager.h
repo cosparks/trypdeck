@@ -38,6 +38,13 @@ class TripdeckMediaManager : public Runnable {
 		std::unordered_map<TripdeckState, std::string> _stateToLedFolder;
 		std::vector<Runnable*> _runnableObjects;
 		bool _run;
+
+		void _playVideoInternal();
+		void _playLedInternal();
+		void _stopVideoInternal();
+		void _stopLedInternal();
+		void _pauseVideoInternal();
+		void _pauseLedInternal();
 };
 
 #endif

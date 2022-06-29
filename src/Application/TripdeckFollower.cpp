@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "TripdeckFollower.h"
-#include "Clock.h"
 
 TripdeckFollower::TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 
@@ -12,20 +11,22 @@ void TripdeckFollower::init() {
 	Tripdeck::init();
 
 	TripdeckStateChangedArgs args = { };
-	args.newState = _currentState;
+	args.newState = _status.state;
 	_onStateChanged(args);
 }
 
 void TripdeckFollower::run() {
 	while (_run) {
-		switch (_currentState) {
+		Tripdeck::run();
+
+		switch (_status.state) {
 			case Connecting:
-				_runTimedAction(&TripdeckFollower::_sendConnectingMessage);
+				_runTimedAction(this, &TripdeckFollower::_sendConnectingMessage);
 				break;
 			case Connected:
-				_runTimedAction(&TripdeckFollower::_sendStatusUpdate, 4000);
-				break;
+				// behavior is same as Wait
 			case Wait:
+				_runTimedAction(this, &TripdeckFollower::_sendStatusUpdate);
 				break;
 			case Pulled:
 				break;
@@ -35,73 +36,60 @@ void TripdeckFollower::run() {
 				// do nothing
 				break;
 		}
-
-		Tripdeck::run();
 	}
 }
 
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
+	_status.videoMedia = args.videoId;
+	_status.ledMedia = args.ledId;
+
 	_mediaManager->updateState(args);
 }
 
 void TripdeckFollower::_sendConnectingMessage() {
-	std::string data = STARTUP_NOTIFICATION_HEADER;
+	std::string data(HEADER_LENGTH, STARTUP_NOTIFICATION_HEADER);
 	data += ID;
 	_serial->transmit(data);
 }
 
 void TripdeckFollower::_sendStatusUpdate() {
-	std::string message = STATUS_UPDATE_HEADER;
+	std::string message(HEADER_LENGTH, STATUS_UPDATE_HEADER);
 	message += ID;
-	message.append("/" + std::to_string(_currentState));
+	message.append("/" + std::to_string(_status.state));
 
-	if (_status.videoMedia != 0)
-		message.append("/" + _hashToHexString(_status.videoMedia));
-	if (_status.ledMedia != 0)
-		message.append("/" + _hashToHexString(_status.ledMedia));
-		
 	_serial->transmit(message);
 }
 
-void TripdeckFollower::_runTimedAction(void (TripdeckFollower::*action)(void), int64_t interval) {
-	int64_t currentTime = Clock::instance().millis();
-	if (currentTime >= _nextActionMillis) {
-		_nextActionMillis = currentTime + interval;
-
-		(this->*action)();
-	}
-}
-
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {
-	if (args.buffer.length() < HEADER_LENGTH + 2) {
-		#if ENABLE_SERIAL_DEBUG
-		// TODO: Remove debug code
-		std::cout << "Warning: Invalid message received -- length: " << args.buffer.length() << std::endl;
-		#endif
-		
+	if (!_validateSerialMessage(args.buffer))
 		return;
-	}
 	
 	// check if message is intended for this follower
 	if (_parseId(args.buffer).compare(ID) == 0) {
-		const std::string header = _parseHeader(args.buffer);
+		
+		char header = _parseHeader(args.buffer);
+		TripdeckStateChangedArgs stateArgs = { };
+		TripdeckMediaOption mediaOption = { };
 
-		if (header.compare(STATE_CHANGED_HEADER) == 0) {
-			TripdeckStateChangedArgs stateArgs = { };
-
-			if (_parseStateChangedMessage(args.buffer, stateArgs)) {
-				_currentState = stateArgs.newState;
-				_onStateChanged(stateArgs);
-			}
-		} else if (header.compare(PLAY_MEDIA_HEADER) == 0) {
-			TripdeckMediaOption option = _parseMediaOption(args.buffer);
-			_mediaManager->play(option);
-		} else if (header.compare(STOP_MEDIA_HEADER)) {
-			TripdeckMediaOption option = _parseMediaOption(args.buffer);
-			_mediaManager->stop(option);
-		} else if (header.compare(PAUSE_MEDIA_HEADER)) {
-			TripdeckMediaOption option = _parseMediaOption(args.buffer);
-			_mediaManager->pause(option);
+		switch (header) {
+			case STATE_CHANGED_HEADER:
+				if (_parseStateChangedMessage(args.buffer, stateArgs)) {
+					_status.state = stateArgs.newState;
+					_onStateChanged(stateArgs);
+				}
+				break;
+			case PLAY_MEDIA_HEADER:
+				mediaOption = _parseMediaOption(args.buffer);
+				_mediaManager->play(mediaOption);
+				break;
+			case STOP_MEDIA_HEADER:
+				mediaOption = _parseMediaOption(args.buffer);
+				_mediaManager->stop(mediaOption);
+				break;
+			case PAUSE_MEDIA_HEADER:
+				mediaOption = _parseMediaOption(args.buffer);
+				_mediaManager->pause(mediaOption);
+				break;
 		}
 	} else {
 		// if transmission is not for us, pass it on
@@ -117,21 +105,16 @@ bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, Trip
 	args.newState = _parseState(buffer);
 
 	// parse message data only if we are entering a new state
-	if (args.newState != _currentState) {
+	if (args.newState != _status.state) {
+		args.mediaOption = _parseMediaOption(buffer);
+
 		// check for extra data in serial message
 		if (_containsMediaHashes(buffer)) {
 			MediaHashes hashes = _parseMediaHashes(buffer);
-
-			if (hashes.videoHash != 0) {
-				args.videoId = hashes.videoHash;
-				args.syncVideo = true;
-			}
-
-			if (hashes.ledHash != 0) {
-				args.ledId = hashes.ledHash;
-				args.syncLeds = true;
-			}
+			args.videoId = hashes.videoHash;
+			args.ledId = hashes.ledHash;
 		}
+
 		return true;
 	}
 	return false;

@@ -6,10 +6,10 @@
 #include "LedController.h"
 
 // Leader or Follower
-#define Leader
+#define Follower
 
 // IDs
-#define ID "0"						// change this setting for different followers: each follower on the network MUST have a unique id
+#define ID "1"						// change this setting for different followers: each follower on the network MUST have a unique id
 #define LEADER_ID "0"				// do not change this ID
 
 // Timing (only matters for Leader)

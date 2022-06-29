@@ -46,18 +46,17 @@ void TripdeckMediaManager::run() {
 void TripdeckMediaManager::play(TripdeckMediaOption option) {
 	switch (option) {
 		case Video:
-			if (_videoPlayer)
-				_videoPlayer->play();
+			_playVideoInternal();
 			break;
 		case Led:
-			if (_ledPlayer)
-				_ledPlayer->play();
+			_playLedInternal();
+			break;
+		case Both:
+			_playVideoInternal();
+			_playLedInternal();
 			break;
 		default:
-			if (_videoPlayer)
-				_videoPlayer->play();
-			if (_ledPlayer)
-				_ledPlayer->play();
+			// do nothing
 			break;
 	} 
 }
@@ -65,18 +64,17 @@ void TripdeckMediaManager::play(TripdeckMediaOption option) {
 void TripdeckMediaManager::stop(TripdeckMediaOption option) {
 	switch (option) {
 		case Video:
-			if (_videoPlayer)
-				_videoPlayer->stop();
+			_stopVideoInternal();
 			break;
 		case Led:
-			if (_ledPlayer)
-				_ledPlayer->stop();
+			_stopLedInternal();
+			break;
+		case Both:
+			_stopVideoInternal();
+			_stopLedInternal();
 			break;
 		default:
-			if (_videoPlayer)
-				_videoPlayer->stop();
-			if (_ledPlayer)
-				_ledPlayer->stop();
+			// do nothing
 			break;
 	}
 }
@@ -84,20 +82,19 @@ void TripdeckMediaManager::stop(TripdeckMediaOption option) {
 void TripdeckMediaManager::pause(TripdeckMediaOption option) {
 	switch (option) {
 		case Video:
-			if (_videoPlayer)
-				_videoPlayer->pause();
+			_pauseVideoInternal();
 			break;
 		case Led:
-			if (_ledPlayer)
-				_ledPlayer->pause();
+			_pauseLedInternal();
+			break;
+		case Both:
+			_pauseVideoInternal();
+			_pauseLedInternal();
 			break;
 		default:
-			if (_videoPlayer)
-				_videoPlayer->pause();
-			if (_ledPlayer)
-				_ledPlayer->pause();
+			// do nothing
 			break;
-	} 
+	}
 }
 
 void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
@@ -105,31 +102,29 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 
 	if (_videoPlayer) {
 		uint32_t videoId = 0;
-		if (args.videoId == 0) {
-			srand((uint32_t)Clock::instance().millis());
-			videoId = getRandomVideoId(_currentState);
-		} else {
-			videoId = args.videoId;
-		}
 
+		if (args.videoId == 0)
+			videoId = getRandomVideoId(_currentState);
+		else
+			videoId = args.videoId;
+		
 		_videoPlayer->setCurrentMedia(videoId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
 
-		if (!args.syncVideo)
+		if (args.mediaOption == Video || args.mediaOption == Both)
 			_videoPlayer->play();
 	}
 
 	if (_ledPlayer) {
 		uint32_t ledId = 0;
-		if (args.ledId == 0) {
-			srand((uint32_t)Clock::instance().millis());
+
+		if (args.ledId == 0)
 			ledId = getRandomVideoId(_currentState);
-		} else {
+		else
 			ledId = args.ledId;
-		}
 
 		_ledPlayer->setCurrentMedia(ledId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
 
-		if (!args.syncLeds)
+		if (args.mediaOption == Led || args.mediaOption == Both)
 			_ledPlayer->play();
 	}
 }
@@ -157,6 +152,7 @@ uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
 			throw std::runtime_error(message);
 		}
 
+		srand((uint32_t)Clock::instance().millis());
 		return videoFiles[rand() % videoFiles.size()];
 	}
 	return 0;
@@ -171,7 +167,44 @@ uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
 			throw std::runtime_error(message);
 		}
 
+		srand((uint32_t)Clock::instance().millis());
 		return ledFiles[rand() % ledFiles.size()];
 	}
 	return 0;
+}
+
+void TripdeckMediaManager::_playVideoInternal() {
+	if (_videoPlayer) {
+		_videoPlayer->play();
+	}
+}
+
+void TripdeckMediaManager::_playLedInternal() {
+	if (_ledPlayer) {
+		_ledPlayer->play();
+	}
+}
+
+void TripdeckMediaManager::_stopVideoInternal() {
+	if (_videoPlayer) {
+		_videoPlayer->stop();
+	}
+}
+
+void TripdeckMediaManager::_stopLedInternal() {
+	if (_ledPlayer) {
+		_ledPlayer->stop();
+	}
+}
+
+void TripdeckMediaManager::_pauseVideoInternal() {
+	if (_videoPlayer) {
+		_videoPlayer->pause();
+	}
+}
+
+void TripdeckMediaManager::_pauseLedInternal() {
+	if (_ledPlayer) {
+		_ledPlayer->pause();
+	}
 }

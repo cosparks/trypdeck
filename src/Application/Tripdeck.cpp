@@ -1,3 +1,4 @@
+#include <iostream>
 #include <iomanip>
 
 #include "Tripdeck.h"
@@ -16,7 +17,7 @@ void Tripdeck::init() {
 	_serialInputDelegate = new SerialInputDelegate(this);
 	_inputManager->addInput(_serialInput, _serialInputDelegate);
 	
-	_currentState = Connecting;
+	_status.state = Connecting;
 	_run = true;
 }
 
@@ -25,8 +26,23 @@ void Tripdeck::run() {
 	_mediaManager->run();
 }
 
+bool Tripdeck::_validateSerialMessage(const std::string& buffer) {
+	// shortest possible message is HEADER_LENGTH + ID + '\n'
+	if (buffer.length() < HEADER_LENGTH + 2) {
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Warning: Invalid message received -- length: " << buffer.length() << std::endl;
+		#endif
+		
+		return true;
+	}
+	
+	return false;
+}
+
+
 Tripdeck::MediaHashes Tripdeck::_parseMediaHashes(const std::string& buffer) {
-	std::string mediaHashes = buffer.substr(HEADER_LENGTH + 4);
+	std::string mediaHashes = buffer.substr(HEADER_LENGTH + 6);
 	int32_t slashIndex = mediaHashes.find("/");
 	return MediaHashes { std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16), std::stoul(mediaHashes.substr(slashIndex + 1), NULL, 16) };
 }

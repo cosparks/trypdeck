@@ -19,12 +19,11 @@ void TripdeckLeader::run() {
 	while (_run) {
 		Tripdeck::run();
 
-		switch (_currentState) {
+		switch (_status.state) {
 			case Connecting:
-				_runStartup();
-				break;
+				// same as Connected
 			case Connected:
-				_runStartup();
+				_runTimedAction(this, &TripdeckLeader::_runStartup, 100);
 				break;
 			case Wait:
 				break;
@@ -41,20 +40,18 @@ void TripdeckLeader::run() {
 
 void TripdeckLeader::_onStateChanged() {
 	TripdeckStateChangedArgs args = { };
-	args.newState = _currentState;
+	args.newState = _status.state;
 
-	switch (_currentState) {
+	switch (_status.state) {
 		case Connecting:
-			args.loop = true;
-			break;
+			// same as Connected
 		case Connected:
 			args.loop = true;
 			break;
 		case Wait:
-			args.videoId = _mediaManager->getRandomVideoId(_currentState);
-			args.ledId = _mediaManager->getRandomLedId(_currentState);
-			args.syncVideo = true;
-			args.syncLeds = true;
+			args.videoId = _mediaManager->getRandomVideoId(_status.state);
+			args.ledId = _mediaManager->getRandomLedId(_status.state);
+			args.mediaOption = None;
 			args.loop = true;
 			_updateFollowers(args);
 			break;
@@ -78,7 +75,7 @@ void TripdeckLeader::_runStartup() {
 	if (!_followersSynced) {
 		if (_verifySynced()) {
 			_followersSynced = true;
-			_currentState = Connected;
+			_status.state = Connected;
 			_onStateChanged();
 		}
 
@@ -86,7 +83,7 @@ void TripdeckLeader::_runStartup() {
 	}
 
 	if (Clock::instance().millis() > STARTUP_TIME) {
-		_currentState = Wait;
+		_status.state = Wait;
 		_onStateChanged();
 	}
 }
@@ -98,53 +95,51 @@ void TripdeckLeader::_updateFollowers(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
-	if (args.buffer.length() < HEADER_LENGTH + 2) {
-		#if ENABLE_SERIAL_DEBUG
-		// TODO: Remove debug code
-		std::cout << "Warning: Invalid message received -- length: " << args.buffer.length() << std::endl;
-		#endif
-
+	if (!_validateSerialMessage(args.buffer))
 		return;
-	}
 
-	const std::string header = _parseHeader(args.buffer);
+	char header = _parseHeader(args.buffer);
 	const std::string id = _parseId(args.buffer);
+	TripdeckStateChangedArgs stateArgs = { };
 
-	// check message header
-	if (header.compare(STARTUP_NOTIFICATION_HEADER) == 0) {
-		// add node to map and send state update message
-		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
-			_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, Unknown, false };
+	switch (header) {
+		case STARTUP_NOTIFICATION_HEADER:
+			// add node to map and send state update message
+			if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
+				_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, None, Unknown, false };
 
-		TripdeckStateChangedArgs stateArgs = { };
-		stateArgs.newState = Connected;
+			stateArgs.newState = Connected;
+			_updateFollowerState(id, stateArgs);
+			break;
+		case STATUS_UPDATE_HEADER:
+			// update internal representation of node's state
+			if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
+				_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseMediaOption(args.buffer), _parseState(args.buffer), true };
+			} else {
+				_nodeIdToStatus[id].state = _parseState(args.buffer);
+				_nodeIdToStatus[id].connected = true;
+			}
 
-		_updateFollowerState(id, stateArgs);
-	} else if (header.compare(STATUS_UPDATE_HEADER) == 0) {
-		// update internal representation of node's state
-		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
-			_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseState(args.buffer), true };
-		} else {
-			_nodeIdToStatus[id].state = _parseState(args.buffer);
-			_nodeIdToStatus[id].connected = true;
-		}
-
-		if (_containsMediaHashes(args.buffer)) {
-			MediaHashes hashes = _parseMediaHashes(args.buffer);
-			_nodeIdToStatus[id].videoMedia = hashes.videoHash;
-			_nodeIdToStatus[id].ledMedia = hashes.ledHash;
-		}
+			if (_containsMediaHashes(args.buffer)) {
+				MediaHashes hashes = _parseMediaHashes(args.buffer);
+				_nodeIdToStatus[id].videoMedia = hashes.videoHash;
+				_nodeIdToStatus[id].ledMedia = hashes.ledHash;
+			}
+			break;
+		default:
+			// do nothing
+			break;
 	}
 }
 
 void TripdeckLeader::_updateFollowerState(const std::string& id, TripdeckStateChangedArgs& args) { 
-	std::string message(STATE_CHANGED_HEADER);
-	message.append(id + "/" + std::to_string(args.newState));
+	std::string message(HEADER_LENGTH, STATE_CHANGED_HEADER);
+	message.append(id + "/" + std::to_string(args.newState) + "/" + std::to_string(args.mediaOption));
 	
-	if (args.syncVideo)
+	if (args.videoId || args.ledId) {
 		message.append("/" + std::to_string(_mediaManager->getRandomVideoId(args.newState)));
-	if (args.syncLeds)
 		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
+	}
 
 	_serial->transmit(message);
 }

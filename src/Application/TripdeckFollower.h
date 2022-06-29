@@ -12,10 +12,9 @@ class TripdeckFollower : public Tripdeck {
 		void init() override;
 		void run() override;
 	private:
-		int64_t _nextActionMillis = 0;
+		// int64_t _nextActionMillis = 0;
 
 		void _onStateChanged(TripdeckStateChangedArgs& args);
-		void _runTimedAction(void (TripdeckFollower::*action)(void), int64_t interval = NOTIFICATION_INTERVAL);
 		void _sendConnectingMessage();
 		void _sendStatusUpdate();
 		void _handleSerialInput(InputArgs& args) override;
