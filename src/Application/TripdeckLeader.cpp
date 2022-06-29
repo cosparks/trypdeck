@@ -12,6 +12,7 @@ void TripdeckLeader::init() {
 	// sets state to Connecting and _run to true
 	Tripdeck::init();
 	// hook up button inputs with callback
+	_onStateChanged();
 }
 
 void TripdeckLeader::run() {

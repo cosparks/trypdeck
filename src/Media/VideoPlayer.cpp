@@ -60,6 +60,10 @@ void VideoPlayer::play() {
 
 	_state = MediaPlayerState::Play;
 	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
+
+
+	// // TODO: Remove debug code
+	// std::cout << "VideoPlayer::play() called with file: " << Index::instance().getSystemPath(_currentMedia) << std::endl;
 }
 
 void VideoPlayer::stop() {

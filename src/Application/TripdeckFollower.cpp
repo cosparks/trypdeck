@@ -12,6 +12,10 @@ TripdeckFollower::~TripdeckFollower() { }
 void TripdeckFollower::init() {
 	// sets state to Connecting and _run to true
 	Tripdeck::init();
+
+	TripdeckStateChangedArgs args = { };
+	args.newState = _currentState;
+	_onStateChanged(args);
 }
 
 void TripdeckFollower::run() {
