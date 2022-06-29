@@ -90,13 +90,13 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 			}
 		} else if (header.compare(PLAY_MEDIA_HEADER) == 0) {
 			TripdeckMediaOption option = _parseMediaOption(args.buffer);
-			_mediaPlayer->play(option);
+			_mediaManager->play(option);
 		} else if (header.compare(STOP_MEDIA_HEADER)) {
 			TripdeckMediaOption option = _parseMediaOption(args.buffer);
-			_mediaPlayer->stop(option);
+			_mediaManager->stop(option);
 		} else if (header.compare(PAUSE_MEDIA_HEADER)) {
 			TripdeckMediaOption option = _parseMediaOption(args.buffer);
-			_mediaPlayer->pause(option);
+			_mediaManager->pause(option);
 		}
 	} else {
 		// if transmission is not for us, pass it on

@@ -64,7 +64,6 @@ void TripdeckLeader::_onStateChanged() {
 			_mediaManager->stop();
 			break;
 		case Reveal:
-			_notifyReveal();
 			break;
 		default:
 			// do nothing

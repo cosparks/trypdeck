@@ -89,6 +89,10 @@ class Tripdeck : public Runnable {
 			return (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
 		}
 
+		inline TripdeckMediaOption _parseMediaOption(const std::string& buffer) {
+			return (TripdeckMediaOption)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+		}
+
 		inline bool _containsMediaHashes(const std::string& buffer) {
 			return buffer.substr(HEADER_LENGTH + 3, 1).compare("/") == 0;
 		}
