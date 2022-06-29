@@ -65,6 +65,11 @@ void TripdeckLeader::_onStateChanged() {
 			break;
 	}
 
+	#if ENABLE_SERIAL_DEBUG
+	std::cout << "State changed: " << _status.state << std::endl;
+	#endif
+
+
 	_mediaManager->updateState(args);
 }
 
@@ -154,5 +159,5 @@ bool TripdeckLeader::_verifySynced() {
 }
 
 void TripdeckLeader::_handleUserInput(InputArgs* data) {
-
+	
 }
