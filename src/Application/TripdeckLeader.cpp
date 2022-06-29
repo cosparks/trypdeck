@@ -24,6 +24,7 @@ void TripdeckLeader::run() {
 				_runStartup();
 				break;
 			case Connected:
+				_runStartup();
 				break;
 			case Wait:
 				break;

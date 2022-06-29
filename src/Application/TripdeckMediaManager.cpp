@@ -135,33 +135,43 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folder) {
-	_videoPlayer->addMediaFolder(folder);
-	_stateToVideoFolder[state] = folder;
+	if (_videoPlayer) {
+		_videoPlayer->addMediaFolder(folder);
+		_stateToVideoFolder[state] = folder;
+	}
 }
 
 void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder) {
-	_ledPlayer->addMediaFolder(folder);
-	_stateToLedFolder[state] = folder;
+	if (_ledPlayer) {
+		_ledPlayer->addMediaFolder(folder);
+		_stateToLedFolder[state] = folder;
+	}
 }
 
 uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
-	const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
+	if (_videoPlayer) {
+		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
 
-	if (videoFiles.size() == 0) {
-		std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
-		throw std::runtime_error(message);
+		if (videoFiles.size() == 0) {
+			std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+			throw std::runtime_error(message);
+		}
+
+		return videoFiles[rand() % videoFiles.size()];
 	}
-
-	return videoFiles[rand() % videoFiles.size()];
+	return 0;
 }
 
 uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
-	const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
+	if (_ledPlayer) {
+		const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
 
-	if (ledFiles.size() == 0) {
-		std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
-		throw std::runtime_error(message);
+		if (ledFiles.size() == 0) {
+			std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+			throw std::runtime_error(message);
+		}
+
+		return ledFiles[rand() % ledFiles.size()];
 	}
-
-	return ledFiles[rand() % ledFiles.size()];
+	return 0;
 }
