@@ -18,6 +18,7 @@ void TripdeckLeader::init() {
 void TripdeckLeader::run() {
 	while (_run) {
 		Tripdeck::run();
+		_runOneShotAction();
 
 		switch (_status.state) {
 			case Connecting:
@@ -54,6 +55,7 @@ void TripdeckLeader::_onStateChanged() {
 			args.mediaOption = None;
 			args.loop = true;
 			_updateFollowers(args);
+			_setMediaNotificationAction(Both, MediaPlayer::Play);
 			break;
 		case Pulled:
 			_mediaManager->stop();
@@ -68,7 +70,6 @@ void TripdeckLeader::_onStateChanged() {
 	#if ENABLE_SERIAL_DEBUG
 	std::cout << "State changed: " << _status.state << std::endl;
 	#endif
-
 
 	_mediaManager->updateState(args);
 }
@@ -147,6 +148,54 @@ void TripdeckLeader::_updateFollowerState(const std::string& id, TripdeckStateCh
 	}
 
 	_serial->transmit(message);
+}
+
+void TripdeckLeader::_setOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait) {
+	_nextOneShotActionMillis = Clock::instance().millis() + wait;
+	_oneShotAction = action;
+}
+
+void TripdeckLeader::_runOneShotAction() {
+	if (_oneShotAction && Clock::instance().millis() > _nextOneShotActionMillis) {
+		(this->*_oneShotAction)();
+		_oneShotAction = NULL;
+	}
+}
+
+void TripdeckLeader::_setMediaNotificationAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
+	_nextMediaActionOption = option;
+	_nextMediaPlayerState = state;
+	_setOneShotAction(&TripdeckLeader::_mediaNotificationAction, 5);
+}
+
+void TripdeckLeader::_mediaNotificationAction() {
+	std::string message = DEFAULT_MEDIA_MESSAGE;
+	void (TripdeckMediaManager::*localAction)(TripdeckMediaOption) = NULL;
+
+	switch (_nextMediaPlayerState) {
+		case MediaPlayer::Play:
+			localAction = &TripdeckMediaManager::play;
+			message[0] = PLAY_MEDIA_HEADER;
+			break;
+		case MediaPlayer::Stop:
+			message[0] = STOP_MEDIA_HEADER;
+			localAction = &TripdeckMediaManager::stop;
+			break;
+		default:
+			message[0] = PAUSE_MEDIA_HEADER;
+			localAction = &TripdeckMediaManager::pause;
+			break;
+	}
+
+	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)_nextMediaActionOption);
+
+	for (const auto& pair : _nodeIdToStatus) {
+		// copy node ID into string and transmit
+		message[1] = pair.first[0];
+		_serial->transmit(message);
+	}
+
+	(_mediaManager->*localAction)(_nextMediaActionOption);
 }
 
 bool TripdeckLeader::_verifySynced() {

@@ -39,6 +39,9 @@ using namespace td_util;
 // OPTION is TripdeckMediaOption
 #define PAUSE_MEDIA_HEADER 'p'
 
+#define MEDIA_OPTION_INDEX 5
+#define DEFAULT_MEDIA_MESSAGE "x0/0/0"
+
 /** @note if you add a new header, it must also be added to ValidHeaders array in Tripdeck.cpp */
 
 // default rate for networking actions
