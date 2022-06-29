@@ -121,10 +121,12 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 		_updateFollowerState(id, stateArgs);
 	} else if (header.compare(STATUS_UPDATE_HEADER) == 0) {
 		// update internal representation of node's state
-		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
+		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
 			_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseState(args.buffer), true };
-		else
+		} else {
 			_nodeIdToStatus[id].state = _parseState(args.buffer);
+			_nodeIdToStatus[id].connected = true;
+		}
 
 		if (_containsMediaHashes(args.buffer)) {
 			MediaHashes hashes = _parseMediaHashes(args.buffer);
