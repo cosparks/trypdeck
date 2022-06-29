@@ -26,7 +26,7 @@
 
 // debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (this disables leds!)
-#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
+#define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
 
 // Led Settings
 // * dont modify these values *

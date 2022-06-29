@@ -3,8 +3,6 @@
 #include "TripdeckFollower.h"
 #include "Clock.h"
 
-#define STARTUP_NOTIFICATION_INTERVAL 2000
-
 TripdeckFollower::TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 
 TripdeckFollower::~TripdeckFollower() { }
@@ -22,10 +20,10 @@ void TripdeckFollower::run() {
 	while (_run) {
 		switch (_currentState) {
 			case Connecting:
-				_sendConnectingMessage();
+				_runTimedAction(&TripdeckFollower::_sendConnectingMessage);
 				break;
 			case Connected:
-				_sendStatusUpdate();
+				_runTimedAction(&TripdeckFollower::_sendStatusUpdate);
 				break;
 			case Wait:
 				break;
@@ -53,7 +51,7 @@ void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 void TripdeckFollower::_sendConnectingMessage() {
 	int64_t currentTime = Clock::instance().millis();
 	if (currentTime >= _nextActionMillis) {
-		_nextActionMillis = currentTime + STARTUP_NOTIFICATION_INTERVAL;
+		_nextActionMillis = currentTime + NOTIFICATION_INTERVAL;
 		std::string data = STARTUP_NOTIFICATION_HEADER;
 		data += ID;
 		_serial->transmit(data);
@@ -69,6 +67,17 @@ void TripdeckFollower::_sendStatusUpdate() {
 		message.append("/" + _hashToHexString(_status.videoMedia));
 	if (_status.ledMedia != 0)
 		message.append("/" + _hashToHexString(_status.ledMedia));
+		
+	_serial->transmit(message);
+}
+
+void TripdeckFollower::_runTimedAction(void (TripdeckFollower::*action)(void), int64_t interval) {
+	int64_t currentTime = Clock::instance().millis();
+	if (currentTime >= _nextActionMillis) {
+		_nextActionMillis = currentTime + interval;
+
+		(this->*action)();
+	}
 }
 
 void TripdeckFollower::_handleSerialInput(InputArgs& args) {

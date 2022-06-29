@@ -1,6 +1,8 @@
 #ifndef _TRIPDECK_BEHAVIOR_FOLLOWER_H_
 #define _TRIPDECK_BEHAVIOR_FOLLOWER_H_
 
+#define NOTIFICATION_INTERVAL 2000
+
 #include "Tripdeck.h"
 
 class TripdeckFollower : public Tripdeck {
@@ -14,6 +16,7 @@ class TripdeckFollower : public Tripdeck {
 		int64_t _nextActionMillis = 0;
 
 		void _onStateChanged(TripdeckStateChangedArgs& args);
+		void _runTimedAction(void (TripdeckFollower::*action)(void), int64_t interval = NOTIFICATION_INTERVAL);
 		void _sendConnectingMessage();
 		void _sendStatusUpdate();
 		void _handleSerialInput(InputArgs& args) override;
