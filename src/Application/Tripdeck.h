@@ -13,8 +13,10 @@
 
 using namespace td_util;
 
-// length of any and all headers used for communication on the Serial network
-#define HEADER_LENGTH 1
+/** HEADERS 
+ * @note if you add a new header, it must also be added to ValidHeaders array in Tripdeck.cpp
+**/
+
 // startup notification structure: "nID"
 // ID is unqiue identifier for sender
 #define STARTUP_NOTIFICATION_HEADER 'n'
@@ -39,10 +41,15 @@ using namespace td_util;
 // OPTION is TripdeckMediaOption
 #define PAUSE_MEDIA_HEADER 'p'
 
+/** MESSAGE METADATA 
+ * @note you must change these values if you make any changes to message format
+**/
+#define HEADER_LENGTH 1
+#define ID_INDEX 1
+#define STATE_INDEX 3
 #define MEDIA_OPTION_INDEX 5
-#define DEFAULT_MEDIA_MESSAGE "x0/0/0"
-
-/** @note if you add a new header, it must also be added to ValidHeaders array in Tripdeck.cpp */
+#define HASH_INDEX 7
+#define DEFAULT_MESSAGE "x0/0/0"
 
 // default rate for networking actions
 #define DEFAULT_ACTION_INTERVAL 1000
@@ -105,19 +112,19 @@ class Tripdeck : public Runnable {
 		}
 
 		inline const std::string _parseId(const std::string& buffer) {
-			return buffer.substr(HEADER_LENGTH, 1);
+			return buffer.substr(ID_INDEX, 1);
 		}
 
 		inline TripdeckState _parseState(const std::string& buffer) {
-			return (TripdeckState)std::stoi(buffer.substr(HEADER_LENGTH + 2, 1));
+			return (TripdeckState)std::stoi(buffer.substr(STATE_INDEX, 1));
 		}
 
 		inline TripdeckMediaOption _parseMediaOption(const std::string& buffer) {
-			return (TripdeckMediaOption)std::stoi(buffer.substr(HEADER_LENGTH + 4, 1));
+			return (TripdeckMediaOption)std::stoi(buffer.substr(MEDIA_OPTION_INDEX, 1));
 		}
 
 		inline bool _containsMediaHashes(const std::string& buffer) {
-			return buffer.substr(HEADER_LENGTH + 5, 1).compare("/") == 0;
+			return buffer.substr(HASH_INDEX - 1, 1).compare("/") == 0;
 		}
 };
 

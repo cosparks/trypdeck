@@ -169,7 +169,7 @@ void TripdeckLeader::_setMediaNotificationAction(TripdeckMediaOption option, Med
 }
 
 void TripdeckLeader::_mediaNotificationAction() {
-	std::string message = DEFAULT_MEDIA_MESSAGE;
+	std::string message = DEFAULT_MESSAGE;
 	void (TripdeckMediaManager::*localAction)(TripdeckMediaOption) = NULL;
 
 	switch (_nextMediaPlayerState) {

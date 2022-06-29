@@ -52,7 +52,7 @@ bool Tripdeck::_validateHeader(char header) {
 }
 
 Tripdeck::MediaHashes Tripdeck::_parseMediaHashes(const std::string& buffer) {
-	std::string mediaHashes = buffer.substr(HEADER_LENGTH + 6);
+	std::string mediaHashes = buffer.substr(HASH_INDEX);
 	int32_t slashIndex = mediaHashes.find("/");
 	return MediaHashes { std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16), std::stoul(mediaHashes.substr(slashIndex + 1), NULL, 16) };
 }
