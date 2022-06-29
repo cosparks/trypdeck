@@ -11,7 +11,6 @@ TripdeckLeader::~TripdeckLeader() { }
 void TripdeckLeader::init() {
 	// sets state to Connecting and _run to true
 	Tripdeck::init();
-
 	// hook up button inputs with callback
 }
 
@@ -28,10 +27,8 @@ void TripdeckLeader::run() {
 			case Wait:
 				break;
 			case Pulled:
-				_notifyPulled();
 				break;
 			case Reveal:
-				_notifyReveal();
 				break;
 			default:
 				// do nothing
@@ -45,16 +42,26 @@ void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckLeader::_onStateChanged() {
+	TripdeckStateChangedArgs args = { };
+	args.newState = _currentState;
+
 	switch (_currentState) {
 		case Connecting:
-			
+			args.loop = true;
 			break;
 		case Connected:
+			args.loop = true;
 			break;
 		case Wait:
+			args.videoId = _mediaManager->getRandomVideoId(_currentState);
+			args.ledId = _mediaManager->getRandomLedId(_currentState);
+			args.syncVideo = true;
+			args.syncLeds = true;
+			args.loop = true;
+			_updateFollowers(args);
 			break;
 		case Pulled:
-			_notifyPulled();
+			_mediaManager->stop();
 			break;
 		case Reveal:
 			_notifyReveal();
@@ -63,6 +70,8 @@ void TripdeckLeader::_onStateChanged() {
 			// do nothing
 			break;
 	}
+
+	_mediaManager->updateState(args);
 }
 
 void TripdeckLeader::_runStartup() {
@@ -85,16 +94,10 @@ void TripdeckLeader::_runStartup() {
 	}
 }
 
-void TripdeckLeader::_notifyPulled() {
-
-}
-
-void TripdeckLeader::_notifyReveal() {
-
-}
-
-void TripdeckLeader::_updateFollowers() {
-
+void TripdeckLeader::_updateFollowers(TripdeckStateChangedArgs& args) {
+	for (auto const& pair : _nodeIdToStatus) {
+		_updateFollowerState(pair.first, args);
+	}
 }
 
 void TripdeckLeader::_handleSerialInput(InputArgs& args) {
@@ -110,16 +113,16 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	const std::string header = _parseHeader(args.buffer);
 	const std::string id = _parseId(args.buffer);
 
-	// check header
+	// check message header
 	if (header.compare(STARTUP_NOTIFICATION_HEADER) == 0) {
 		// add node to map and send state update message
 		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
 			_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, Unknown, false };
 
-		TripdeckStateChangedArgs stateChangedArgs = { };
-		stateChangedArgs.newState = Connected;
+		TripdeckStateChangedArgs stateArgs = { };
+		stateArgs.newState = Connected;
 
-		_sendNodeUpdate(id, stateChangedArgs);
+		_updateFollowerState(id, stateArgs);
 	} else if (header.compare(STATUS_UPDATE_HEADER) == 0) {
 		// update internal representation of node's state
 		if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
@@ -135,7 +138,7 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	}
 }
 
-void TripdeckLeader::_sendNodeUpdate(const std::string& id, TripdeckStateChangedArgs& args) { 
+void TripdeckLeader::_updateFollowerState(const std::string& id, TripdeckStateChangedArgs& args) { 
 	std::string message(STATE_CHANGED_HEADER);
 	message.append(id + "/" + std::to_string(args.newState));
 	
@@ -143,11 +146,6 @@ void TripdeckLeader::_sendNodeUpdate(const std::string& id, TripdeckStateChanged
 		message.append("/" + std::to_string(_mediaManager->getRandomVideoId(args.newState)));
 	if (args.syncLeds)
 		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
-
-	#if ENABLE_SERIAL_DEBUG
-	// TODO: Remove debug code
-	std::cout << "Startup message received!  Updating node state with UART message: " << message << std::endl;
-	#endif
 
 	_serial->transmit(message);
 }

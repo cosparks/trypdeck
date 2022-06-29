@@ -18,14 +18,12 @@ class TripdeckLeader : public Tripdeck {
 		bool _followersSynced = false;
 
 		void _onStateChanged();
-		void _updateFollowers();
+		void _updateFollowers(TripdeckStateChangedArgs& args);
 		void _handleSerialInput(InputArgs& args) override;
 		void _handleUserInput(InputArgs* data);
-		void _sendNodeUpdate(const std::string& id, TripdeckStateChangedArgs& args);
+		void _updateFollowerState(const std::string& id, TripdeckStateChangedArgs& args);
 		bool _verifySynced();
 		void _runStartup();
-		void _notifyPulled();
-		void _notifyReveal();
 };
 
 #endif

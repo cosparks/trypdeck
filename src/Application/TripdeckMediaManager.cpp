@@ -43,7 +43,7 @@ void TripdeckMediaManager::run() {
 	}
 }
 
-void TripdeckMediaManager::play(TripdeckMediaPlaybackOption option) {
+void TripdeckMediaManager::play(TripdeckMediaOption option) {
 	switch (option) {
 		case Video:
 			if (_videoPlayer)
@@ -62,7 +62,7 @@ void TripdeckMediaManager::play(TripdeckMediaPlaybackOption option) {
 	} 
 }
 
-void TripdeckMediaManager::stop(TripdeckMediaPlaybackOption option) {
+void TripdeckMediaManager::stop(TripdeckMediaOption option) {
 	switch (option) {
 		case Video:
 			if (_videoPlayer)
@@ -81,7 +81,7 @@ void TripdeckMediaManager::stop(TripdeckMediaPlaybackOption option) {
 	}
 }
 
-void TripdeckMediaManager::pause(TripdeckMediaPlaybackOption option) {
+void TripdeckMediaManager::pause(TripdeckMediaOption option) {
 	switch (option) {
 		case Video:
 			if (_videoPlayer)

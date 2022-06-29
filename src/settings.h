@@ -13,7 +13,7 @@
 #define LEADER_ID "0"				// do not change this ID
 
 // Timing (only matters for Leader)
-#define STARTUP_TIME 120000			// duration for pis to sync up and play startup animation
+#define STARTUP_TIME 15000			// duration for pis to sync up and play startup animation
 #define PULL_DEBOUNCE_TIME 2000		// duration within which other people can still pull chain before pulled animation starts
 #define REVEAL_TIME 20000			// duration for which tarot cards will be displayed before returning to wait state
 

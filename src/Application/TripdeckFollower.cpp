@@ -43,7 +43,7 @@ void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
-	// _mediaManager->updateState(args);
+	_mediaManager->updateState(args);
 }
 
 void TripdeckFollower::_sendConnectingMessage() {
@@ -78,16 +78,25 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	}
 	
 	// check if message is intended for this follower
-	if (args.buffer.substr(HEADER_LENGTH, 1).compare(ID) == 0) {
+	if (_parseId(args.buffer).compare(ID) == 0) {
 		const std::string header = _parseHeader(args.buffer);
 
 		if (header.compare(STATE_CHANGED_HEADER) == 0) {
-			TripdeckStateChangedArgs stateChangedArgs = { };
+			TripdeckStateChangedArgs stateArgs = { };
 
-			if (_parseStateChangedMessage(args.buffer, stateChangedArgs)) {
-				_currentState = stateChangedArgs.newState;
-				_onStateChanged(stateChangedArgs);
+			if (_parseStateChangedMessage(args.buffer, stateArgs)) {
+				_currentState = stateArgs.newState;
+				_onStateChanged(stateArgs);
 			}
+		} else if (header.compare(PLAY_MEDIA_HEADER) == 0) {
+			TripdeckMediaOption option = _parseMediaOption(args.buffer);
+			_mediaPlayer->play(option);
+		} else if (header.compare(STOP_MEDIA_HEADER)) {
+			TripdeckMediaOption option = _parseMediaOption(args.buffer);
+			_mediaPlayer->stop(option);
+		} else if (header.compare(PAUSE_MEDIA_HEADER)) {
+			TripdeckMediaOption option = _parseMediaOption(args.buffer);
+			_mediaPlayer->pause(option);
 		}
 	} else {
 		// if transmission is not for us, pass it on

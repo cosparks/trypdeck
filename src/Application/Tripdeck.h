@@ -25,10 +25,15 @@ using namespace td_util;
 // follower synced message header: fs/ID/STATE
 // sent during Follower's connected phase
 #define STATUS_UPDATE_HEADER "su/"
-// message dictating that follower stop playing media: "sm/ID"
+// message dictating that follower play media: "jm/ID/OPTION"
+// OPTION is TripdeckMediaOption
+#define PLAY_MEDIA_HEADER "jm/"
+// message dictating that follower stop media: "sm/ID/OPTION"
+// OPTION is TripdeckMediaOption
 #define STOP_MEDIA_HEADER "sm/"
-// message dictating that follower start playing media: "pm/ID"
-#define PLAY_MEDIA_HEADER "pm/"
+// message dictating that follower pause media: "pm/ID/OPTION"
+// OPTION is TripdeckMediaOption
+#define PAUSE_MEDIA_HEADER "pm/"
 
 /**
  * @brief Abstract class the children of which will encapsulate the unique behavior for leader and follower
