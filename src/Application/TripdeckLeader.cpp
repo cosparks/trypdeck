@@ -38,10 +38,6 @@ void TripdeckLeader::run() {
 	}
 }
 
-void TripdeckLeader::handleMediaChanged(TripdeckStateChangedArgs& args) {
-
-}
-
 void TripdeckLeader::_onStateChanged() {
 	TripdeckStateChangedArgs args = { };
 	args.newState = _currentState;

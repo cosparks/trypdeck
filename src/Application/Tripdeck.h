@@ -46,7 +46,6 @@ class Tripdeck : public Runnable {
 		void init() override;
 		void run() override;
 		void setStateChangedDelegate(Command* delegate);
-		virtual void handleMediaChanged(TripdeckStateChangedArgs& args) = 0;
 
 	protected:
 		class SerialInputDelegate : public Command {

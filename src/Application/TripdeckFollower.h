@@ -11,7 +11,6 @@ class TripdeckFollower : public Tripdeck {
 		~TripdeckFollower();
 		void init() override;
 		void run() override;
-		void handleMediaChanged(TripdeckStateChangedArgs& args) override;
 	private:
 		int64_t _nextActionMillis = 0;
 

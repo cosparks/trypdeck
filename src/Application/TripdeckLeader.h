@@ -12,7 +12,6 @@ class TripdeckLeader : public Tripdeck {
 		~TripdeckLeader();
 		void init() override;
 		void run() override;
-		void handleMediaChanged(TripdeckStateChangedArgs& args) override;
 	private:
 		std::unordered_map<std::string, TripdeckStatus> _nodeIdToStatus;
 		bool _followersSynced = false;

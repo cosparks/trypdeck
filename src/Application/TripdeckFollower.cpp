@@ -40,10 +40,6 @@ void TripdeckFollower::run() {
 	}
 }
 
-void TripdeckFollower::handleMediaChanged(TripdeckStateChangedArgs& args) {
-	// do nothing ??
-}
-
 void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	_mediaManager->updateState(args);
 }
