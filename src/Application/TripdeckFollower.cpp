@@ -49,13 +49,9 @@ void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 }
 
 void TripdeckFollower::_sendConnectingMessage() {
-	int64_t currentTime = Clock::instance().millis();
-	if (currentTime >= _nextActionMillis) {
-		_nextActionMillis = currentTime + NOTIFICATION_INTERVAL;
-		std::string data = STARTUP_NOTIFICATION_HEADER;
-		data += ID;
-		_serial->transmit(data);
-	}
+	std::string data = STARTUP_NOTIFICATION_HEADER;
+	data += ID;
+	_serial->transmit(data);
 }
 
 void TripdeckFollower::_sendStatusUpdate() {
