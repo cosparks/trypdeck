@@ -23,7 +23,7 @@ void TripdeckFollower::run() {
 				_runTimedAction(&TripdeckFollower::_sendConnectingMessage);
 				break;
 			case Connected:
-				_runTimedAction(&TripdeckFollower::_sendStatusUpdate);
+				_runTimedAction(&TripdeckFollower::_sendStatusUpdate, 4000);
 				break;
 			case Wait:
 				break;
@@ -53,7 +53,7 @@ void TripdeckFollower::_sendConnectingMessage() {
 void TripdeckFollower::_sendStatusUpdate() {
 	std::string message = STATUS_UPDATE_HEADER;
 	message += ID;
-	message.append(std::to_string(_currentState));
+	message.append("/" + std::to_string(_currentState));
 
 	if (_status.videoMedia != 0)
 		message.append("/" + _hashToHexString(_status.videoMedia));

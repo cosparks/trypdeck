@@ -56,7 +56,6 @@ class Tripdeck : public Runnable {
 			private:
 				Tripdeck* _owner;
 		};
-
 		struct MediaHashes {
 			uint32_t videoHash;
 			uint32_t ledHash;
@@ -69,8 +68,8 @@ class Tripdeck : public Runnable {
 		Command* _stateChangedDelegate = NULL;
 		InputThreadedSerial* _serialInput = NULL;
 		SerialInputDelegate* _serialInputDelegate = NULL;
-		TripdeckStatus _status;
-		bool _run;
+		TripdeckStatus _status = { };
+		bool _run = false;
 
 		virtual void _handleSerialInput(InputArgs& args) = 0;
 		MediaHashes _parseMediaHashes(const std::string& buffer);
