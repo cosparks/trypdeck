@@ -142,8 +142,8 @@ void TripdeckLeader::_updateFollowerState(const std::string& id, TripdeckStateCh
 	message.append(id + "/" + std::to_string(args.newState) + "/" + std::to_string(args.mediaOption));
 	
 	if (args.videoId || args.ledId) {
-		message.append("/" + std::to_string(_mediaManager->getRandomVideoId(args.newState)));
-		message.append("/" + std::to_string(_mediaManager->getRandomLedId(args.newState)));
+		message.append("/" + _hashToHexString(_mediaManager->getRandomVideoId(args.newState)));
+		message.append("/" + _hashToHexString(_mediaManager->getRandomLedId(args.newState)));
 	}
 
 	_serial->transmit(message);
@@ -159,5 +159,5 @@ bool TripdeckLeader::_verifySynced() {
 }
 
 void TripdeckLeader::_handleUserInput(InputArgs* data) {
-	
+
 }
