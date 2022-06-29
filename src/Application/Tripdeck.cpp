@@ -3,6 +3,8 @@
 
 #include "Tripdeck.h"
 
+const char ValidHeaders[] = { STARTUP_NOTIFICATION_HEADER, STATE_CHANGED_HEADER, STATUS_UPDATE_HEADER, CONNECTION_CONFIRMATION_HEADER, PLAY_MEDIA_HEADER, STOP_MEDIA_HEADER, PAUSE_MEDIA_HEADER };
+
 // tripdeck behavior
 Tripdeck::Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : _mediaManager(mediaManager), _inputManager(inputManager), _serial(serial) { }
 
@@ -34,12 +36,20 @@ bool Tripdeck::_validateSerialMessage(const std::string& buffer) {
 		std::cout << "Warning: Invalid message received -- length: " << buffer.length() << std::endl;
 		#endif
 		
-		return true;
+		return false;
 	}
-	
-	return false;
+
+	// check if first character is alphanumeric
+	return iswalnum(buffer[0]) != 0 && _validateHeader(buffer[0]);
 }
 
+bool Tripdeck::_validateHeader(char header) {
+	for (char h : ValidHeaders) {
+		if (header == h)
+			return true;
+	}
+	return false;
+}
 
 Tripdeck::MediaHashes Tripdeck::_parseMediaHashes(const std::string& buffer) {
 	std::string mediaHashes = buffer.substr(HEADER_LENGTH + 6);

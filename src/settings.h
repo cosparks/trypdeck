@@ -6,14 +6,14 @@
 #include "LedController.h"
 
 // Leader or Follower
-#define Follower
+#define Leader
 
 // IDs
-#define ID "1"						// change this setting for different followers: each follower on the network MUST have a unique id
+#define ID "0"						// change this setting for different followers: each follower on the network MUST have a unique id
 #define LEADER_ID "0"				// do not change this ID
 
 // Timing (only matters for Leader)
-#define STARTUP_TIME 15000			// duration for pis to sync up and play startup animation
+#define STARTUP_TIME 20000			// duration for pis to sync up and play startup animation
 #define PULL_DEBOUNCE_TIME 2000		// duration within which other people can still pull chain before pulled animation starts
 #define REVEAL_TIME 20000			// duration for which tarot cards will be displayed before returning to wait state
 
@@ -22,10 +22,10 @@
 #define SERIAL_BUFFER_SIZE 64		// largest possible serial message size
 #define SPI_BAUD 4000000			// led matrix baud rate
 #define NUM_INPUTS 3				// number of inputs for pull-chains on sculpture
-#define NUM_FOLLOWERS 2				// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
+#define NUM_FOLLOWERS 1				// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
 
 // debug
-#define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (this disables leds!)
+#define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
 #define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
 
 // Led Settings

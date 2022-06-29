@@ -81,6 +81,7 @@ class Tripdeck : public Runnable {
 
 		virtual void _handleSerialInput(InputArgs& args) = 0;
 		bool _validateSerialMessage(const std::string& buffer);
+		bool _validateHeader(char header);
 		MediaHashes _parseMediaHashes(const std::string& buffer);
 		const std::string _hashToHexString(uint32_t hash);
 
