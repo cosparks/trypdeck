@@ -110,8 +110,13 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 		
 		_videoPlayer->setCurrentMedia(videoId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
 
-		if (args.mediaOption == Video || args.mediaOption == Both)
+		if (args.mediaOption == Video || args.mediaOption == Both) {
+			#if ENABLE_SERIAL_DEBUG
+			// TODO: Remove debug code
+			std::cout << "Playing video with hash: " << videoId << endl;
+			#endif
 			_videoPlayer->play();
+		}
 	}
 
 	if (_ledPlayer) {
@@ -124,8 +129,13 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 
 		_ledPlayer->setCurrentMedia(ledId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
 
-		if (args.mediaOption == Led || args.mediaOption == Both)
+		if (args.mediaOption == Led || args.mediaOption == Both) {
+			#if ENABLE_SERIAL_DEBUG
+			// TODO: Remove debug code
+			std::cout << "Playing video with hash: " << ledId << endl;
+			#endif
 			_ledPlayer->play();
+		}
 	}
 }
 
