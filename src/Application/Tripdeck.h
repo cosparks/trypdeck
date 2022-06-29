@@ -94,6 +94,7 @@ class Tripdeck : public Runnable {
 		virtual void _handleSerialInput(InputArgs& args) = 0;
 		bool _validateSerialMessage(const std::string& buffer);
 		bool _validateHeader(char header);
+		void _formatBasicMessage();
 		MediaHashes _parseMediaHashes(const std::string& buffer);
 		const std::string _hashToHexString(uint32_t hash);
 
@@ -107,12 +108,12 @@ class Tripdeck : public Runnable {
 			}
 		}
 
-		inline const char _parseHeader(const std::string& buffer) {
+		inline char _parseHeader(const std::string& buffer) {
 			return buffer[0];
 		}
 
-		inline const std::string _parseId(const std::string& buffer) {
-			return buffer.substr(ID_INDEX, 1);
+		inline char _parseId(const std::string& buffer) {
+			return buffer[ID_INDEX];
 		}
 
 		inline TripdeckState _parseState(const std::string& buffer) {

@@ -71,7 +71,7 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 		return;
 	
 	// check if message is intended for this follower
-	if (_parseId(args.buffer).compare(ID) == 0) {
+	if (_parseId(args.buffer)== ID) {
 		
 		char header = _parseHeader(args.buffer);
 		TripdeckStateChangedArgs stateArgs = { };

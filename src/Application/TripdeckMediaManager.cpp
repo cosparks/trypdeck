@@ -132,7 +132,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 		if (args.mediaOption == Led || args.mediaOption == Both) {
 			#if ENABLE_SERIAL_DEBUG
 			// TODO: Remove debug code
-			std::cout << "Playing video with hash: " << ledId << endl;
+			std::cout << "Playing led animation with hash: " << ledId << endl;
 			#endif
 			_ledPlayer->play();
 		}

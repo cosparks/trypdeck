@@ -106,16 +106,18 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 		return;
 
 	char header = _parseHeader(args.buffer);
-	const std::string id = _parseId(args.buffer);
+	char id = _parseId(args.buffer);
 	TripdeckStateChangedArgs stateArgs = { };
 
 	switch (header) {
 		case STARTUP_NOTIFICATION_HEADER:
 			// add node to map and send state update message
 			if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
-				_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, None, Unknown, false };
+				_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, Both, Unknown, false };
 
+			// update follower to connected state and tell it to play new media upon receipt of message
 			stateArgs.newState = Connected;
+			stateArgs.mediaOption = Both;
 			_updateFollowerState(id, stateArgs);
 			break;
 		case STATUS_UPDATE_HEADER:
@@ -139,9 +141,12 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	}
 }
 
-void TripdeckLeader::_updateFollowerState(const std::string& id, TripdeckStateChangedArgs& args) { 
-	std::string message(HEADER_LENGTH, STATE_CHANGED_HEADER);
-	message.append(id + "/" + std::to_string(args.newState) + "/" + std::to_string(args.mediaOption));
+void TripdeckLeader::_updateFollowerState(char id, TripdeckStateChangedArgs& args) { 
+	std::string message = DEFAULT_MESSAGE;
+	message[0] = STATE_CHANGED_HEADER;
+	message[ID_INDEX] = id;
+	message[STATE_INDEX] = (char)('0' + (int32_t)args.newState);
+	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)args.mediaOption);
 	
 	if (args.videoId || args.ledId) {
 		message.append("/" + _hashToHexString(_mediaManager->getRandomVideoId(args.newState)));
@@ -192,7 +197,7 @@ void TripdeckLeader::_mediaNotificationAction() {
 
 	for (const auto& pair : _nodeIdToStatus) {
 		// copy node ID into string and transmit
-		message[1] = pair.first[0];
+		message[1] = pair.first;
 		_serial->transmit(message);
 	}
 

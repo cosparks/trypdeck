@@ -13,7 +13,7 @@ class TripdeckLeader : public Tripdeck {
 		void init() override;
 		void run() override;
 	private:
-		std::unordered_map<std::string, TripdeckStatus> _nodeIdToStatus;
+		std::unordered_map<char, TripdeckStatus> _nodeIdToStatus;
 		void (TripdeckLeader::*_oneShotAction)(void)  = NULL;
 		int64_t _nextOneShotActionMillis = 0;
 		TripdeckMediaOption _nextMediaActionOption;
@@ -24,7 +24,7 @@ class TripdeckLeader : public Tripdeck {
 		void _updateFollowers(TripdeckStateChangedArgs& args);
 		void _handleSerialInput(InputArgs& args) override;
 		void _handleUserInput(InputArgs* data);
-		void _updateFollowerState(const std::string& id, TripdeckStateChangedArgs& args);
+		void _updateFollowerState(char id, TripdeckStateChangedArgs& args);
 		void _setOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait);
 		void _runOneShotAction();
 		void _setMediaNotificationAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
