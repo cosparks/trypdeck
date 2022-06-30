@@ -123,7 +123,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 		uint32_t ledId = 0;
 
 		if (args.ledId == 0)
-			ledId = getRandomVideoId(_currentState);
+			ledId = getRandomLedId(_currentState);
 		else
 			ledId = args.ledId;
 
