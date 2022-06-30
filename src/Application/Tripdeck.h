@@ -61,7 +61,7 @@ using namespace td_util;
 #define RESET_MESSAGE "r/all"
 
 // default rate for networking actions
-#define DEFAULT_ACTION_INTERVAL 1000
+#define DEFAULT_ACTION_INTERVAL DEFAULT_PING_INTERVAL
 
 /**
  * @brief Abstract class the children of which will encapsulate the unique behavior for leader and follower

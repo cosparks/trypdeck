@@ -20,10 +20,11 @@
 #define LEADER_ID '0'					// do not change this ID
 
 // Timing -- Leader only
-#define STARTUP_TIME 8000				// duration for pis to sync up and play startup animation
+#define STARTUP_TIME 20000				// duration for pis to sync up and play startup animation
 #define PULL_TO_PRE_REVEAL_TIME 5000	// amount of time between chain pull (on any pi) and pre-reveal state
 #define PRE_REVEAL_TO_REVEAL_TIME 1500	// amount of time between pre-reveal and reveal state
 #define REVEAL_TIME 20000				// duration for which tarot cards will be displayed before returning to wait state
+#define DEFAULT_PING_INTERVAL 10000		// intervals on which Leader / Follower ping one another
 
 // GPIO Settings (general)
 #define SERIAL_BAUD B9600				// networking baud rate
