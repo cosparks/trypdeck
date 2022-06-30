@@ -103,7 +103,7 @@ void TripdeckLeader::_runOneShotAction() {
 
 		for (auto const& pair : _oneShotActions) {
 			// if we are past this action's execution time, execute
-			if (pair.first > currentTime) {
+			if (currentTime > pair.first) {
 				(this->*pair.second)();
 				toDelete.push_back(i);
 			}
@@ -332,14 +332,18 @@ void TripdeckLeader::_handleReset() {
 }
 
 void TripdeckLeader::_executePreReveal() {
+	std::cout << "Executing pre reveal!" << std::endl;
+
 	// TODO
 	// send message to all followers, set videos and start leds (either on timer or right away)
+	_updateMediaStateUniversal(Both, MediaPlayer::Stop);
 	// set next action, reveal
 	_addOneShotAction(&TripdeckLeader::_executeReveal, PRE_REVEAL_TO_REVEAL_TIME);
 }
 
 void TripdeckLeader::_executeReveal() {
 	// notify all nodes to play video and led animation
+	std::cout << "Executing reveal!" << std::endl;
 }
 
 // Digital Input Delegate
