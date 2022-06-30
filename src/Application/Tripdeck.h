@@ -1,6 +1,7 @@
 #ifndef _TRIPDECK_BEHAVIOR_H_
 #define _TRIPDECK_BEHAVIOR_H_
 
+#include <unordered_map>
 #include <vector>
 
 #include "settings.h"
@@ -17,20 +18,20 @@ using namespace td_util;
  * @note if you add a new header, it must also be added to ValidHeaders array in Tripdeck.cpp
 **/
 
+// startup notification structure: "cID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
+// STATE is TripdeckState to change to and OPTION/LOOP contains information on how media should be played
+// VIDEOHASH/LEDHASH are optional arguments for video and led file IDs
+// if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
+#define STATE_CHANGED_HEADER 'c'
 // startup notification structure: "nID"
 // ID is unqiue identifier for sender
 #define STARTUP_NOTIFICATION_HEADER 'n'
-// startup notification structure: "cID/STATE/OPTION(/VIDEOHASH/LEDHASH)"
-// STATE is TripdeckState to change to and OPTION contains information on how media should be played
-// /VIDEOHASH/LEDHASH are optional arguments for video and led file IDs
-// if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
-#define STATE_CHANGED_HEADER 'c'
-// status update message header: "uID/STATE/OPTION"
-// sent during Follower's connected and wait phase -- generally to notify leader that follower is still connected
-#define STATUS_UPDATE_HEADER 'u'
 // status update message header: "rID/STATE"
 // sent by leader to confirm it has received status update from follower
 #define CONNECTION_CONFIRMATION_HEADER 'r'
+// status update message header: "uID/STATE/OPTION"
+// sent during Follower's connected and wait phase -- generally to notify leader that follower is still connected
+#define STATUS_UPDATE_HEADER 'u'
 // message dictating that follower play media: "jID/STATE/OPTION"
 // OPTION is TripdeckMediaOption
 #define PLAY_MEDIA_HEADER 'j'
@@ -40,6 +41,9 @@ using namespace td_util;
 // message dictating that follower pause media: "pID/STATE/OPTION"
 // OPTION is TripdeckMediaOption
 #define PAUSE_MEDIA_HEADER 'p'
+// play media from state folder message: "mID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
+// allows Leader to send message to follower indicating that it should play media from a folder not associated with its current state
+#define PLAY_MEDIA_FROM_STATE_FOLDER_HEADER 'm'
 
 /** MESSAGE METADATA 
  * @note you must change these values if you make any changes to message format
@@ -48,8 +52,9 @@ using namespace td_util;
 #define ID_INDEX 1
 #define STATE_INDEX 3
 #define MEDIA_OPTION_INDEX 5
-#define HASH_INDEX 7
-#define DEFAULT_MESSAGE "x0/0/0"
+#define LOOP_INDEX 7
+#define HASH_INDEX 9
+#define DEFAULT_MESSAGE "x0/0/0/0"
 
 // default rate for networking actions
 #define DEFAULT_ACTION_INTERVAL 1000
@@ -109,6 +114,10 @@ class Tripdeck : public Runnable {
 
 		inline TripdeckMediaOption _parseMediaOption(const std::string& buffer) {
 			return (TripdeckMediaOption)std::stoi(buffer.substr(MEDIA_OPTION_INDEX, 1));
+		}
+
+		inline bool _parseLoop(const std::string& buffer) {
+			return buffer[LOOP_INDEX] == '1';
 		}
 
 		inline bool _containsMediaHashes(const std::string& buffer) {

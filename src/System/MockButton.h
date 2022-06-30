@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
+#include "settings.h"
 #include "td_util.h"
 #include "Clock.h"
 
@@ -34,7 +35,7 @@ class MockButton : public Input {
 
 	private:
 		int64_t _lastTime = 0;
-		int64_t _nextTime = 25000;
+		int64_t _nextTime = STARTUP_TIME;
 		int64_t _minRange = 0;
 		int64_t _maxRange = 0;
 };

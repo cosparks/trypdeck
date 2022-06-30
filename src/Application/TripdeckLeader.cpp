@@ -15,17 +15,17 @@ void TripdeckLeader::init() {
 
 	// hook up button inputs with input manager
 	// TODO: remove test code
-	// _inputManager->addInput(new MockButton(LEADER_BUTTON_ID, 15000, 20000), new TripdeckLeader::DigitalInputDelegate(this));
-	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, 15000, 20000), new TripdeckLeader::DigitalInputDelegate(this));
-	
+	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
+	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
 	// TODO: add button which will perform full reset
+	
 	_onStateChanged();
 }
 
 void TripdeckLeader::run() {
 	while (_run) {
 		Tripdeck::run();
-		_runOneShotAction();
+		_runOneShotActions();
 
 		switch (_status.state) {
 			case Connecting:
@@ -36,12 +36,12 @@ void TripdeckLeader::run() {
 			case Wait:
 				break;
 			case Pulled:
-				_runPulled();
+				_runTimedAction(this, &TripdeckLeader::_runPulled, 20);
 				break;
 			case Reveal:
 				break;
 			default:
-				// do nothing
+				// Unknown state -- do nothing
 				break;
 		}
 	}
@@ -77,8 +77,11 @@ bool TripdeckLeader::_verifySynced() {
 }
 
 void TripdeckLeader::_runPulled() {
-	if (_verifyAllPulled()) {
+	if (!_executingPreReveal && _verifyAllPulled()) {
+		// if all chains have been pulled, jump straight to pre-reveal
 		_updateMediaStateUniversal(Both, MediaPlayer::Stop);
+		_cancelOneShotActions();
+		_executePreReveal();
 	}
 }
 
@@ -88,14 +91,18 @@ bool TripdeckLeader::_verifyAllPulled() {
 			return false;
 	}
 
-	return true;
+	return _status.state == Pulled;
 }
 
 void TripdeckLeader::_addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait) {
 	_oneShotActions.push_back(std::make_pair(Clock::instance().millis() + wait, action));
 }
 
-void TripdeckLeader::_runOneShotAction() {
+void TripdeckLeader::_cancelOneShotActions() {
+	_oneShotActions.clear();
+}
+
+void TripdeckLeader::_runOneShotActions() {
 	if (_oneShotActions.size() > 0) {
 		std::vector<int32_t> toDelete;
 		uint8_t i = 0;
@@ -128,7 +135,7 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 			_receiveStartupNotification(id, args.buffer);
 			break;
 		case STATUS_UPDATE_HEADER:
-			_updateFollowerStatusInternal(id, args.buffer);
+			_receiveFollowerStatusUpdate(id, args.buffer);
 			break;
 		default:
 			// do nothing
@@ -162,6 +169,11 @@ void TripdeckLeader::_onStateChanged() {
 			args.loop = false;
 			break;
 		case Reveal:
+			if (_chainPulled)
+				args.mediaOption = Both;
+			else
+				args.mediaOption = Led;
+			args.loop = false;
 			break;
 		default:
 			// do nothing
@@ -193,6 +205,7 @@ void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& arg
 	message[ID_INDEX] = id;
 	message[STATE_INDEX] = (char)('0' + (int32_t)args.newState);
 	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)args.mediaOption);
+	message[LOOP_INDEX] = args.loop ? '1' : '0';
 	
 	if (args.videoId || args.ledId) {
 		message.append("/" + _hashToHexString(_mediaManager->getRandomVideoId(args.newState)));
@@ -202,7 +215,13 @@ void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& arg
 	_serial->transmit(message);
 }
 
-void TripdeckLeader::_updateFollowerStatusInternal(char id, const std::string& buffer) {
+void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
+	for (auto const& pair : _nodeIdToStatus) {
+		_updateStateFollower(pair.first, args);
+	}
+}
+
+void TripdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& buffer) {
 	// update internal representation of node's state, including time
 	int64_t currentTime = Clock::instance().millis();
 	if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
@@ -217,12 +236,6 @@ void TripdeckLeader::_updateFollowerStatusInternal(char id, const std::string& b
 		MediaHashes hashes = _parseMediaHashes(buffer);
 		_nodeIdToStatus[id].videoMedia = hashes.videoHash;
 		_nodeIdToStatus[id].ledMedia = hashes.ledHash;
-	}
-}
-
-void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
-	for (auto const& pair : _nodeIdToStatus) {
-		_updateStateFollower(pair.first, args);
 	}
 }
 
@@ -308,22 +321,31 @@ void TripdeckLeader::_handleChainPull(char id) {
 		if (_nodeIdToStatus[id].state == Pulled)
 			return;
 
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
+		std::cout << "State changed for node with id: " << id << ".  Updating node" << std::endl;
+		#endif
+
 		// first chain pull -- update follower status
 		_nodeIdToStatus[id].state = Pulled;
 
-		// send stop Video message to Follower (turns screen black)
+		// send stop Video message to Follower
 		_updateMediaStateFollower(id, Video, MediaPlayer::Stop);
 
-		// send Pulled state update message to Follower
+		// send Pulled state update message to Followers (change led effect but not video)
+		// at this point, we rely on Leader's internal representation of follower state to determine behavior
 		TripdeckStateChangedArgs args = { };
 		args.newState = Pulled;
 		args.mediaOption = None;
 		args.loop = false;
-		_updateStateFollower(id, args);
+		_updateStateFollower(id, args); 
 	}
 
 	// add one shot action for initialize pre-reveal
-	_addOneShotAction(&TripdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
+	if (!_revealTriggered) {
+		_addOneShotAction(&TripdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
+		_revealTriggered = true;
+	}
 }
 
 void TripdeckLeader::_handleReset() {
@@ -332,18 +354,55 @@ void TripdeckLeader::_handleReset() {
 }
 
 void TripdeckLeader::_executePreReveal() {
+	#if SERIAL_DEBUG_ENABLED
+	// TODO: Remove debug code
 	std::cout << "Executing pre reveal!" << std::endl;
+	#endif
 
-	// TODO
-	// send message to all followers, set videos and start leds (either on timer or right away)
+	_executingPreReveal = true;
 	_updateMediaStateUniversal(Both, MediaPlayer::Stop);
+
+	// TODO: Add some LED behaviors in here
+
 	// set next action, reveal
 	_addOneShotAction(&TripdeckLeader::_executeReveal, PRE_REVEAL_TO_REVEAL_TIME);
 }
 
 void TripdeckLeader::_executeReveal() {
-	// notify all nodes to play video and led animation
+	#if ENABLE_DEBUG_SERIAL
+	// TODO: Remove debug code
 	std::cout << "Executing reveal!" << std::endl;
+	#endif
+
+	// notify all nodes to play video and led animation
+	uint32_t ledId = _mediaManager->getRandomLedId(Reveal);
+
+	for (auto const& pair : _nodeIdToStatus) {
+		TripdeckStateChangedArgs args = { };
+		args.newState = Reveal;
+		args.ledId = ledId;
+
+		if (pair.second.state == Pulled)
+			args.mediaOption = Both;
+		else
+			args.mediaOption = Led;
+
+		_updateStateFollower(pair.first, args);
+	}
+
+	_executingPreReveal = false;
+	_status.state = Reveal;
+	_onStateChanged();
+
+	_addOneShotAction(&TripdeckLeader::_returnToWait, REVEAL_TIME);
+}
+
+void TripdeckLeader::_returnToWait() {
+	_revealTriggered = false;
+	_chainPulled = false;
+
+	_status.state = Wait;
+	_onStateChanged();
 }
 
 // Digital Input Delegate
