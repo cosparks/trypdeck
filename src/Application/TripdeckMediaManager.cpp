@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <iostream>
+#include <thread>
 #include <cstdlib>
 
 #include "Clock.h"
@@ -134,6 +135,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 			// TODO: Remove debug code
 			std::cout << "Playing led animation with hash: " << ledId << endl;
 			#endif
+			std::this_thread::sleep_for(std::chrono::milliseconds(LED_WAIT_TIME));
 			_ledPlayer->play();
 		}
 	}
