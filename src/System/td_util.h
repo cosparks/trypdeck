@@ -14,19 +14,19 @@ namespace td_util {
 
 	class Input {
 		public:
-			Input(uint32_t id);
+			Input(char id);
 			virtual ~Input();
 			virtual bool read() = 0;
-			uint32_t getId();
-			const std::string& getData();
+			char getId();
+			const std::string getData();
 		protected:
-			uint32_t _id;
+			char _id;
 			std::string _data;
 	};
 
 	struct InputArgs {
-		uint32_t id;
-		const std::string& buffer;
+		char id;
+		std::string buffer;
 	};
 }
 

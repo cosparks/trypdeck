@@ -10,7 +10,7 @@ using namespace td_util;
 
 class InputThreadedSerial : public Input {
 	public:
-		InputThreadedSerial(uint32_t id, Serial* serial);
+		InputThreadedSerial(char id, Serial* serial);
 		~InputThreadedSerial();
 		bool read() override;
 	private:

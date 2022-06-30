@@ -2,7 +2,7 @@
 
 #include "InputThreadedSerial.h"
 
-InputThreadedSerial::InputThreadedSerial(uint32_t id, Serial* serial) : Input(id), _serial(serial) { }
+InputThreadedSerial::InputThreadedSerial(char id, Serial* serial) : Input(id), _serial(serial) { }
 
 InputThreadedSerial::~InputThreadedSerial() { }
 
@@ -35,6 +35,6 @@ void InputThreadedSerial::_readInternal() {
 
 	_stateMutex.lock();
 	_currentlyReading = false;
-	_dataAvailable = true;
+	_dataAvailable = !_data.empty();
 	_stateMutex.unlock();
 }
