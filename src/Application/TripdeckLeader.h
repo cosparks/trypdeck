@@ -42,6 +42,7 @@ class TripdeckLeader : public Tripdeck {
 		void _handleDigitalInput(InputArgs& data);
 		void _handleChainPull(char id);
 		void _handleReset();
+		void _handleShutdown();
 		// actions
 		void _addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait);
 		void _setMediaUpdateUniversalAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state, int64_t wait = 5);

@@ -105,6 +105,12 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 				_populateStateArgsFromBuffer(args.buffer, stateArgs);
 				_mediaManager->updateState(stateArgs);
 				break;
+			case SYSTEM_RESET_HEADER:
+				_reset();
+				break;
+			case SYSTEM_SHUTDOWN_HEADER:
+				_shutdown();
+				break;
 			default:
 				// do nothing
 				break;

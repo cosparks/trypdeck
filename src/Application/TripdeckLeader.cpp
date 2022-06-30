@@ -17,8 +17,9 @@ void TripdeckLeader::init() {
 	// TODO: remove test code
 	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
 	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
-	// TODO: add button which will perform full reset
-	
+	_inputManager->addInput(new MockButton(FOLLOWER_2_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
+
+	// TODO: add buttons which will perform full reset and shutdown
 	_onStateChanged();
 }
 
@@ -296,21 +297,24 @@ void TripdeckLeader::_updateMediaStateUniversal(TripdeckMediaOption option, Medi
 }
 
 void TripdeckLeader::_handleDigitalInput(InputArgs& data) {
+	if (data.buffer[0] != '1')
+		return;
+	
 	// handle reset
 	if (data.id == RESET_BUTTON_ID) {
-		if (data.buffer[0] == '1')
-			_handleReset();
+		_handleReset();
+		return;
+	}
+
+	// handle reset
+	if (data.id == SHUTDOWN_BUTTON_ID) {
+		_handleShutdown();
 		return;
 	}
 
 	// back out if we are not in a state to receive chain pull
-	if (_status.state != Wait && _status.state != Pulled)
-		return;
-	
-	// check if chain has been pulled
-	if (data.buffer[0] == '1') {
+	if (_status.state == Wait || _status.state == Pulled)
 		_handleChainPull(data.id);
-	}
 }
 
 void TripdeckLeader::_handleChainPull(char id) {
@@ -322,6 +326,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 		
 		// first chain pull -- handle internally
 		_status.state = Pulled;
+		_chainPulled = true;
 		_onStateChanged();
 	} else {
 		// check if follower node's chain has already been pulled
@@ -354,13 +359,18 @@ void TripdeckLeader::_handleChainPull(char id) {
 		// TODO: Remove debug code
 		std::cout << "Adding _executePreReveal to one shot actions" << std::endl;
 		#endif
-		
+
 		_addOneShotAction(&TripdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
 		_revealTriggered = true;
 	}
 }
 
 void TripdeckLeader::_handleReset() {
+	// TODO
+	// careful...
+}
+
+void TripdeckLeader::_handleShutdown() {
 	// TODO
 	// careful...
 }

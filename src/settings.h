@@ -20,8 +20,7 @@
 #define LEADER_ID '0'					// do not change this ID
 
 // Timing -- Leader only
-#define STARTUP_TIME 10000				// duration for pis to sync up and play startup animation
-#define PULL_DEBOUNCE_TIME 2000			// duration within which other people can still pull chain before pulled animation starts
+#define STARTUP_TIME 8000				// duration for pis to sync up and play startup animation
 #define PULL_TO_PRE_REVEAL_TIME 5000	// amount of time between chain pull (on any pi) and pre-reveal state
 #define PRE_REVEAL_TO_REVEAL_TIME 1500	// amount of time between pre-reveal and reveal state
 #define REVEAL_TIME 20000				// duration for which tarot cards will be displayed before returning to wait state
@@ -38,10 +37,12 @@
 #define FOLLOWER_1_BUTTON_ID '1'
 #define FOLLOWER_2_BUTTON_ID '2'
 #define RESET_BUTTON_ID 'x'
+#define SHUTDOWN_BUTTON_ID 'y'
 #define LEADER_BUTTON_PIN 1
 #define PIN_BUTTON_2 2
 #define PIN_BUTTON_3 3
 #define RESET_BUTTON_PIN 4
+#define SHUTDOWN_BUTTON_PIN 5
 
 // Led Settings
 // * dont modify these values *

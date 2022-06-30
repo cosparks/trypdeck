@@ -41,6 +41,12 @@ using namespace td_util;
 // play media from state folder message: "mID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
 // allows Leader to send message to follower indicating that it should play media from a folder not associated with its current state
 #define PLAY_MEDIA_FROM_STATE_FOLDER_HEADER 'm'
+// reset message structure: "r/all"
+// triggers reboot of all pis currently connected on network
+#define SYSTEM_RESET_HEADER 'r'
+// reset message structure: "r/all"
+// triggers reboot of all pis currently connected on network
+#define SYSTEM_SHUTDOWN_HEADER 'x'
 
 /** MESSAGE METADATA 
  * @note you must change these values if you make any changes to message format
@@ -52,6 +58,7 @@ using namespace td_util;
 #define LOOP_INDEX 7
 #define HASH_INDEX 9
 #define DEFAULT_MESSAGE "x0/0/0/0"
+#define RESET_MESSAGE "r/all"
 
 // default rate for networking actions
 #define DEFAULT_ACTION_INTERVAL 1000
@@ -87,6 +94,8 @@ class Tripdeck : public Runnable {
 		MediaHashes _parseMediaHashes(const std::string& buffer);
 		const std::string _hashToHexString(uint32_t hash);
 		void _updateStatusFromStateArgs(TripdeckStateChangedArgs& args);
+		void _reset();
+		void _shutdown();
 
 		template <class T>
 		void _runTimedAction(T *object, void (T::*action)(void), int64_t interval = DEFAULT_ACTION_INTERVAL) {
