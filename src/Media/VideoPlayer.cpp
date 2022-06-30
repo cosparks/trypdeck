@@ -99,13 +99,13 @@ void VideoPlayer::_addMedia(uint32_t fileId) {
 		_createAndInsertMedia(fileId, i);
 	}
 
-	// TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
-	if (libvlc_media_list_player_is_playing(_mediaListPlayer)) {
-		setCurrentMedia(fileId, MediaPlaybackOption::Loop);
+	// // TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
+	// if (libvlc_media_list_player_is_playing(_mediaListPlayer)) {
+	// 	setCurrentMedia(fileId, MediaPlaybackOption::Loop);
 
-		if (_state == MediaPlayerState::Play)
-			play();
-	}
+	// 	if (_state == MediaPlayerState::Play)
+	// 		play();
+	// }
 }
 
 void VideoPlayer::_removeMedia(uint32_t fileId) {

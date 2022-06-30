@@ -117,13 +117,13 @@ void LedPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToData.find(fileId) == _fileIdToData.end()) {
 		_fileIdToData[fileId] = 0;
 
-		// TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
-		if (_streamIsOpen) {
-			setCurrentMedia(fileId, MediaPlaybackOption::Loop);
+		// // TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
+		// if (_streamIsOpen) {
+		// 	setCurrentMedia(fileId, MediaPlaybackOption::Loop);
 
-			if (_state == MediaPlayerState::Play)
-				play();
-		}
+		// 	if (_state == MediaPlayerState::Play)
+		// 		play();
+		// }
 	}
 }
 
