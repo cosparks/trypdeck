@@ -86,6 +86,7 @@ class Tripdeck : public Runnable {
 		void _formatBasicMessage();
 		MediaHashes _parseMediaHashes(const std::string& buffer);
 		const std::string _hashToHexString(uint32_t hash);
+		void _updateStatusFromStateArgs(TripdeckStateChangedArgs& args);
 
 		template <class T>
 		void _runTimedAction(T *object, void (T::*action)(void), int64_t interval = DEFAULT_ACTION_INTERVAL) {
@@ -106,11 +107,11 @@ class Tripdeck : public Runnable {
 		}
 
 		inline TripdeckState _parseState(const std::string& buffer) {
-			return (TripdeckState)std::stoi(buffer.substr(STATE_INDEX, 1));
+			return (TripdeckState)(buffer[STATE_INDEX] - '0');
 		}
 
 		inline TripdeckMediaOption _parseMediaOption(const std::string& buffer) {
-			return (TripdeckMediaOption)std::stoi(buffer.substr(MEDIA_OPTION_INDEX, 1));
+			return (TripdeckMediaOption)(buffer[MEDIA_OPTION_INDEX] - '0');
 		}
 
 		inline bool _parseLoop(const std::string& buffer) {

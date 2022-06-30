@@ -79,6 +79,12 @@ bool TripdeckLeader::_verifySynced() {
 void TripdeckLeader::_runPulled() {
 	if (!_executingPreReveal && _verifyAllPulled()) {
 		// if all chains have been pulled, jump straight to pre-reveal
+
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Removing _executePreReveal to one shot actions" << std::endl;
+		#endif
+
 		_updateMediaStateUniversal(Both, MediaPlayer::Stop);
 		_cancelOneShotActions();
 		_executePreReveal();
@@ -344,6 +350,11 @@ void TripdeckLeader::_handleChainPull(char id) {
 
 	// add one shot action for initialize pre-reveal
 	if (!_revealTriggered) {
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Adding _executePreReveal to one shot actions" << std::endl;
+		#endif
+		
 		_addOneShotAction(&TripdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
 		_revealTriggered = true;
 	}
@@ -355,7 +366,7 @@ void TripdeckLeader::_handleReset() {
 }
 
 void TripdeckLeader::_executePreReveal() {
-	#if SERIAL_DEBUG_ENABLED
+	#if ENABLE_SERIAL_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Executing pre reveal!" << std::endl;
 	#endif
@@ -370,7 +381,7 @@ void TripdeckLeader::_executePreReveal() {
 }
 
 void TripdeckLeader::_executeReveal() {
-	#if ENABLE_DEBUG_SERIAL
+	#if ENABLE_SERIAL_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Executing reveal!" << std::endl;
 	#endif

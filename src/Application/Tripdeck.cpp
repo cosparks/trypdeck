@@ -65,6 +65,16 @@ const std::string Tripdeck::_hashToHexString(uint32_t hash) {
 	return stream.str();
 }
 
+void Tripdeck::_updateStatusFromStateArgs(TripdeckStateChangedArgs& args) {
+	_status.videoMedia = args.videoId;
+	_status.ledMedia = args.ledId;
+	_status.option = args.mediaOption;
+	_status.state = args.newState;
+	_status.lastTransmitMillis = Clock::instance().millis();
+	_status.connected = true;
+}
+
+
 // Serial Input Delegate
 Tripdeck::SerialInputDelegate::SerialInputDelegate(Tripdeck* owner) : _owner(owner) { }
 

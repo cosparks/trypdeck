@@ -85,7 +85,7 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 		switch (header) {
 			case STATE_CHANGED_HEADER:
 				if (_parseStateChangedMessage(args.buffer, stateArgs)) {
-					_status.state = stateArgs.newState;
+					_updateStatusFromStateArgs(stateArgs);
 					_onStateChanged(stateArgs);
 				}
 				break;
