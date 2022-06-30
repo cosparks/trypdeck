@@ -31,14 +31,14 @@ class TripdeckLeader : public Tripdeck {
 		bool _verifyAllPulled();
 		void _runOneShotActions();
 		// state and input
-		void _handleSerialInput(InputArgs& args) override;
 		void _onStateChanged();
+		void _handleSerialInput(InputArgs& args) override;
 		void _receiveStartupNotification(char id, const std::string& buffer);
+		void _receiveFollowerStatusUpdate(char id, const std::string& buffer);
 		void _updateStateFollower(char id, TripdeckStateChangedArgs& args);
 		void _updateStateFollowers(TripdeckStateChangedArgs& args);
 		void _updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
 		void _updateMediaStateUniversal(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
-		void _receiveFollowerStatusUpdate(char id, const std::string& buffer);
 		void _handleDigitalInput(InputArgs& data);
 		void _handleChainPull(char id);
 		void _handleReset();

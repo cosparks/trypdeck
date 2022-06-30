@@ -26,10 +26,7 @@ using namespace td_util;
 // startup notification structure: "nID"
 // ID is unqiue identifier for sender
 #define STARTUP_NOTIFICATION_HEADER 'n'
-// status update message header: "rID/STATE"
-// sent by leader to confirm it has received status update from follower
-#define CONNECTION_CONFIRMATION_HEADER 'r'
-// status update message header: "uID/STATE/OPTION"
+// status update message header: "uID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
 // sent during Follower's connected and wait phase -- generally to notify leader that follower is still connected
 #define STATUS_UPDATE_HEADER 'u'
 // message dictating that follower play media: "jID/STATE/OPTION"
@@ -121,7 +118,11 @@ class Tripdeck : public Runnable {
 		}
 
 		inline bool _containsMediaHashes(const std::string& buffer) {
-			return buffer.substr(HASH_INDEX - 1, 1).compare("/") == 0;
+			return buffer.size() >= HASH_INDEX && buffer[HASH_INDEX - 1] == '/';
+		}
+
+		inline char _singleDigitIntToChar(int32_t num) {
+			return (char)('0' + num);
 		}
 
 		class SerialInputDelegate : public Command {

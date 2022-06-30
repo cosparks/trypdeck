@@ -3,8 +3,8 @@
 
 #include "Tripdeck.h"
 
-const char ValidHeaders[] = { STARTUP_NOTIFICATION_HEADER, STATE_CHANGED_HEADER, STATUS_UPDATE_HEADER, CONNECTION_CONFIRMATION_HEADER,
-	PLAY_MEDIA_HEADER, STOP_MEDIA_HEADER, PAUSE_MEDIA_HEADER, PLAY_MEDIA_FROM_STATE_FOLDER_HEADER };
+const char ValidHeaders[] = { STARTUP_NOTIFICATION_HEADER, STATE_CHANGED_HEADER, STATUS_UPDATE_HEADER, PLAY_MEDIA_HEADER,
+	STOP_MEDIA_HEADER, PAUSE_MEDIA_HEADER, PLAY_MEDIA_FROM_STATE_FOLDER_HEADER };
 
 // tripdeck behavior
 Tripdeck::Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : _mediaManager(mediaManager), _inputManager(inputManager), _serial(serial) { }

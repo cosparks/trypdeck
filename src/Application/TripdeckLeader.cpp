@@ -123,26 +123,6 @@ void TripdeckLeader::_runOneShotActions() {
 	}
 }
 
-void TripdeckLeader::_handleSerialInput(InputArgs& args) {
-	if (!_validateSerialMessage(args.buffer))
-		return;
-
-	char header = _parseHeader(args.buffer);
-	char id = _parseId(args.buffer);
-
-	switch (header) {
-		case STARTUP_NOTIFICATION_HEADER:
-			_receiveStartupNotification(id, args.buffer);
-			break;
-		case STATUS_UPDATE_HEADER:
-			_receiveFollowerStatusUpdate(id, args.buffer);
-			break;
-		default:
-			// do nothing
-			break;
-	}
-}
-
 void TripdeckLeader::_onStateChanged() {
 	TripdeckStateChangedArgs args = { };
 	args.newState = _status.state;
@@ -151,8 +131,8 @@ void TripdeckLeader::_onStateChanged() {
 		case Connecting:
 			// same as Connected
 		case Connected:
-			args.loop = true;
 			args.mediaOption = Both;
+			args.loop = true;
 			break;
 		case Wait:
 			args.videoId = _mediaManager->getRandomVideoId(_status.state);
@@ -187,6 +167,26 @@ void TripdeckLeader::_onStateChanged() {
 	_mediaManager->updateState(args);
 }
 
+void TripdeckLeader::_handleSerialInput(InputArgs& args) {
+	if (!_validateSerialMessage(args.buffer))
+		return;
+
+	char header = _parseHeader(args.buffer);
+	char id = _parseId(args.buffer);
+
+	switch (header) {
+		case STARTUP_NOTIFICATION_HEADER:
+			_receiveStartupNotification(id, args.buffer);
+			break;
+		case STATUS_UPDATE_HEADER:
+			_receiveFollowerStatusUpdate(id, args.buffer);
+			break;
+		default:
+			// do nothing
+			break;
+	}
+}
+
 void TripdeckLeader::_receiveStartupNotification(char id, const std::string& buffer) {
 	// add node to map and send state update message
 	if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
@@ -199,12 +199,31 @@ void TripdeckLeader::_receiveStartupNotification(char id, const std::string& buf
 	_updateStateFollower(id, stateArgs);
 }
 
+void TripdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& buffer) {
+	// update internal representation of node's state, including time
+	int64_t currentTime = Clock::instance().millis();
+	if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
+		_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseMediaOption(buffer), _parseState(buffer), currentTime, true };
+	} else {
+		_nodeIdToStatus[id].option = _parseMediaOption(buffer);
+		_nodeIdToStatus[id].state = _parseState(buffer);
+		_nodeIdToStatus[id].lastTransmitMillis = currentTime;
+		_nodeIdToStatus[id].connected = true;
+	}
+
+	if (_containsMediaHashes(buffer)) {
+		MediaHashes hashes = _parseMediaHashes(buffer);
+		_nodeIdToStatus[id].videoMedia = hashes.videoHash;
+		_nodeIdToStatus[id].ledMedia = hashes.ledHash;
+	}
+}
+
 void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& args) {
 	std::string message = DEFAULT_MESSAGE;
 	message[0] = STATE_CHANGED_HEADER;
 	message[ID_INDEX] = id;
-	message[STATE_INDEX] = (char)('0' + (int32_t)args.newState);
-	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)args.mediaOption);
+	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.newState);
+	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.mediaOption);
 	message[LOOP_INDEX] = args.loop ? '1' : '0';
 	
 	if (args.videoId || args.ledId) {
@@ -221,29 +240,11 @@ void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
 	}
 }
 
-void TripdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& buffer) {
-	// update internal representation of node's state, including time
-	int64_t currentTime = Clock::instance().millis();
-	if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
-		_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseMediaOption(buffer), _parseState(buffer), currentTime, true };
-	} else {
-		_nodeIdToStatus[id].state = _parseState(buffer);
-		_nodeIdToStatus[id].lastTransmitMillis = currentTime;
-		_nodeIdToStatus[id].connected = true;
-	}
-
-	if (_containsMediaHashes(buffer)) {
-		MediaHashes hashes = _parseMediaHashes(buffer);
-		_nodeIdToStatus[id].videoMedia = hashes.videoHash;
-		_nodeIdToStatus[id].ledMedia = hashes.ledHash;
-	}
-}
-
 void TripdeckLeader::_updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
 	std::string message = DEFAULT_MESSAGE;
 	message[0] = STOP_MEDIA_HEADER;
 	message[ID_INDEX] = id;
-	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)option);
+	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)option);
 	_serial->transmit(message);
 }
 
@@ -277,7 +278,7 @@ void TripdeckLeader::_updateMediaStateUniversal(TripdeckMediaOption option, Medi
 	}
 
 	// set media option (follower will ignore state for these types of messages)
-	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)option);
+	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)option);
 
 	for (const auto& pair : _nodeIdToStatus) {
 		// copy node ID into string and transmit

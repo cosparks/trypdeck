@@ -62,9 +62,11 @@ void TripdeckFollower::_pingLeader() {
 }
 
 void TripdeckFollower::_sendStatusUpdate() {
-	std::string message(HEADER_LENGTH, STATUS_UPDATE_HEADER);
-	message += ID;
-	message.append("/" + std::to_string(_status.state));
+	std::string message = DEFAULT_MESSAGE;
+	message[0] = STATUS_UPDATE_HEADER;
+	message[ID_INDEX] = ID;
+	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)_status.state);
+	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)_status.option);
 
 	_serial->transmit(message);
 }
