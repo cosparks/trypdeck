@@ -14,7 +14,9 @@ Clock& Clock::instance() {
 	return *_instance;
 }
 
-Clock::~Clock() { }
+Clock::~Clock() {
+	delete _instance;
+}
 
 void Clock::reset() {
 	_startTimeMillis = _currentTimeInMilliseconds();

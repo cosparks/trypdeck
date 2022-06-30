@@ -11,7 +11,7 @@ using namespace td_util;
 
 class MockButton : public Input {
 	public:
-		MockButton(int32_t id, int64_t minRange, int64_t maxRange) : Input(id) {
+		MockButton(char id, int64_t minRange, int64_t maxRange) : Input(id) {
 			_minRange = minRange;
 			_maxRange = maxRange;
 		}
@@ -25,7 +25,8 @@ class MockButton : public Input {
 				if (random < _minRange)
 					random = std::rand() % (_maxRange - random) + random;
 				_nextTime = Clock::instance().millis() + random;
-				
+
+				_data = random % 2 ? "1" : "0";
 				return true;
 			}
 			return false;
@@ -33,7 +34,7 @@ class MockButton : public Input {
 
 	private:
 		int64_t _lastTime = 0;
-		int64_t _nextTime = 5000;
+		int64_t _nextTime = 25000;
 		int64_t _minRange = 0;
 		int64_t _maxRange = 0;
 };

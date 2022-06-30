@@ -13,11 +13,12 @@ void Tripdeck::init() {
 	_inputManager->init();
 	_mediaManager->init();
 	_serial->init();
+	
+	// create and add serial input and serial input delegate to InputManager
+	// ID does not matter in this case -- objects will be cleaned up by InputManger on Destruction
+	_inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new SerialInputDelegate(this));
 
-	// create delegate to listen for serial input
-	_serialInput = new InputThreadedSerial(5, _serial);
-	_serialInputDelegate = new SerialInputDelegate(this);
-	_inputManager->addInput(_serialInput, _serialInputDelegate);
+
 	
 	_status.state = Connecting;
 	_run = true;
@@ -63,15 +64,11 @@ const std::string Tripdeck::_hashToHexString(uint32_t hash) {
 	return stream.str();
 }
 
-void Tripdeck::setStateChangedDelegate(Command* delegate) {
-	_stateChangedDelegate = delegate;
-}
+// Serial Input Delegate
+Tripdeck::SerialInputDelegate::SerialInputDelegate(Tripdeck* owner) : _owner(owner) { }
+
+Tripdeck::SerialInputDelegate::~SerialInputDelegate() { }
 
 void Tripdeck::SerialInputDelegate::execute(CommandArgs args) {
 	_owner->_handleSerialInput(*((InputArgs*)args));
 }
-
-// serial input delegate
-Tripdeck::SerialInputDelegate::SerialInputDelegate(Tripdeck* owner) : _owner(owner) { }
-
-Tripdeck::SerialInputDelegate::~SerialInputDelegate() { }

@@ -3,6 +3,7 @@
 
 #include "TripdeckLeader.h"
 #include "Clock.h"
+#include "MockButton.h"
 
 TripdeckLeader::TripdeckLeader(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 
@@ -11,7 +12,13 @@ TripdeckLeader::~TripdeckLeader() { }
 void TripdeckLeader::init() {
 	// sets state to Connecting and _run to true
 	Tripdeck::init();
-	// hook up button inputs with callback
+
+	// hook up button inputs with input manager
+	// TODO: remove test code
+	// _inputManager->addInput(new MockButton(LEADER_BUTTON_ID, 15000, 20000), new TripdeckLeader::DigitalInputDelegate(this));
+	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, 15000, 20000), new TripdeckLeader::DigitalInputDelegate(this));
+	
+	// TODO: add button which will perform full reset
 	_onStateChanged();
 }
 
@@ -29,6 +36,7 @@ void TripdeckLeader::run() {
 			case Wait:
 				break;
 			case Pulled:
+				_checkAllPulled();
 				break;
 			case Reveal:
 				break;
@@ -59,7 +67,9 @@ void TripdeckLeader::_onStateChanged() {
 			_setMediaNotificationAction(Both, MediaPlayer::Play);
 			break;
 		case Pulled:
-			_mediaManager->stop();
+			args.mediaOption = Led;
+			args.loop = false;
+			_mediaManager->stop(Video);
 			break;
 		case Reveal:
 			break;
@@ -93,6 +103,10 @@ void TripdeckLeader::_runStartup() {
 		_status.state = Wait;
 		_onStateChanged();
 	}
+}
+
+void TripdeckLeader::_executeReveal() {
+	
 }
 
 void TripdeckLeader::_updateFollowers(TripdeckStateChangedArgs& args) {
@@ -141,7 +155,49 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 	}
 }
 
-void TripdeckLeader::_updateFollowerState(char id, TripdeckStateChangedArgs& args) { 
+void TripdeckLeader::_handleDigitalInput(InputArgs& data) {
+	if (_status.state != Wait)
+		return;
+	
+	// check if chain has been pulled during wait phase
+	if (data.buffer[0] == '1') {
+		if (data.id == RESET_BUTTON_ID)
+			_handleReset();
+		else
+			_handleChainPull(data.id);
+	}
+}
+
+void TripdeckLeader::_handleChainPull(char id) {
+	if (id == LEADER_ID) {
+		// this pi's chain was pulled -- handle internally
+		_status.state = Pulled;
+		_onStateChanged();
+	} else {
+		// send stop Video message to Follower (turns screen black)
+		std::string message = DEFAULT_MESSAGE;
+		message[0] = STOP_MEDIA_HEADER;
+		message[ID_INDEX] = id;
+		message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)Video);
+		_serial->transmit(message);
+
+		// send Pulled state update message to Follower
+		TripdeckStateChangedArgs args = { };
+		args.newState = Pulled;
+		args.mediaOption = Led;
+		args.loop = false;
+		_updateFollowerState(id, args);
+	}
+
+	// add one shot action for switch to reveal state
+	_addOneShotAction(&TripdeckLeader::_executeReveal, PULL_TO_REVEAL_TIME);
+}
+
+void TripdeckLeader::_handleReset() {
+	// careful...
+}
+
+void TripdeckLeader::_updateFollowerState(char id, TripdeckStateChangedArgs& args) {
 	std::string message = DEFAULT_MESSAGE;
 	message[0] = STATE_CHANGED_HEADER;
 	message[ID_INDEX] = id;
@@ -156,22 +212,35 @@ void TripdeckLeader::_updateFollowerState(char id, TripdeckStateChangedArgs& arg
 	_serial->transmit(message);
 }
 
-void TripdeckLeader::_setOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait) {
-	_nextOneShotActionMillis = Clock::instance().millis() + wait;
-	_oneShotAction = action;
+void TripdeckLeader::_addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait) {
+	_oneShotActions.push_back(std::make_pair(Clock::instance().millis() + wait, action));
 }
 
 void TripdeckLeader::_runOneShotAction() {
-	if (_oneShotAction && Clock::instance().millis() > _nextOneShotActionMillis) {
-		(this->*_oneShotAction)();
-		_oneShotAction = NULL;
+	if (_oneShotActions.size() > 0) {
+		std::vector<int32_t> toDelete;
+		uint8_t i = 0;
+		int64_t currentTime = Clock::instance().millis();
+
+		for (auto const& pair : _oneShotActions) {
+			// if we are past this action's execution time, execute
+			if (pair.first > currentTime) {
+				(this->*pair.second)();
+				toDelete.push_back(i);
+			}
+			i++;
+		}
+
+		for (int32_t index : toDelete) {
+			_oneShotActions.erase(_oneShotActions.begin() + index);
+		}
 	}
 }
 
 void TripdeckLeader::_setMediaNotificationAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
 	_nextMediaActionOption = option;
 	_nextMediaPlayerState = state;
-	_setOneShotAction(&TripdeckLeader::_mediaNotificationAction, 5);
+	_addOneShotAction(&TripdeckLeader::_mediaNotificationAction, 5);
 }
 
 void TripdeckLeader::_mediaNotificationAction() {
@@ -193,6 +262,7 @@ void TripdeckLeader::_mediaNotificationAction() {
 			break;
 	}
 
+	// set media option (follower will ignore state for these types of messages)
 	message[MEDIA_OPTION_INDEX] = (char)('0' + (int32_t)_nextMediaActionOption);
 
 	for (const auto& pair : _nodeIdToStatus) {
@@ -213,6 +283,11 @@ bool TripdeckLeader::_verifySynced() {
 	return true;
 }
 
-void TripdeckLeader::_handleUserInput(InputArgs* data) {
+// Digital Input Delegate definitions
+TripdeckLeader::DigitalInputDelegate::DigitalInputDelegate(TripdeckLeader* owner) : _owner(owner) { }
 
+TripdeckLeader::DigitalInputDelegate::~DigitalInputDelegate() { }
+
+void TripdeckLeader::DigitalInputDelegate::execute(CommandArgs args) {
+	_owner->_handleDigitalInput(*((InputArgs*)args));
 }

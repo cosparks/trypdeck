@@ -2,7 +2,12 @@
 
 InputManager::InputManager() { }
 
-InputManager::~InputManager() { }
+InputManager::~InputManager() {
+	for (const auto& pair : _inputToCommand) {
+		delete pair.first;
+		delete pair.second;
+	}
+}
 
 void InputManager::init() { }
 

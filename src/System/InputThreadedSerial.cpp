@@ -2,7 +2,7 @@
 
 #include "InputThreadedSerial.h"
 
-InputThreadedSerial::InputThreadedSerial(uint32_t id, Serial* serial) : Input(id), _serial(serial) { }
+InputThreadedSerial::InputThreadedSerial(char id, Serial* serial) : Input(id), _serial(serial) { }
 
 InputThreadedSerial::~InputThreadedSerial() { }
 

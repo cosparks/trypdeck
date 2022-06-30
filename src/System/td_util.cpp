@@ -1,10 +1,10 @@
 #include "td_util.h"
 
-td_util::Input::Input(uint32_t id) : _id(id) { }
+td_util::Input::Input(char id) : _id(id) { }
 
 td_util::Input::~Input() { }
 
-uint32_t td_util::Input::getId() {
+char td_util::Input::getId() {
 	return _id;
 }
 

@@ -25,10 +25,10 @@ using namespace td_util;
 // /VIDEOHASH/LEDHASH are optional arguments for video and led file IDs
 // if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
 #define STATE_CHANGED_HEADER 'c'
-// statis update message header: "uID/STATE/OPTION"
+// status update message header: "uID/STATE/OPTION"
 // sent during Follower's connected and wait phase -- generally to notify leader that follower is still connected
 #define STATUS_UPDATE_HEADER 'u'
-// statis update message header: "rID/STATE"
+// status update message header: "rID/STATE"
 // sent by leader to confirm it has received status update from follower
 #define CONNECTION_CONFIRMATION_HEADER 'r'
 // message dictating that follower play media: "jID/STATE/OPTION"
@@ -64,17 +64,8 @@ class Tripdeck : public Runnable {
 		virtual ~Tripdeck() { }
 		void init() override;
 		void run() override;
-		void setStateChangedDelegate(Command* delegate);
 
 	protected:
-		class SerialInputDelegate : public Command {
-			public:
-				SerialInputDelegate(Tripdeck* owner);
-				~SerialInputDelegate();
-				void execute(CommandArgs args) override;
-			private:
-				Tripdeck* _owner;
-		};
 		struct MediaHashes {
 			uint32_t videoHash;
 			uint32_t ledHash;
@@ -83,9 +74,6 @@ class Tripdeck : public Runnable {
 		TripdeckMediaManager* _mediaManager = NULL;
 		InputManager* _inputManager = NULL;
 		Serial* _serial = NULL;
-		Command* _stateChangedDelegate = NULL;
-		InputThreadedSerial* _serialInput = NULL;
-		SerialInputDelegate* _serialInputDelegate = NULL;
 		TripdeckStatus _status = { }; //  video and led media ids, current state and connection status
 		int64_t _nextActionMillis = 0;
 
@@ -127,6 +115,15 @@ class Tripdeck : public Runnable {
 		inline bool _containsMediaHashes(const std::string& buffer) {
 			return buffer.substr(HASH_INDEX - 1, 1).compare("/") == 0;
 		}
+
+		class SerialInputDelegate : public Command {
+			public:
+				SerialInputDelegate(Tripdeck* owner);
+				~SerialInputDelegate();
+				void execute(CommandArgs args) override;
+			private:
+				Tripdeck* _owner;
+		};
 };
 
 #endif
