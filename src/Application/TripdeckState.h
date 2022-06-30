@@ -24,6 +24,7 @@ struct TripdeckStatus {
 	uint32_t ledMedia;
 	TripdeckMediaOption option;
 	TripdeckState state;
+	int64_t lastTransmitMillis;
 	bool connected;
 };
 

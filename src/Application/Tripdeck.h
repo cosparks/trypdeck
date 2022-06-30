@@ -76,7 +76,6 @@ class Tripdeck : public Runnable {
 		Serial* _serial = NULL;
 		TripdeckStatus _status = { }; //  video and led media ids, current state and connection status
 		int64_t _nextActionMillis = 0;
-
 		bool _run = false;
 
 		virtual void _handleSerialInput(InputArgs& args) = 0;

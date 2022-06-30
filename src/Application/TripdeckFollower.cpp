@@ -30,8 +30,10 @@ void TripdeckFollower::run() {
 				_runTimedAction(this, &TripdeckFollower::_sendStatusUpdate);
 				break;
 			case Pulled:
+				_runTimedAction(this, &TripdeckFollower::_sendStatusUpdate);
 				break;
 			case Reveal:
+				_runTimedAction(this, &TripdeckFollower::_sendStatusUpdate);
 				break;
 			default:
 				// do nothing

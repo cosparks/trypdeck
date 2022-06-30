@@ -21,20 +21,31 @@ class TripdeckLeader : public Tripdeck {
 		std::vector<Input*> _buttons;
 		bool _followersSynced = false;
 
-		void _onStateChanged();
-		void _updateFollowers(TripdeckStateChangedArgs& args);
-		void _handleSerialInput(InputArgs& args) override;
-		void _handleDigitalInput(InputArgs& data);
-		void _updateFollowerState(char id, TripdeckStateChangedArgs& args);
-		void _addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait);
-		void _runOneShotAction();
-		void _setMediaNotificationAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
-		void _mediaNotificationAction();
-		bool _verifySynced();
+		// run
 		void _runStartup();
-		void _executeReveal();
+		bool _verifySynced();
+		void _runPulled();
+		bool _verifyAllPulled();
+		void _runOneShotAction();
+		// state and input
+		void _handleSerialInput(InputArgs& args) override;
+		void _onStateChanged();
+		void _receiveStartupNotification(char id, const std::string& buffer);
+		void _updateStateFollower(char id, TripdeckStateChangedArgs& args);
+		void _updateStateFollowers(TripdeckStateChangedArgs& args);
+		void _updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
+		void _updateMediaStateUniversal(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
+		void _updateFollowerStatusInternal(char id, const std::string& buffer);
+		void _handleDigitalInput(InputArgs& data);
 		void _handleChainPull(char id);
 		void _handleReset();
+		// actions
+		void _addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait);
+		void _executePreReveal();
+		void _executeReveal();
+		void _setMediaUpdateUniversalAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state, int64_t wait = 5);
+		void _updateMediaStateUniversalAction();
+
 
 		class DigitalInputDelegate : public Command {
 			public:
