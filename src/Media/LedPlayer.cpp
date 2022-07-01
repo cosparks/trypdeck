@@ -113,6 +113,10 @@ void LedPlayer::pause() {
 	_state = Pause;
 }
 
+bool LedPlayer::containsMedia(uint32_t fileId) {
+	return _fileIdToData.find(fileId) != _fileIdToData.end();
+}
+
 void LedPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToData.find(fileId) == _fileIdToData.end()) {
 		_fileIdToData[fileId] = 0;

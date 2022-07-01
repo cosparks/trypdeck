@@ -104,7 +104,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 	if (_videoPlayer) {
 		uint32_t videoId = 0;
 
-		if (args.videoId == 0)
+		if (args.videoId == 0 || !_videoPlayer->containsMedia(args.videoId))
 			videoId = getRandomVideoId(_currentState);
 		else
 			videoId = args.videoId;
@@ -116,6 +116,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 			// TODO: Remove debug code
 			std::cout << "Playing video with hash: " << videoId << endl;
 			#endif
+
 			_videoPlayer->play();
 		}
 	}
@@ -123,7 +124,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 	if (_ledPlayer) {
 		uint32_t ledId = 0;
 
-		if (args.ledId == 0)
+		if (args.ledId == 0 || !_ledPlayer->containsMedia(args.ledId))
 			ledId = getRandomLedId(_currentState);
 		else
 			ledId = args.ledId;
@@ -135,6 +136,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 			// TODO: Remove debug code
 			std::cout << "Playing led animation with hash: " << ledId << endl;
 			#endif
+			
 			std::this_thread::sleep_for(std::chrono::milliseconds(LED_WAIT_TIME));
 			_ledPlayer->play();
 		}

@@ -82,6 +82,10 @@ void VideoPlayer::pause() {
 	libvlc_media_list_player_pause(_mediaListPlayer);
 }
 
+bool VideoPlayer::containsMedia(uint32_t fileId) {
+	return _fileIdToIndex.find(fileId) != _fileIdToIndex.end();
+}
+
 void VideoPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		int32_t i = 0;

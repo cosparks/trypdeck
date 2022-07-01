@@ -30,6 +30,7 @@ class LedPlayer : public MediaPlayer {
 		void play() override;
 		void stop() override;
 		void pause() override;
+		bool containsMedia(uint32_t fileId) override;
 
 	private:
 		uint32_t _currentMedia = 0;
