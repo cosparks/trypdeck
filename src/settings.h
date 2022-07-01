@@ -13,10 +13,10 @@
 // Trypdeck
 
 // Leader or Follower
-#define Leader
+#define Follower
 
 // IDs
-#define ID '0'							// change this setting for different followers: each follower on the network MUST have a unique id
+#define ID '1'							// change this setting for different followers: each follower on the network MUST have a unique id
 #define LEADER_ID '0'					// do not change this ID
 
 // Timing -- Leader only
@@ -55,7 +55,7 @@
 #define NO_LEDS 2
 
 // modify these values
-#define LED_SETTING NO_LEDS
+#define LED_SETTING CENTRE_LEDS
 #define PIXEL_BRIGHTNESS 31
 #define RUN_LEDS (LED_SETTING != NO_LEDS)
 
@@ -68,9 +68,9 @@
 #define LED_GRID_CONFIGURATION_OPTION_B Apa102::VerticalTopRight	// configuration of second led grid in main light chamber
 #define GRID_AB_ORIENTATION LedController::Horizontal				// orientation of grid A and grid B (Horizontal -> A B -- Vertical -> A / B)
 #elif (LED_SETTING == CENTRE_LEDS)	 // centre led grid
-#define LED_MATRIX_WIDTH 25
-#define LED_MATRIX_HEIGHT 30
-#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft
+#define LED_MATRIX_WIDTH 10
+#define LED_MATRIX_HEIGHT 50
+#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalBottomRight
 #define GRID_AB_ORIENTATION LedController::None
 #else
 // do nothing						// no leds
