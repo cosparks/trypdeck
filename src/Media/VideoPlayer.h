@@ -22,6 +22,10 @@ class VideoPlayer : public MediaPlayer {
 		bool containsMedia(uint32_t fileId) override;
 
 	private:
+		struct MediaData {
+			
+		};
+
 		uint32_t _currentMedia;
 		std::unordered_map<uint32_t, int32_t> _fileIdToIndex;
 		std::queue<uint32_t> _emptyIndices;

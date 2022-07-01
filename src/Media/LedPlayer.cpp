@@ -12,6 +12,10 @@ LedPlayer::~LedPlayer() {
 	_ledController->clear();
 	_ledController->show();
 	#endif
+
+	if (_streamIsOpen) {
+		_closeStream();
+	}
 }
 
 void LedPlayer::init() {
