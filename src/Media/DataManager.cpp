@@ -99,7 +99,11 @@ int32_t DataManager::_addFolder(const std::string path) {
 	if (_folderToFileIds.find(path) == _folderToFileIds.end()) {
 		// create new entry in folder-to-fileId map
 		_folderToFileIds[path] = new std::vector<uint32_t>();
+
+		#if ENABLE_FILE_SYSTEM_DEBUG
+		// TODO: remove debug code
 		std::cout << "Adding folder to watch " << path << std::endl;
+		#endif
 
 		// add inotify watch for folder
 		int32_t wd = inotify_add_watch(_fd, path.c_str(), IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_CREATE | IN_MODIFY);
