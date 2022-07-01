@@ -15,7 +15,7 @@ class MediaPlayer : public MediaListener {
 		virtual void play() = 0;
 		virtual void stop() = 0;
 		virtual void pause() = 0;
-		virtual bool containsMedia(uint32_t fileI) = 0;
+		virtual bool containsMedia(uint32_t fileId) = 0;
 		MediaPlayerState getState();
 		bool isPlaying();
 	protected:

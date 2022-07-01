@@ -234,8 +234,15 @@ void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& arg
 	message[LOOP_INDEX] = args.loop ? '1' : '0';
 	
 	if (args.videoId || args.ledId) {
-		message.append("/" + _hashToHexString(_mediaManager->getRandomVideoId(args.newState)));
-		message.append("/" + _hashToHexString(_mediaManager->getRandomLedId(args.newState)));
+		if (args.videoId)
+			message.append("/" + _hashToHexString(args.videoId));
+		else
+			message.append("/" + _hashToHexString(_mediaManager->getRandomVideoId(args.newState)));
+		
+		if (args.ledId)
+			message.append("/" + _hashToHexString(args.ledId));
+		else
+			message.append("/" + _hashToHexString(_mediaManager->getRandomLedId(args.newState)));
 	}
 
 	_serial->transmit(message);

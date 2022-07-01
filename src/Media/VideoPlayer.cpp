@@ -8,7 +8,11 @@ const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen",
 
 VideoPlayer::VideoPlayer() { }
 
-VideoPlayer::~VideoPlayer() { }
+VideoPlayer::~VideoPlayer() {
+	libvlc_media_list_release(_mediaList);
+	libvlc_media_list_player_release(_mediaListPlayer);
+	libvlc_release(_instance);
+}
 
 void VideoPlayer::init() {
 	_instance = libvlc_new(VLC_NUM_ARGS, VLC_ARGS);
@@ -120,6 +124,7 @@ void VideoPlayer::_removeMedia(uint32_t fileId) {
 		}
 
 		int32_t i = _fileIdToIndex[fileId];
+		_fileIdToIndex.erase(fileId);
 		_removeMediaAtIndex(i);
 		_emptyIndices.emplace(i);
 	}
