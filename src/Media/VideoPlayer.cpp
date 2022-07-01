@@ -120,6 +120,7 @@ void VideoPlayer::_removeMedia(uint32_t fileId) {
 		}
 
 		int32_t i = _fileIdToIndex[fileId];
+		_fileIdToIndex.erase(fileId);
 		_removeMediaAtIndex(i);
 		_emptyIndices.emplace(i);
 	}

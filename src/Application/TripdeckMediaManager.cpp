@@ -3,6 +3,7 @@
 #include <thread>
 #include <cstdlib>
 
+#include "Index.h"
 #include "Clock.h"
 #include "TripdeckMediaManager.h"
 
@@ -136,7 +137,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 			// TODO: Remove debug code
 			std::cout << "Playing led animation with hash: " << ledId << endl;
 			#endif
-			
+
 			std::this_thread::sleep_for(std::chrono::milliseconds(LED_WAIT_TIME));
 			_ledPlayer->play();
 		}
@@ -160,6 +161,14 @@ void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder)
 uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
 	if (_videoPlayer) {
 		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
+
+		#if ENABLE_FILE_SYSTEM_DEBUG
+		std::cout << "\ncurrent representation of file folder for state: " << state << std::endl;
+		std::cout << "video folder associated with this state: " << std::endl;
+		for (uint32_t file : _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state])) {
+			std::cout << "\t" << Index::instance().getSystemPath(file) << state << std::endl;
+		}
+		#endif
 
 		if (videoFiles.size() == 0) {
 			std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
