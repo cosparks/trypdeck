@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 	DataManager dataManager;
 
 	// Video Player
-	#if USE_OMX_PLAYER
+	#if RUN_OMX_PLAYER
 	VideoPlayerOmx videoPlayer;
 	#else
 	VideoPlayerVLC videoPlayer;

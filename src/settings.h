@@ -49,7 +49,6 @@
 #define RESET_BUTTON_PIN 4
 #define SHUTDOWN_BUTTON_PIN 5
 
-
 // Video Settings
 #define RUN_OMX_PLAYER 0
 
