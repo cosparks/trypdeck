@@ -49,6 +49,10 @@
 #define RESET_BUTTON_PIN 4
 #define SHUTDOWN_BUTTON_PIN 5
 
+
+// Video Settings
+#define RUN_OMX_PLAYER 0
+
 // Led Settings
 // * dont modify these values *
 #define MAIN_LEDS 0
@@ -76,9 +80,6 @@
 #else
 // do nothing						// no leds
 #endif // LED_SETTINGS
-
-// Video Settings
-#define RUN_OMX 0
 
 // Media Folders
 #define VIDEO_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/"

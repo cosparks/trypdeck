@@ -5,6 +5,7 @@
 #include "Clock.h"
 #include "Serial.h"
 #include "VideoPlayerVLC.h"
+#include "VideoPlayerOmx.h"
 #include "LedPlayer.h"
 #include "TripdeckMediaManager.h"
 #include "TripdeckLeader.h"
@@ -14,21 +15,22 @@
 const char* VideoFolders[] = { VIDEO_CONNECTING_DIRECTORY, VIDEO_CONNECTED_DIRECTORY, VIDEO_WAIT_DIRECTORY, VIDEO_PULLED_DIRECTORY, VIDEO_REVEAL_DIRECTORY };
 const char* LedFolders[] = { LED_CONNECTING_DIRECTORY, LED_CONNECTED_DIRECTORY, LED_WAIT_DIRECTORY, LED_PULLED_DIRECTORY, LED_REVEAL_DIRECTORY };
 
-InputManager inputManager;
-Serial serial("/dev/ttyAMA0", O_RDWR);
-
 int main(int argc, char** argv) {
 	system("sudo sh -c \"TERM=linux setterm -foreground black -clear all >/dev/tty0\"");
 
-	// set up media
+	// Input and Media
+	InputManager inputManager;
+	Serial serial("/dev/ttyAMA0", O_RDWR);
 	DataManager dataManager;
 
+	// Video Player
 	#if USE_OMX_PLAYER
 	VideoPlayerOmx videoPlayer;
 	#else
 	VideoPlayerVLC videoPlayer;
 	#endif
 
+	// Led Player
 	#if RUN_LEDS
 	#if (LED_SETTING == MAIN_LEDS)
 	LedController ledController(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT, LED_MATRIX_SPLIT, GRID_AB_ORIENTATION, LED_GRID_CONFIGURATION_OPTION_A, LED_GRID_CONFIGURATION_OPTION_B);
@@ -41,6 +43,7 @@ int main(int argc, char** argv) {
 	TripdeckMediaManager mediaManager(&dataManager, &videoPlayer);
 	#endif
 
+	// Add Project Folders
 	for (int32_t state = TripdeckState::Connecting; state <= TripdeckState::Reveal; state++) {
 		mediaManager.addVideoFolder(TripdeckState(state), VideoFolders[state]);
 
@@ -49,14 +52,14 @@ int main(int argc, char** argv) {
 		#endif
 	}
 
-	// set up application
+	// Application
 	#ifdef Leader
 	TripdeckLeader tripdeck(&mediaManager, &inputManager, &serial);
 	#else
 	TripdeckFollower tripdeck(&mediaManager, &inputManager, &serial);
 	#endif
 
-	// initialize and run application
+	// Initialize and Run
 	tripdeck.init();
 	tripdeck.run();
 
