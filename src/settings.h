@@ -78,7 +78,7 @@
 #endif // LED_SETTINGS
 
 // Video Settings
-#define LEGACY_OS 0
+#define RUN_OMX 0
 
 // Media Folders
 #define VIDEO_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/"
