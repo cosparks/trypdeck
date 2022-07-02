@@ -4,9 +4,10 @@
 #include <iostream>
 #include "settings.h"
 #include "td_util.h"
+#include "Clock.h"
 #include "Index.h"
 
-#define THREAD_SLEEP_MICROS 500
+#define THREAD_SLEEP_MICROS 200
 
 #define KILL_COMMAND "killall omxplayer.bin"
 #define ONESHOT_ARGS "omxplayer --no-osd "
@@ -79,7 +80,18 @@ void VideoPlayerOmx::stop() {
 	}
 	_stateMutex.unlock();
 
+		#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	int64_t before = Clock::instance().micros();
+	#endif
+	
 	system(KILL_COMMAND);
+
+	#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	int64_t after = Clock::instance().micros();
+	std::cout << "'killall omxplayer.bin' execution time: " << after - before << std::endl;
+	#endif
 }
 
 void VideoPlayerOmx::pause() {
