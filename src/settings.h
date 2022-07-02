@@ -7,7 +7,7 @@
 
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
-#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
+#define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
 #define ENABLE_MEDIA_DEBUG 1	// when true, prints out messages regarding file system state
 
 /////////////////////////////////////
@@ -27,7 +27,7 @@
 #define REVEAL_TIME 10000				// duration for which tarot cards will be displayed before returning to wait state
 
 // Timing -- Leader and Follower
-#define DEFAULT_PING_INTERVAL 1000		// intervals on which Leader / Follower ping one another
+#define DEFAULT_PING_INTERVAL 8000		// intervals on which Leader / Follower ping one another
 #define LED_WAIT_TIME 0					// Led decodes much faster than video, so a short pause may be needed
 
 // GPIO Settings (general)

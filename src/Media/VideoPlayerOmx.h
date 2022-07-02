@@ -11,7 +11,7 @@ class VideoPlayerOmx : public MediaPlayer {
 	public:
 		VideoPlayerOmx();
 		~VideoPlayerOmx();
-		void init() override;
+		void init() override { }
 		void run() override { }
 		void setCurrentMedia(uint32_t fileId, MediaPlaybackOption option = OneShot) override;
 		uint32_t getCurrentMedia() override;
