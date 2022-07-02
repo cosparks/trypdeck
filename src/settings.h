@@ -8,7 +8,7 @@
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
 #define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
-#define ENABLE_FILE_SYSTEM_DEBUG 1	// when true, prints out messages regarding file system state
+#define ENABLE_MEDIA_DEBUG 1	// when true, prints out messages regarding file system state
 
 /////////////////////////////////////
 // Trypdeck
@@ -76,6 +76,9 @@
 #else
 // do nothing						// no leds
 #endif // LED_SETTINGS
+
+// Video Settings
+#define LEGACY_OS 0
 
 // Media Folders
 #define VIDEO_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/"

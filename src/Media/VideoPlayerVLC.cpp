@@ -1,29 +1,29 @@
 #include <iostream>
 
-#include "VideoPlayer.h"
+#include "VideoPlayerVLC.h"
 #include "Index.h"
 
 const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--quiet", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
 #define VLC_NUM_ARGS 10
 
-VideoPlayer::VideoPlayer() { }
+VideoPlayerVLC::VideoPlayerVLC() { }
 
-VideoPlayer::~VideoPlayer() {
+VideoPlayerVLC::~VideoPlayerVLC() {
 	libvlc_media_list_release(_mediaList);
 	libvlc_media_list_player_release(_mediaListPlayer);
 	libvlc_release(_instance);
 }
 
-void VideoPlayer::init() {
+void VideoPlayerVLC::init() {
 	_instance = libvlc_new(VLC_NUM_ARGS, VLC_ARGS);
 	_mediaList = libvlc_media_list_new(_instance);
 	_mediaListPlayer = libvlc_media_list_player_new(_instance);
 	libvlc_media_list_player_set_media_list(_mediaListPlayer, _mediaList);
 }
 
-void VideoPlayer::run() { }
+void VideoPlayerVLC::run() { }
 
-void VideoPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
+void VideoPlayerVLC::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		throw std::runtime_error("Media not found: cache does not contain the media requested");
 	}
@@ -42,21 +42,21 @@ void VideoPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	_currentMedia = fileId;
 }
 
-uint32_t VideoPlayer::getCurrentMedia() {
+uint32_t VideoPlayerVLC::getCurrentMedia() {
 	return _currentMedia;
 }
 
-uint32_t VideoPlayer::getNumMediaFiles() {
+uint32_t VideoPlayerVLC::getNumMediaFiles() {
 	return _fileIdToIndex.size();
 }
 
-void VideoPlayer::play() {
+void VideoPlayerVLC::play() {
 	if (_mediaListPlayer == NULL) {
-		throw std::runtime_error("Error: VideoPlayer has not been initialized!");
+		throw std::runtime_error("Error: VideoPlayerVLC has not been initialized!");
 	}
 
 	if (!_currentMedia) {
-		throw std::runtime_error("Error: VideoPlayer::_currentMedia has either not been set, or has been removed!");
+		throw std::runtime_error("Error: VideoPlayerVLC::_currentMedia has either not been set, or has been removed!");
 	}
 
 	if (libvlc_media_list_player_is_playing(_mediaListPlayer))
@@ -67,10 +67,10 @@ void VideoPlayer::play() {
 
 
 	// // TODO: Remove debug code
-	// std::cout << "VideoPlayer::play() called with file: " << Index::instance().getSystemPath(_currentMedia) << std::endl;
+	// std::cout << "VideoPlayerVLC::play() called with file: " << Index::instance().getSystemPath(_currentMedia) << std::endl;
 }
 
-void VideoPlayer::stop() {
+void VideoPlayerVLC::stop() {
 	if (_state == Stop)
 		return;
 	
@@ -78,7 +78,7 @@ void VideoPlayer::stop() {
 	libvlc_media_list_player_stop(_mediaListPlayer);
 }
 
-void VideoPlayer::pause() {
+void VideoPlayerVLC::pause() {
 	if (_state == Pause)
 		return;
 
@@ -86,11 +86,11 @@ void VideoPlayer::pause() {
 	libvlc_media_list_player_pause(_mediaListPlayer);
 }
 
-bool VideoPlayer::containsMedia(uint32_t fileId) {
+bool VideoPlayerVLC::containsMedia(uint32_t fileId) {
 	return _fileIdToIndex.find(fileId) != _fileIdToIndex.end();
 }
 
-void VideoPlayer::_addMedia(uint32_t fileId) {
+void VideoPlayerVLC::_addMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) == _fileIdToIndex.end()) {
 		int32_t i = 0;
 
@@ -116,7 +116,7 @@ void VideoPlayer::_addMedia(uint32_t fileId) {
 	// }
 }
 
-void VideoPlayer::_removeMedia(uint32_t fileId) {
+void VideoPlayerVLC::_removeMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
 		if (_currentMedia == fileId) {
 			_currentMedia = 0;
@@ -130,7 +130,7 @@ void VideoPlayer::_removeMedia(uint32_t fileId) {
 	}
 }
 
-void VideoPlayer::_updateMedia(uint32_t fileId) {
+void VideoPlayerVLC::_updateMedia(uint32_t fileId) {
 	if (_fileIdToIndex.find(fileId) != _fileIdToIndex.end()) {
 		int32_t i = _fileIdToIndex[fileId];
 		_removeMediaAtIndex(i);
@@ -141,7 +141,7 @@ void VideoPlayer::_updateMedia(uint32_t fileId) {
 	}
 }
 
-void VideoPlayer::_createAndInsertMedia(uint32_t fileId, int32_t i) {
+void VideoPlayerVLC::_createAndInsertMedia(uint32_t fileId, int32_t i) {
 	libvlc_media_t* media = libvlc_media_new_path(_instance, Index::instance().getSystemPath(fileId).c_str());
 
 	libvlc_media_list_lock(_mediaList);
@@ -152,7 +152,7 @@ void VideoPlayer::_createAndInsertMedia(uint32_t fileId, int32_t i) {
 		throw std::runtime_error("Error: Unable to insert media.  Media list is read only");
 }
 
-void VideoPlayer::_removeMediaAtIndex(int32_t i) {
+void VideoPlayerVLC::_removeMediaAtIndex(int32_t i) {
 	libvlc_media_list_lock(_mediaList);
 	libvlc_media_list_remove_index(_mediaList, i);
 	libvlc_media_list_unlock(_mediaList);

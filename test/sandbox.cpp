@@ -55,8 +55,8 @@ using namespace std;
 
 #define PLAY_OMX 1
 #define STOP_OMX_ARGS "killall omxplayer.bin" // MAYBE ADD "omxplayer -p -o hdmi /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
-#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
-#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/loop/complex-color-test.mp4"
+#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/elden.mp4"
+#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/elden.mp4"
 
 #define PLAY_VLC 0
 #define PRINT_USER_INFO 0
@@ -149,8 +149,7 @@ void play_video_omx(const char* omxArgs, std::function<void()> func) {
 }
 
 void play_start_video() {
-	play_video_omx(OMX_ARGS1, [](void) -> void { ; });
-
+	play_video_omx(OMX_ARGS2, [](void) -> void { std::cout << "Thread terminated" << std::endl; });
 }
 
 struct VLCData {
@@ -158,9 +157,9 @@ struct VLCData {
 	libvlc_media_player_t* mp;
 };
 
-std::string get_full_path(std::string path) {
-	return CARD_VIDEO_DIRECTORY + path;
-}
+// std::string get_full_path(std::string path) {
+// 	return CARD_VIDEO_DIRECTORY + path;
+// }
 
 void stop_vlc(VLCData& data) {
 	libvlc_release(data.inst);
@@ -178,7 +177,7 @@ void initialize_vlc(VLCData& data) {
 	data.mp = libvlc_media_player_new(data.inst);
 
 	for (std::string movie : movies) {
-		_mediaCache[movie] = libvlc_media_new_path(data.inst, get_full_path(movie).c_str());
+		// _mediaCache[movie] = libvlc_media_new_path(data.inst, get_full_path(movie).c_str());
 	}
 }
 

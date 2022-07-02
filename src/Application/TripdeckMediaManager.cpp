@@ -162,7 +162,7 @@ uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
 	if (_videoPlayer) {
 		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
 
-		#if ENABLE_FILE_SYSTEM_DEBUG
+		#if ENABLE_MEDIA_DEBUG
 		std::cout << "\ncurrent representation of file folder for state: " << state << std::endl;
 		std::cout << "video folder associated with this state: " << std::endl;
 		for (uint32_t file : _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state])) {

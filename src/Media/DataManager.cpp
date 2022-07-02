@@ -100,7 +100,7 @@ int32_t DataManager::_addFolder(const std::string path) {
 		// create new entry in folder-to-fileId map
 		_folderToFileIds[path] = new std::vector<uint32_t>();
 
-		#if ENABLE_FILE_SYSTEM_DEBUG
+		#if ENABLE_MEDIA_DEBUG
 		// TODO: remove debug code
 		std::cout << "Adding folder to watch " << path << std::endl;
 		#endif

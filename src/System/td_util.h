@@ -28,6 +28,29 @@ namespace td_util {
 		char id;
 		std::string buffer;
 	};
+
+	template <class T>
+	void onThreadExit(T* obj, void (T::*callback)(void)) {
+		class ThreadExiter {
+			public:
+				ThreadExiter() = default;
+				ThreadExiter(ThreadExiter const&) = delete;
+				void operator=(ThreadExiter const&) = delete;
+				~ThreadExiter() {
+					(_object->*_exitCallback)();
+				}
+				void setCallback(T* object, void (T::*exitCallback)(void)) {
+					_object = object;
+					_exitCallback = exitCallback;
+				}
+			private:
+				T* _object;
+				void (T::*_exitCallback)(void);
+		};
+
+		thread_local ThreadExiter exiter;
+		exiter.setCallback(obj, callback);
+	}
 }
 
 #endif
