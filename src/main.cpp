@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "Clock.h"
 #include "Serial.h"
+#include "td_pigpio.h"
 #include "VideoPlayerVLC.h"
 #include "VideoPlayerOmx.h"
 #include "LedPlayer.h"
@@ -19,6 +20,7 @@ int main(int argc, char** argv) {
 	system("sudo sh -c \"TERM=linux setterm -foreground black -clear all >/dev/tty0\"");
 
 	// Input and Media
+	td_pigpio pigpio;
 	InputManager inputManager;
 	Serial serial("/dev/ttyAMA0", O_RDWR);
 	DataManager dataManager;

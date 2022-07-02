@@ -16,16 +16,9 @@ LedPlayer::~LedPlayer() {
 	if (_streamIsOpen) {
 		_closeStream();
 	}
-
-	gpioTerminate();
 }
 
 void LedPlayer::init() {
-	#if not ENABLE_VISUAL_DEBUG
-	if (gpioInitialise() < 0)
-		throw std::runtime_error("Error: PI GPIO Initialization failed");
-	#endif
-	
 	_ledController->init(SPI_BAUD);
 
 	#if not ENABLE_VISUAL_DEBUG

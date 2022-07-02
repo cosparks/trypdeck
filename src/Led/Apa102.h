@@ -2,7 +2,6 @@
 #define _APA102_H_
 
 #include <functional>
-#include <pigpio.h>
 
 struct Pixel {
 	uint8_t brightness;

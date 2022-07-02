@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "TripdeckLeader.h"
+#include "td_util.h"
 #include "Clock.h"
 #include "MockButton.h"
 
@@ -13,11 +14,18 @@ void TripdeckLeader::init() {
 	// sets state to Connecting and _run to true
 	Tripdeck::init();
 
-	// hook up button inputs with input manager
+	// hook up button inputs with input manager (input manager will clean up heap objects)
+	td_util::Command* digitalInputDelegate = new TripdeckLeader::DigitalInputDelegate(this);
+	#if RUN_MOCK_BUTTONS
 	// TODO: remove test code
-	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
-	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
-	_inputManager->addInput(new MockButton(FOLLOWER_2_BUTTON_ID, 5000, 10000), new TripdeckLeader::DigitalInputDelegate(this));
+	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
+	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
+	_inputManager->addInput(new MockButton(FOLLOWER_2_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
+	#else
+	_inputManager->addInput(new InputDigitalButton(LEADER_BUTTON_ID, LEADER_BUTTON_PIN), digitalInputDelegate);
+	_inputManager->addInput(new InputDigitalButton(FOLLOWER_1_BUTTON_ID, FOLLOWER_1_BUTTON_PIN), digitalInputDelegate);
+	_inputManager->addInput(new InputDigitalButton(FOLLOWER_2_BUTTON_ID, FOLLOWER_2_BUTTON_PIN), digitalInputDelegate);
+	#endif
 
 	// TODO: add buttons which will perform full reset and shutdown
 	_onStateChanged();

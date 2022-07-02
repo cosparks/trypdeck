@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <math.h>
+#include <pigpio.h>
 
 #include "settings.h"
 #include "Apa102.h"

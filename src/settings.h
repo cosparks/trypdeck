@@ -48,6 +48,12 @@
 #define PIN_BUTTON_3 3
 #define RESET_BUTTON_PIN 4
 #define SHUTDOWN_BUTTON_PIN 5
+#define BUTTON_RESET_INTERVAL_MILLIS 1000
+
+// Buttons -- Leader only -- Testing
+#define RUN_MOCK_BUTTONS 1
+#define MOCK_BUTTON_RANDOM_MIN_MILLIS 9000
+#define MOCK_BUTTON_RANDOM_MAX_MILLIS 15000
 
 // Media Settings
 #define PLAY_MEDIA_ON_ADD 0
