@@ -7,7 +7,7 @@
 #include "Clock.h"
 #include "Index.h"
 
-#define THREAD_SLEEP_MICROS 500
+#define THREAD_SLEEP_MICROS 1000
 
 #define KILL_COMMAND "killall omxplayer.bin"
 #define ONESHOT_ARGS "omxplayer --no-osd "
@@ -16,8 +16,7 @@
 VideoPlayerOmx::VideoPlayerOmx() { }
 
 VideoPlayerOmx::~VideoPlayerOmx() {
-	if (_isPlaying)
-		system(KILL_COMMAND);
+	stop();
 }
 
 void VideoPlayerOmx::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
@@ -49,7 +48,7 @@ uint32_t VideoPlayerOmx::getNumMediaFiles() {
 void VideoPlayerOmx::play() {
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
-	std::cout << "Play called with _isPlaying set to: " << (_isPlaying ? "true" : "false") << std::endl;
+	std::cout << "Play called with _state set to: " << (_state == MediaPlayer::Play ? "Play" : "Stop") << std::endl;
 	#endif
 
 	stop();
@@ -62,13 +61,13 @@ void VideoPlayerOmx::stop() {
 	_stateMutex.lock();
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
-	std::cout << "Stop called with _isPlaying set to: " << (_isPlaying ? "true" : "false") << std::endl;
+	std::cout << "Stop called with _state set to: " << (_state == MediaPlayer::Play ? "Play" : "Stop") << std::endl;
 	
 	bool killCommandCalled = false;
 	int64_t before = Clock::instance().micros();
 	#endif
 
-	if (_isPlaying) {
+	if (_state == MediaPlayer::Play) {
 		_stateMutex.unlock();
 
 		#if ENABLE_MEDIA_DEBUG
@@ -91,7 +90,7 @@ void VideoPlayerOmx::stop() {
 }
 
 void VideoPlayerOmx::pause() {
-	// pause not possible with omx player
+	// pause not possible with omx player system calls
 }
 
 bool VideoPlayerOmx::containsMedia(uint32_t fileId) {
@@ -101,6 +100,15 @@ bool VideoPlayerOmx::containsMedia(uint32_t fileId) {
 void VideoPlayerOmx::_addMedia(uint32_t fileId) {
 	if (_fileIdToSystemPath.find(fileId) == _fileIdToSystemPath.end())
 		_fileIdToSystemPath[fileId] = Index::instance().getSystemPath(fileId);
+
+	#if PLAY_MEDIA_ON_ADD
+	// // TODO: Remove temp behavior for testing
+	setCurrentMedia(fileId, MediaPlaybackOption::Loop);
+
+	if (_state == MediaPlayerState::Play)
+		play();
+	}
+	#endif
 }
 
 void VideoPlayerOmx::_removeMedia(uint32_t fileId) {
@@ -109,9 +117,9 @@ void VideoPlayerOmx::_removeMedia(uint32_t fileId) {
 }
 
 void VideoPlayerOmx::_updateMedia(uint32_t fileId) {
-	// lock to read _isPlaying
+	// lock to read _state
 	_stateMutex.lock();
-	if (_isPlaying && _currentMedia == fileId) {
+	if (_state == MediaPlayer::Play && _currentMedia == fileId) {
 		_stateMutex.unlock();
 
 		stop();
@@ -123,7 +131,7 @@ void VideoPlayerOmx::_updateMedia(uint32_t fileId) {
 
 void VideoPlayerOmx::_playInternal() {
 	// wait play other playing thread to terminate
-	while (_isPlaying) {
+	while (_state == MediaPlayer::Play) {
 		std::this_thread::sleep_for(std::chrono::microseconds(THREAD_SLEEP_MICROS));
 	}
 	
@@ -131,12 +139,11 @@ void VideoPlayerOmx::_playInternal() {
 	_stateMutex.lock();
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
-	std::cout << "_playInternal called with _isPlaying set to: " << (_isPlaying ? "true" : "false") << " -- position 1" << std::endl;
+	std::cout << "_playInternal called with _state set to: " << (_state == MediaPlayer::Play ? "Play" : "Stop") << " -- position 1" << std::endl;
 	#endif
 
 	std::string playerArgs;
-	_isPlaying = true;
-	_isPlayingOneShot = _currentOption == OneShot;
+	_state = MediaPlayer::Play;
 	playerArgs = _omxplayerArgs;
 	td_util::onThreadExit<VideoPlayerOmx>(this, &VideoPlayerOmx::_threadExitCallback);
 	_stateMutex.unlock();
@@ -144,7 +151,7 @@ void VideoPlayerOmx::_playInternal() {
 	#if ENABLE_MEDIA_DEBUG
 	_stateMutex.lock();
 	// TODO: Remove debug code
-	std::cout << "_playInternal called with _isPlaying set to: " << (_isPlaying ? "true" : "false") << " -- position 2" << std::endl;
+	std::cout << "_playInternal called with _state set to: " << (_state == MediaPlayer::Play ? "Play" : "Stop") << " -- position 2" << std::endl;
 	_stateMutex.unlock();
 	#endif
 
@@ -158,6 +165,6 @@ void VideoPlayerOmx::_threadExitCallback() {
 	#endif
 
 	_stateMutex.lock();
-	_isPlaying = false;
+	_state = MediaPlayer::Stop;
 	_stateMutex.unlock();
 }

@@ -7,8 +7,8 @@
 
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
-#define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
-#define ENABLE_MEDIA_DEBUG 1	// when true, prints out messages regarding file system state
+#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
+#define ENABLE_MEDIA_DEBUG 0	// when true, prints out messages regarding file system state
 
 /////////////////////////////////////
 // Trypdeck
@@ -48,6 +48,9 @@
 #define PIN_BUTTON_3 3
 #define RESET_BUTTON_PIN 4
 #define SHUTDOWN_BUTTON_PIN 5
+
+// Media Settings
+#define PLAY_MEDIA_ON_ADD 0
 
 // Video Settings
 #define RUN_OMX_PLAYER 0

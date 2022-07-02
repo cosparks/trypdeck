@@ -95,7 +95,8 @@ void VideoPlayerVLC::_addMedia(uint32_t fileId) {
 		int32_t i = 0;
 
 		// reuse empty indices in media list if any are available
-		if (_emptyIndices.size() > 0) {
+		// TODO: Investigate bug related to overwriting media items in media list (causes playback issue)
+		if (false && _emptyIndices.size() > 0) {
 			i = _emptyIndices.front();
 			_emptyIndices.pop();
 		} else {
@@ -107,13 +108,15 @@ void VideoPlayerVLC::_addMedia(uint32_t fileId) {
 		_createAndInsertMedia(fileId, i);
 	}
 
-	// // TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
-	// if (libvlc_media_list_player_is_playing(_mediaListPlayer)) {
-	// 	setCurrentMedia(fileId, MediaPlaybackOption::Loop);
+	#if PLAY_MEDIA_ON_ADD
+	// // TODO: Remove temp behavior for testing
+	if (libvlc_media_list_player_is_playing(_mediaListPlayer)) {
+		setCurrentMedia(fileId, MediaPlaybackOption::Loop);
 
-	// 	if (_state == MediaPlayerState::Play)
-	// 		play();
-	// }
+		if (_state == MediaPlayerState::Play)
+			play();
+	}
+	#endif
 }
 
 void VideoPlayerVLC::_removeMedia(uint32_t fileId) {
@@ -147,6 +150,9 @@ void VideoPlayerVLC::_createAndInsertMedia(uint32_t fileId, int32_t i) {
 	libvlc_media_list_lock(_mediaList);
 	int32_t ret = libvlc_media_list_insert_media(_mediaList, media, i);
 	libvlc_media_list_unlock(_mediaList);
+
+	// decrement ref count of media
+	libvlc_media_release(media);
 
 	if (ret == -1)
 		throw std::runtime_error("Error: Unable to insert media.  Media list is read only");

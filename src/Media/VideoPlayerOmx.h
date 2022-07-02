@@ -23,8 +23,6 @@ class VideoPlayerOmx : public MediaPlayer {
 
 	private:
 		uint32_t _currentMedia = 0;
-		bool _isPlaying = false;
-		bool _isPlayingOneShot = false;
 		MediaPlaybackOption _currentOption;
 		std::string _omxplayerArgs;
 		std::mutex _stateMutex;
