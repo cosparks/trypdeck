@@ -29,7 +29,7 @@ void LedController::init(uint32_t spiBaud) {
     }
 
     _ledGridA->init(0, SPI_BAUD, 0);
-    if (_splitOption != None)
+    if (_ledGridB)
         _ledGridB->init(1, SPI_BAUD, 0);
 
     _clear();

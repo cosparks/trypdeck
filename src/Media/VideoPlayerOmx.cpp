@@ -55,6 +55,11 @@ void VideoPlayerOmx::play() {
 
 	// lock to read _isPlaying
 	_stateMutex.lock();
+	#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	std::cout << "Play called with _isPlaying set to: " << (_isPlaying ? "true" : "false") << std::endl;
+	#endif
+
 	if (_isPlaying) {
 		_stateMutex.unlock();
 
@@ -82,6 +87,7 @@ void VideoPlayerOmx::stop() {
 
 		#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
+	std::cout << "Stop called with _isPlaying set to: " << (_isPlaying ? "true" : "false") << std::endl;
 	int64_t before = Clock::instance().micros();
 	#endif
 	

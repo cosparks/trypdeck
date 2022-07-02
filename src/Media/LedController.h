@@ -20,8 +20,8 @@ class LedController {
 		int32_t getHeight();
 
     private:
-        Apa102* _ledGridA;
-        Apa102* _ledGridB;
+        Apa102* _ledGridA = NULL;
+        Apa102* _ledGridB = NULL;
         int32_t _width;
         int32_t _height;
         int32_t _centre;
