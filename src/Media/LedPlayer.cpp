@@ -16,6 +16,8 @@ LedPlayer::~LedPlayer() {
 	if (_streamIsOpen) {
 		_closeStream();
 	}
+
+	gpioTerminate();
 }
 
 void LedPlayer::init() {
