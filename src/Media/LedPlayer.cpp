@@ -81,8 +81,18 @@ void LedPlayer::play() {
 	}
 
 	if (openStream) {
+		#if ENABLE_MEDIA_DEBUG
+		// TODO: Remove debug code
+		int64_t before = Clock::instance().micros();
+		#endif
+
 		_openStream();
 		_playStartTimeMicros = Clock::instance().micros();
+
+		#if ENABLE_MEDIA_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Time to open stream in micros: " << _playStartTimeMicros - before << " -- " << Index::instance().getSystemPath() << std::endl;
+		#endif
 	}
 
 	_mediaChanged = false;
