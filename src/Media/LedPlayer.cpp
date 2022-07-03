@@ -91,7 +91,7 @@ void LedPlayer::play() {
 
 		#if ENABLE_MEDIA_DEBUG
 		// TODO: Remove debug code
-		std::cout << "Time to open stream in micros: " << _playStartTimeMicros - before << " -- " << Index::instance().getSystemPath() << std::endl;
+		std::cout << "Time to open stream in micros: " << _playStartTimeMicros - before << " -- " << Index::instance().getSystemPath(_currentMedia) << std::endl;
 		#endif
 	}
 
@@ -263,7 +263,14 @@ void LedPlayer::_showNextFrame() {
 	for(int32_t y = 0; y < height; y++) {
 		for (int32_t x = 0; x < width; x++) {
 			uint8_t* ptr = _frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * _frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
+			
+			#if SCALE_BRIGHTNESS
+			// logarithmic brightness scaling
+			uint16_t avg = (ptr[0] + ptr[1] + ptr[2]) / 3;
+			_ledController->setPixel(Pixel {  (uint8_t)((avg - 1 <= DARK_THRESHOLD) ? 0 : floor(log2((avg - DARK_THRESHOLD) * 4))), ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			#else
 			_ledController->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			#endif
 		}
 	}
 

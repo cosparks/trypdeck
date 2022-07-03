@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <math.h>
 
 #include "settings.h"
 #include "LedController.h"

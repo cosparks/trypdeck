@@ -8,10 +8,10 @@
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
 #define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
-#define ENABLE_MEDIA_DEBUG 0	// when true, prints out messages regarding file system state
+#define ENABLE_MEDIA_DEBUG 1		// when true, prints out messages regarding file system state
 
-/////////////////////////////////////
-// Trypdeck
+///////////////////////////////////////////
+// Trypdeck Settings
 
 // Leader or Follower
 #define Follower
@@ -68,8 +68,10 @@
 #define NO_LEDS 2
 
 // * modify these values *
-#define LED_SETTING NO_LEDS 				// * important * main led setting
+#define LED_SETTING CENTRE_LEDS 			// * important * main led setting
 #define PIXEL_BRIGHTNESS 31 				// global pixel brightness
+#define SCALE_BRIGHTNESS 1					// bring pixel brightness down as color approaces black
+#define DARK_THRESHOLD 23					// rgb avg below this threshold will have brightness set to 0
 
 // * dont modify this value *
 #define RUN_LEDS (LED_SETTING != NO_LEDS)
