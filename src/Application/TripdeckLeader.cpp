@@ -131,13 +131,13 @@ void TripdeckLeader::_onStateChanged() {
 			// same as Connected
 		case Connected:
 			args.mediaOption = Both;
-			args.loop = true;
+			args.playbackOption = MediaPlayer::Loop;
 			break;
 		case Wait:
 			args.videoId = _mediaManager->getRandomVideoId(_status.state);
 			args.ledId = _mediaManager->getRandomLedId(_status.state);
 			args.mediaOption = None;
-			args.loop = true;
+			args.playbackOption = MediaPlayer::Loop;
 			_updateStateFollowers(args);
 			_setMediaUpdateUniversalAction(Both, MediaPlayer::Play);
 			break;
@@ -150,7 +150,7 @@ void TripdeckLeader::_onStateChanged() {
 			args.mediaOption = Video;
 			#endif
 
-			args.loop = false;
+			args.playbackOption = MediaPlayer::OneShot;
 			break; 
 		case Reveal:
 			if (_chainPulled)
@@ -158,7 +158,7 @@ void TripdeckLeader::_onStateChanged() {
 			else
 				args.mediaOption = Led;
 			args.ledId = _status.ledMedia;
-			args.loop = false;
+			args.playbackOption = MediaPlayer::OneShot;
 			break;
 		default:
 			// do nothing
@@ -229,7 +229,7 @@ void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& arg
 	message[ID_INDEX] = id;
 	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.newState);
 	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.mediaOption);
-	message[LOOP_INDEX] = args.loop ? '1' : '0';
+	message[PLAYBACK_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.playbackOption);
 	
 	if (args.videoId || args.ledId) {
 		if (args.videoId)
@@ -301,12 +301,12 @@ void TripdeckLeader::_updateMediaStateUniversal(TripdeckMediaOption option, Medi
 	(_mediaManager->*localAction)(option);
 }
 
-void TripdeckLeader::_triggerLedAnimationForState(TripdeckState state, bool loop) {
+void TripdeckLeader::_triggerLedAnimationForState(TripdeckState state, MediaPlayer::MediaPlaybackOption playbackOption) {
 	TripdeckStateChangedArgs args = { };
 	args.newState = state;
 	args.ledId = _mediaManager->getRandomLedId(state);
 	args.mediaOption = Led;
-	args.loop = loop;
+	args.playbackOption = playbackOption;
 	std::string message = _populateBufferFromStateArgs(args, PLAY_MEDIA_FROM_STATE_FOLDER_HEADER);
 
 	_updateMediaStateUniversal(Led, MediaPlayer::Stop);
@@ -385,7 +385,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 		TripdeckStateChangedArgs args = { };
 		args.newState = Pulled;
 		args.mediaOption = option;
-		args.loop = false;
+		args.playbackOption = MediaPlayer::OneShot;
 		_updateStateFollower(id, args);
 	}
 

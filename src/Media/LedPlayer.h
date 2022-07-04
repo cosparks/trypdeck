@@ -33,8 +33,6 @@ class LedPlayer : public MediaPlayer {
 		bool containsMedia(uint32_t fileId) override;
 
 	private:
-		uint32_t _currentMedia = 0;
-		MediaPlaybackOption _playbackOption;
 		std::unordered_map<uint32_t, uint32_t> _fileIdToData;
 		LedController* _ledController = NULL;
 		AVFormatContext* _formatContext =  NULL;

@@ -37,6 +37,7 @@ void LedPlayer::run() {
 
 			if (_getNextFrame() < 0) {
 				stop();
+				_onPlaybackComplete();
 			}
 		}
 	}
@@ -48,7 +49,7 @@ void LedPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	}
 
 	_currentMedia = fileId;
-	_playbackOption = option;
+	_currentOption = option;
 	_mediaChanged = true;
 }
 
@@ -180,15 +181,15 @@ int32_t LedPlayer::_getNextFrame() {
 		ret = av_read_frame(_formatContext, &packet);
 
 		if (ret == AVERROR_EOF) {
-			if (_playbackOption == MediaPlaybackOption::Loop) {
+			if (_currentOption == MediaPlaybackOption::Loop) {
 				// reset avformat context and and continue loop
 				avio_seek(_formatContext->pb, 0, SEEK_SET);
 				avformat_seek_file(_formatContext, _streamId, 0, 0, stream->duration, AVSEEK_FLAG_ANY);
 
 				_streamRestarted = true;
 				
-				// TODO: REMOVE DEBUGGING CODE
 				#if ENABLE_VISUAL_DEBUG
+				// TODO: Remove debugging code
 				i = 0;
 				printDebug = 1;
 				#endif
@@ -219,7 +220,7 @@ int32_t LedPlayer::_getNextFrame() {
 			throw std::runtime_error("Error: avcodec_receive_frame returned < 0");
 		}
 
-		// flush non-key frames from end of video
+		// for Looping: reset timer after first key frame of video
 		if (_streamRestarted && _frame->key_frame) {
 			_playStartTimeMicros = Clock::instance().micros();
 			_streamRestarted = false;

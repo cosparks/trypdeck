@@ -22,8 +22,6 @@ class VideoPlayerOmx : public MediaPlayer {
 		bool containsMedia(uint32_t fileId) override;
 
 	private:
-		uint32_t _currentMedia = 0;
-		MediaPlaybackOption _currentOption;
 		std::string _omxplayerArgs;
 		std::mutex _stateMutex;
 		std::unordered_map<uint32_t, std::string> _fileIdToSystemPath;

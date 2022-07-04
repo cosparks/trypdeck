@@ -45,6 +45,8 @@ class TripdeckMediaManager : public Runnable {
 		void _stopLedInternal();
 		void _pauseVideoInternal();
 		void _pauseLedInternal();
+		void _ledPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args);
+		void _videoPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args);
 };
 
 #endif

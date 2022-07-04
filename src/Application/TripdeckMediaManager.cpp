@@ -33,10 +33,17 @@ void TripdeckMediaManager::init() {
 	}
 
 	// hook up media players to data manager
-	if (_ledPlayer)
+	if (_ledPlayer) {
 		_dataManager->addMediaListener(_ledPlayer);
-	if (_videoPlayer)
+		_ledPlayer->setPlaybackCompleteDelegate(
+			new Delegate<TripdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TripdeckMediaManager::_ledPlayerPlaybackComplete));
+	}
+
+	if (_videoPlayer) {
 		_dataManager->addMediaListener(_videoPlayer);
+		_videoPlayer->setPlaybackCompleteDelegate(
+			new Delegate<TripdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TripdeckMediaManager::_videoPlayerPlaybackComplete));
+	}
 }
 
 void TripdeckMediaManager::run() {
@@ -100,7 +107,8 @@ void TripdeckMediaManager::pause(TripdeckMediaOption option) {
 }
 
 void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
-	_currentState = args.newState;
+	if (args.newState != Unknown)
+		_currentState = args.newState;
 
 	if (_videoPlayer) {
 		uint32_t videoId = 0;
@@ -110,7 +118,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 		else
 			videoId = args.videoId;
 		
-		_videoPlayer->setCurrentMedia(videoId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
+		_videoPlayer->setCurrentMedia(videoId, args.playbackOption);
 
 		if (args.mediaOption == Video || args.mediaOption == Both) {
 			#if ENABLE_SERIAL_DEBUG
@@ -130,7 +138,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 		else
 			ledId = args.ledId;
 
-		_ledPlayer->setCurrentMedia(ledId, args.loop ? MediaPlayer::MediaPlaybackOption::Loop : MediaPlayer::MediaPlaybackOption::OneShot);
+		_ledPlayer->setCurrentMedia(ledId, args.playbackOption);
 
 		if (args.mediaOption == Led || args.mediaOption == Both) {
 			#if ENABLE_SERIAL_DEBUG
@@ -230,4 +238,31 @@ void TripdeckMediaManager::_pauseLedInternal() {
 	if (_ledPlayer) {
 		_ledPlayer->pause();
 	}
+}
+
+void TripdeckMediaManager::_ledPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args) {
+	#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	std::cout << "Received player playback complete call with current media set to :" << args.currentMedia << std::endl;
+	#endif
+
+	if (args.playbackOption == MediaPlayer::Cycle) {
+		uint32_t newMedia = getRandomLedId(_currentState);
+		
+		// if media is same as last, try one more time to grab new media
+		if (newMedia == args.currentMedia)
+			newMedia = getRandomLedId(_currentState);
+		
+		#if ENABLE_MEDIA_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Cycling: setting new media to " << newMedia << std::endl;
+		#endif
+
+		_ledPlayer->setCurrentMedia(newMedia, args.playbackOption);
+		_ledPlayer->play();
+	}
+}
+
+void TripdeckMediaManager::_videoPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args) {
+	// do nothing (for now)
 }

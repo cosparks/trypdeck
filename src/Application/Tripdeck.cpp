@@ -85,7 +85,7 @@ void Tripdeck::_populateStateArgsFromBuffer(const std::string& buffer, TripdeckS
 	}
 
 	args.mediaOption = _parseMediaOption(buffer);
-	args.loop = _parseLoop(buffer);
+	args.playbackOption = _parsePlaybackOption(buffer);
 }
 
 std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArgs& args, char header, char id) {
@@ -94,7 +94,7 @@ std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArg
 	message[ID_INDEX] = id;
 	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.newState);
 	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.mediaOption);
-	message[LOOP_INDEX] = args.loop ? '1' : '0';
+	message[PLAYBACK_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.playbackOption);
 	
 	if (args.videoId || args.ledId)
 		message.append("/" + _hashToHexString(args.videoId) + "/" + _hashToHexString(args.ledId));

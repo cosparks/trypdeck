@@ -55,7 +55,7 @@ using namespace td_util;
 #define ID_INDEX 1
 #define STATE_INDEX 3
 #define MEDIA_OPTION_INDEX 5
-#define LOOP_INDEX 7
+#define PLAYBACK_OPTION_INDEX 7
 #define HASH_INDEX 9
 #define DEFAULT_MESSAGE "x0/0/0/0"
 #define RESET_MESSAGE "r/all"
@@ -124,8 +124,8 @@ class Tripdeck : public Runnable {
 			return (TripdeckMediaOption)(buffer[MEDIA_OPTION_INDEX] - '0');
 		}
 
-		inline bool _parseLoop(const std::string& buffer) {
-			return buffer[LOOP_INDEX] == '1';
+		inline MediaPlayer::MediaPlaybackOption _parsePlaybackOption(const std::string& buffer) {
+			return (MediaPlayer::MediaPlaybackOption)(buffer[PLAYBACK_OPTION_INDEX] - '0');
 		}
 
 		inline bool _containsMediaHashes(const std::string& buffer) {

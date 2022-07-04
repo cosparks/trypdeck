@@ -37,7 +37,7 @@ class TripdeckLeader : public Tripdeck {
 		void _updateStateFollowers(TripdeckStateChangedArgs& args);
 		void _updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
 		void _updateMediaStateUniversal(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
-		void _triggerLedAnimationForState(TripdeckState state, bool loop = false);
+		void _triggerLedAnimationForState(TripdeckState state, MediaPlayer::MediaPlaybackOption playbackOption = MediaPlayer::OneShot);
 		void _handleDigitalInput(InputArgs& data);
 		void _handleChainPull(char id);
 		void _handleReset();

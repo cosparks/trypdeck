@@ -12,6 +12,19 @@ namespace td_util {
 			virtual void execute(CommandArgs args) = 0;
 	};
 
+	template <class T, class R>
+	class Delegate : public Command {
+		public:
+			Delegate(T* owner, void (T::*callback)(const R&)) : _owner(owner), _callback(callback) { }
+			~Delegate() { }
+			void execute(CommandArgs args) override {
+				(_owner->*_callback)(*((R*)args));
+			}
+		private:
+			T* _owner;
+			void (T::*_callback)(const R&);
+	};
+
 	class Input {
 		public:
 			Input(char id);
