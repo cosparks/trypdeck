@@ -22,12 +22,10 @@ class TripdeckLeader : public Tripdeck {
 		bool _followersSynced = false;
 		bool _revealTriggered = false;
 		bool _chainPulled = false;
-		bool _executingPreReveal = false;
 
 		// run
 		void _runStartup();
 		bool _verifySynced();
-		void _runPulled();
 		bool _verifyAllPulled();
 		void _runOneShotActions();
 		// state and input
@@ -39,6 +37,7 @@ class TripdeckLeader : public Tripdeck {
 		void _updateStateFollowers(TripdeckStateChangedArgs& args);
 		void _updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
 		void _updateMediaStateUniversal(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
+		void _triggerLedAnimationForState(TripdeckState state, bool loop = false);
 		void _handleDigitalInput(InputArgs& data);
 		void _handleChainPull(char id);
 		void _handleReset();

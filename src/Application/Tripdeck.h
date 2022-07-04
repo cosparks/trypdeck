@@ -44,7 +44,7 @@ using namespace td_util;
 // reset message structure: "r/all"
 // triggers reboot of all pis currently connected on network
 #define SYSTEM_RESET_HEADER 'r'
-// reset message structure: "r/all"
+// reset message structure: "x/all"
 // triggers reboot of all pis currently connected on network
 #define SYSTEM_SHUTDOWN_HEADER 'x'
 
@@ -90,10 +90,11 @@ class Tripdeck : public Runnable {
 		virtual void _handleSerialInput(InputArgs& args) = 0;
 		bool _validateSerialMessage(const std::string& buffer);
 		bool _validateHeader(char header);
-		void _formatBasicMessage();
 		MediaHashes _parseMediaHashes(const std::string& buffer);
 		const std::string _hashToHexString(uint32_t hash);
 		void _updateStatusFromStateArgs(TripdeckStateChangedArgs& args);
+		void _populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args);
+		std::string _populateBufferFromStateArgs(const TripdeckStateChangedArgs& args, char header = '0', char id = '0');
 		void _reset();
 		void _shutdown();
 

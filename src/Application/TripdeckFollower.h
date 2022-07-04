@@ -19,7 +19,6 @@ class TripdeckFollower : public Tripdeck {
 		void _sendStatusUpdate();
 		void _handleSerialInput(InputArgs& args) override;
 		bool _parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args);
-		void _populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args);
 };
 
 #endif

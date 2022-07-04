@@ -74,6 +74,35 @@ void Tripdeck::_updateStatusFromStateArgs(TripdeckStateChangedArgs& args) {
 	_status.connected = true;
 }
 
+void Tripdeck::_populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args) {
+	args.newState = _parseState(buffer);
+
+	// check for media id info
+	if (_containsMediaHashes(buffer)) {
+		MediaHashes hashes = _parseMediaHashes(buffer);
+		args.videoId = hashes.videoHash;
+		args.ledId = hashes.ledHash;
+	}
+
+	args.mediaOption = _parseMediaOption(buffer);
+	args.loop = _parseLoop(buffer);
+}
+
+std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArgs& args, char header, char id) {
+	std::string message = DEFAULT_MESSAGE;
+	message[0] = header;
+	message[ID_INDEX] = id;
+	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.newState);
+	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.mediaOption);
+	message[LOOP_INDEX] = args.loop ? '1' : '0';
+	
+	if (args.videoId || args.ledId)
+		message.append("/" + _hashToHexString(args.videoId) + "/" + _hashToHexString(args.ledId));
+
+	return message;
+}
+
+
 void Tripdeck::_reset() {
 	system("sudo reboot");
 }

@@ -133,17 +133,3 @@ bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, Trip
 	}
 	return false;
 }
-
-void TripdeckFollower::_populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args) {
-	args.newState = _parseState(buffer);
-
-	// check for media id info
-	if (_containsMediaHashes(buffer)) {
-		MediaHashes hashes = _parseMediaHashes(buffer);
-		args.videoId = hashes.videoHash;
-		args.ledId = hashes.ledHash;
-	}
-
-	args.mediaOption = _parseMediaOption(buffer);
-	args.loop = _parseLoop(buffer);
-}
