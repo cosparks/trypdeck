@@ -11,7 +11,7 @@ void TripdeckFollower::init() {
 	Tripdeck::init();
 
 	TripdeckStateChangedArgs args = { };
-	args.newState = _status.state;
+	args.state = _status.state;
 	args.mediaOption = Both;
 	args.playbackOption = MediaPlayer::Loop;
 	_onStateChanged(args);
@@ -71,7 +71,7 @@ void TripdeckFollower::_sendStatusUpdate() {
 	_serial->transmit(message);
 }
 
-void TripdeckFollower::_handleSerialInput(InputArgs& args) {
+void TripdeckFollower::_handleSerialInput(const InputArgs& args) {
 	if (!_validateSerialMessage(args.buffer))
 		return;
 	
@@ -79,15 +79,11 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	if (_parseId(args.buffer)== ID) {
 		
 		char header = _parseHeader(args.buffer);
-		TripdeckStateChangedArgs stateArgs = { };
-		TripdeckMediaOption mediaOption = { };
+		TripdeckMediaOption mediaOption = None;
 
 		switch (header) {
 			case STATE_CHANGED_HEADER:
-				if (_parseStateChangedMessage(args.buffer, stateArgs)) {
-					_updateStatusFromStateArgs(stateArgs);
-					_onStateChanged(stateArgs);
-				}
+				_handleStateChangedMessage(args.buffer);
 				break;
 			case PLAY_MEDIA_HEADER:
 				mediaOption = _parseMediaOption(args.buffer);
@@ -101,9 +97,8 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 				mediaOption = _parseMediaOption(args.buffer);
 				_mediaManager->pause(mediaOption);
 				break;
-			case PLAY_MEDIA_FROM_STATE_FOLDER_HEADER:
-				_populateStateArgsFromBuffer(args.buffer, stateArgs);
-				_mediaManager->updateState(stateArgs);
+			case PLAY_MEDIA_FROM_ARGS_HEADER:
+				_handlePlayMediaFromArgsMessage(args.buffer);
 				break;
 			case SYSTEM_RESET_HEADER:
 				_reset();
@@ -121,6 +116,35 @@ void TripdeckFollower::_handleSerialInput(InputArgs& args) {
 	}
 }
 
+void TripdeckFollower::_handleStateChangedMessage(const std::string& buffer) {
+	TripdeckStateChangedArgs stateArgs = { };
+
+	if (_parseStateChangedMessage(buffer, stateArgs)) {
+		_updateStatusFromStateArgs(stateArgs);
+		_onStateChanged(stateArgs);
+	}
+}
+
+void TripdeckFollower::_handlePlayMediaFromArgsMessage(const std::string& buffer) {
+	TripdeckStateChangedArgs stateArgs = { };
+	_populateStateArgsFromBuffer(buffer, stateArgs);
+
+	switch (stateArgs.mediaOption) {
+		case None:
+			// do nothing
+			break;
+		case Video:
+			_mediaManager->updateStateVideo(stateArgs);
+			break;
+		case Led:
+			_mediaManager->updateStateLed(stateArgs);
+			break;
+		default: // Both
+			_mediaManager->updateState(stateArgs);
+			break;
+	}
+}
+
 // returns true and loads StateChangedArgs if entering new state, false otherwise
 bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
 	if (buffer.length() < 6)
@@ -132,4 +156,12 @@ bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, Trip
 		return true;
 	}
 	return false;
+}
+
+void TripdeckFollower::_handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) {
+	// currently only called when Wait && Led && Cycle
+	if (_status.state == Wait) {
+		std::string message = _populateBufferFromStateArgs(args, MEDIA_PLAYBACK_COMPLETE_HEADER, ID);
+		_serial->transmit(message);
+	}
 }

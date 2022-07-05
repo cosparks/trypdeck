@@ -14,7 +14,7 @@ enum TripdeckState { Connecting, Connected, Wait, Pulled, Reveal, Unknown };
 enum TripdeckMediaOption { None, Video, Led, Both };
 
 struct TripdeckStateChangedArgs {
-	TripdeckState newState;
+	TripdeckState state;
 	uint32_t videoId;
 	uint32_t ledId;
 	TripdeckMediaOption mediaOption;

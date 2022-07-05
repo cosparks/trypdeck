@@ -19,6 +19,7 @@ class TripdeckLeader : public Tripdeck {
 		std::unordered_map<char, TripdeckStatus> _nodeIdToStatus;
 		std::vector<pair<int64_t, void (TripdeckLeader::*)(void)>> _oneShotActions;
 		std::vector<Input*> _buttons;
+		int64_t _lastPlaybackCompleteMessageMillis = 0;
 		bool _followersSynced = false;
 		bool _revealTriggered = false;
 		bool _chainPulled = false;
@@ -30,18 +31,21 @@ class TripdeckLeader : public Tripdeck {
 		void _runOneShotActions();
 		// state and input
 		void _onStateChanged();
-		void _handleSerialInput(InputArgs& args) override;
+		void _handleSerialInput(const InputArgs& args) override;
 		void _receiveStartupNotification(char id, const std::string& buffer);
 		void _receiveFollowerStatusUpdate(char id, const std::string& buffer);
+		void _handleMediaPlaybackCompleteMessage(char id, const std::string& buffer);
 		void _updateStateFollower(char id, TripdeckStateChangedArgs& args);
 		void _updateStateFollowers(TripdeckStateChangedArgs& args);
 		void _updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
 		void _updateMediaStateUniversal(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state);
 		void _triggerLedAnimationForState(TripdeckState state, MediaPlayer::MediaPlaybackOption playbackOption = MediaPlayer::OneShot);
-		void _handleDigitalInput(InputArgs& data);
+		void _handleDigitalInput(const InputArgs& args);
 		void _handleChainPull(char id);
 		void _handleReset();
 		void _handleShutdown();
+		// events
+		void _handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) override;
 		// actions
 		void _addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait);
 		void _setMediaUpdateUniversalAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state, int64_t wait = 5);

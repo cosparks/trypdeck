@@ -14,11 +14,17 @@ class TripdeckFollower : public Tripdeck {
 
 	private:
 
+		// state and networking
 		void _onStateChanged(TripdeckStateChangedArgs& args);
 		void _pingLeader();
 		void _sendStatusUpdate();
-		void _handleSerialInput(InputArgs& args) override;
+		void _handleSerialInput(const InputArgs& args) override;
+		void _handleStateChangedMessage(const std::string& buffer);
+		void _handlePlayMediaFromArgsMessage(const std::string& buffer);
 		bool _parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args);
+		// events
+		void _handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) override;
+
 };
 
 #endif

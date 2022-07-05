@@ -15,7 +15,7 @@ void TripdeckLeader::init() {
 	Tripdeck::init();
 
 	// hook up button inputs with input manager (input manager will clean up heap objects)
-	td_util::Command* digitalInputDelegate = new TripdeckLeader::DigitalInputDelegate(this);
+	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	#if RUN_MOCK_BUTTONS
 	// TODO: remove test code
 	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
@@ -124,7 +124,7 @@ void TripdeckLeader::_runOneShotActions() {
 
 void TripdeckLeader::_onStateChanged() {
 	TripdeckStateChangedArgs args = { };
-	args.newState = _status.state;
+	args.state = _status.state;
 
 	switch (_status.state) {
 		case Connecting:
@@ -172,7 +172,7 @@ void TripdeckLeader::_onStateChanged() {
 	_mediaManager->updateState(args);
 }
 
-void TripdeckLeader::_handleSerialInput(InputArgs& args) {
+void TripdeckLeader::_handleSerialInput(const InputArgs& args) {
 	if (!_validateSerialMessage(args.buffer))
 		return;
 
@@ -185,6 +185,9 @@ void TripdeckLeader::_handleSerialInput(InputArgs& args) {
 			break;
 		case STATUS_UPDATE_HEADER:
 			_receiveFollowerStatusUpdate(id, args.buffer);
+			break;
+		case MEDIA_PLAYBACK_COMPLETE_HEADER:
+			_handleMediaPlaybackCompleteMessage(id, args.buffer);
 			break;
 		default:
 			// do nothing
@@ -199,7 +202,7 @@ void TripdeckLeader::_receiveStartupNotification(char id, const std::string& buf
 
 	// update follower to connected state and tell it to play new media upon receipt of message
 	TripdeckStateChangedArgs stateArgs = { };
-	stateArgs.newState = Connected;
+	stateArgs.state = Connected;
 	stateArgs.mediaOption = Both;
 	_updateStateFollower(id, stateArgs);
 }
@@ -223,26 +226,17 @@ void TripdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& bu
 	}
 }
 
-void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& args) {
-	std::string message = DEFAULT_MESSAGE;
-	message[0] = STATE_CHANGED_HEADER;
-	message[ID_INDEX] = id;
-	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.newState);
-	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.mediaOption);
-	message[PLAYBACK_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.playbackOption);
-	
-	if (args.videoId || args.ledId) {
-		if (args.videoId)
-			message.append("/" + _hashToHexString(args.videoId));
-		else
-			message.append("/" + _hashToHexString(_mediaManager->getRandomVideoId(args.newState)));
-		
-		if (args.ledId)
-			message.append("/" + _hashToHexString(args.ledId));
-		else
-			message.append("/" + _hashToHexString(_mediaManager->getRandomLedId(args.newState)));
+void TripdeckLeader::_handleMediaPlaybackCompleteMessage(char id, const std::string& buffer) {
+	// Only handle cycling Led at the moment
+	if (_parsePlaybackOption(buffer) == MediaPlayer::Cycle && _parseMediaOption(buffer) == Led) {
+		TripdeckStateChangedArgs args = { };
+		_populateStateArgsFromBuffer(buffer, args);
+		_handleMediaPlayerPlaybackComplete(args);
 	}
+}
 
+void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& args) {
+	std::string message = _populateBufferFromStateArgs(args, STATE_CHANGED_HEADER, id);
 	_serial->transmit(message);
 }
 
@@ -254,7 +248,19 @@ void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
 
 void TripdeckLeader::_updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
 	std::string message = DEFAULT_MESSAGE;
-	message[0] = STOP_MEDIA_HEADER;
+	
+	switch (state) {
+		case MediaPlayer::Play:
+			message[0] = PLAY_MEDIA_HEADER;
+			break;
+		case MediaPlayer::Stop:
+			message[0] = STOP_MEDIA_HEADER;
+			break;
+		default:
+			message[0] = PAUSE_MEDIA_HEADER;
+			break;
+	}
+
 	message[ID_INDEX] = id;
 	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)option);
 	_serial->transmit(message);
@@ -303,11 +309,11 @@ void TripdeckLeader::_updateMediaStateUniversal(TripdeckMediaOption option, Medi
 
 void TripdeckLeader::_triggerLedAnimationForState(TripdeckState state, MediaPlayer::MediaPlaybackOption playbackOption) {
 	TripdeckStateChangedArgs args = { };
-	args.newState = state;
+	args.state = state;
 	args.ledId = _mediaManager->getRandomLedId(state);
 	args.mediaOption = Led;
 	args.playbackOption = playbackOption;
-	std::string message = _populateBufferFromStateArgs(args, PLAY_MEDIA_FROM_STATE_FOLDER_HEADER);
+	std::string message = _populateBufferFromStateArgs(args, PLAY_MEDIA_FROM_ARGS_HEADER);
 
 	_updateMediaStateUniversal(Led, MediaPlayer::Stop);
 
@@ -318,28 +324,28 @@ void TripdeckLeader::_triggerLedAnimationForState(TripdeckState state, MediaPlay
 	}
 
 	// update media state for this
-	_mediaManager->updateState(args);
+	_mediaManager->updateStateLed(args);
 }
 
-void TripdeckLeader::_handleDigitalInput(InputArgs& data) {
-	if (data.buffer[0] != '1')
+void TripdeckLeader::_handleDigitalInput(const InputArgs& args) {
+	if (args.buffer[0] != '1')
 		return;
 	
 	// handle reset
-	if (data.id == RESET_BUTTON_ID) {
+	if (args.id == RESET_BUTTON_ID) {
 		_handleReset();
 		return;
 	}
 
 	// handle reset
-	if (data.id == SHUTDOWN_BUTTON_ID) {
+	if (args.id == SHUTDOWN_BUTTON_ID) {
 		_handleShutdown();
 		return;
 	}
 
 	// back out if we are not in a state to receive chain pull
 	if (_status.state == Wait || _status.state == Pulled)
-		_handleChainPull(data.id);
+		_handleChainPull(args.id);
 }
 
 void TripdeckLeader::_handleChainPull(char id) {
@@ -383,7 +389,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 		// send Pulled state update message to Followers (change led effect but not video)
 		// at this point, we rely on Leader's internal representation of follower state to determine behavior
 		TripdeckStateChangedArgs args = { };
-		args.newState = Pulled;
+		args.state = Pulled;
 		args.mediaOption = option;
 		args.playbackOption = MediaPlayer::OneShot;
 		_updateStateFollower(id, args);
@@ -430,6 +436,32 @@ void TripdeckLeader::_handleShutdown() {
 	// careful...
 }
 
+void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) {
+	// currently only called when Led && Cycle
+	if (_status.state == Wait && args.state == Wait) {
+		int64_t currentTime = Clock::instance().millis();
+		if (currentTime > _lastPlaybackCompleteMessageMillis + PLAYBACK_MESSAGE_WAIT_INTERVAL) {
+			_lastPlaybackCompleteMessageMillis = currentTime;
+
+			// try twice to get random led animation:
+			TripdeckStateChangedArgs newArgs = args;
+			newArgs.ledId = _mediaManager->getRandomLedId(_status.state);
+
+			if (newArgs.ledId == args.ledId)
+				newArgs.ledId = _mediaManager->getRandomLedId(_status.state);
+			
+			std::string message = _populateBufferFromStateArgs(newArgs, PLAY_MEDIA_FROM_ARGS_HEADER);
+
+			for (const auto& pair : _nodeIdToStatus) {
+				message[ID_INDEX] = pair.first;
+				_serial->transmit(message);
+			}
+
+			_mediaManager->updateStateLed(args);
+		}
+	}
+}
+
 void TripdeckLeader::_executePreReveal() {
 	#if ENABLE_SERIAL_DEBUG
 	// TODO: Remove debug code
@@ -442,6 +474,7 @@ void TripdeckLeader::_executePreReveal() {
 	_addOneShotAction(&TripdeckLeader::_executeReveal, PRE_REVEAL_TO_REVEAL_TIME);
 	#else
 	//trigger reveal right away
+	_updateMediaStateUniversal(Video, MediaPlayer::Stop);
 	_executeReveal();
 	#endif
 
@@ -459,7 +492,7 @@ void TripdeckLeader::_executeReveal() {
 
 	for (auto const& pair : _nodeIdToStatus) {
 		TripdeckStateChangedArgs args = { };
-		args.newState = Reveal;
+		args.state = Reveal;
 		args.ledId = ledId;
 
 		if (pair.second.state == Pulled)
@@ -480,7 +513,6 @@ void TripdeckLeader::_executeReveal() {
 void TripdeckLeader::_returnToWait() {
 	_revealTriggered = false;
 	_chainPulled = false;
-
 	_status.state = Wait;
 	_onStateChanged();
 }

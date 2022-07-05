@@ -20,7 +20,9 @@ class TripdeckMediaManager : public Runnable {
 		~TripdeckMediaManager();
 		void init() override;
 		void run() override;
-		void updateState(TripdeckStateChangedArgs& args);
+		void updateState(const TripdeckStateChangedArgs& args);
+		void updateStateVideo(const TripdeckStateChangedArgs& args);
+		void updateStateLed(const TripdeckStateChangedArgs& args);
 		void play(TripdeckMediaOption option = Both);
 		void stop(TripdeckMediaOption option = Both);
 		void pause(TripdeckMediaOption option = Both);
@@ -28,12 +30,14 @@ class TripdeckMediaManager : public Runnable {
 		void addLedFolder(TripdeckState state, const char* folder);
 		uint32_t getRandomVideoId(TripdeckState state);
 		uint32_t getRandomLedId(TripdeckState state);
+		void setPlaybackCompleteDelegate(Command* delegate);
 
 	private:
 		TripdeckState _currentState = Unknown;
 		DataManager* _dataManager = NULL;
 		MediaPlayer* _videoPlayer = NULL;
 		MediaPlayer* _ledPlayer = NULL;
+		Command* _playbackCompleteDelegate;
 		std::unordered_map<TripdeckState, std::string> _stateToVideoFolder;
 		std::unordered_map<TripdeckState, std::string> _stateToLedFolder;
 		std::vector<Runnable*> _runnableObjects;

@@ -18,15 +18,15 @@ using namespace td_util;
  * @note if you add a new header, it must also be added to ValidHeaders array in Tripdeck.cpp
 **/
 
-// startup notification structure: "cID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
-// STATE is TripdeckState to change to and OPTION/LOOP contains information on how media should be played
+// startup notification structure: "cID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
+// STATE is TripdeckState to change to and OPTION/PLAYBACK contains information on how media should be played
 // VIDEOHASH/LEDHASH are optional arguments for video and led file IDs
 // if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
 #define STATE_CHANGED_HEADER 'c'
 // startup notification structure: "nID"
 // ID is unqiue identifier for sender
 #define STARTUP_NOTIFICATION_HEADER 'n'
-// status update message header: "uID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
+// status update message header: "uID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
 // sent during Follower's connected and wait phase -- generally to notify leader that follower is still connected
 #define STATUS_UPDATE_HEADER 'u'
 // message dictating that follower play media: "jID/STATE/OPTION"
@@ -38,9 +38,12 @@ using namespace td_util;
 // message dictating that follower pause media: "pID/STATE/OPTION"
 // OPTION is TripdeckMediaOption
 #define PAUSE_MEDIA_HEADER 'p'
-// play media from state folder message: "mID/STATE/OPTION/LOOP(/VIDEOHASH/LEDHASH)"
+// play media from state folder message: "mID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
 // allows Leader to send message to follower indicating that it should play media from a folder not associated with its current state
-#define PLAY_MEDIA_FROM_STATE_FOLDER_HEADER 'm'
+#define PLAY_MEDIA_FROM_ARGS_HEADER 'm'
+// message received by Leader: "mID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
+// ID is Follower whose media playback is complete, additional params give info on which media, etc..
+#define MEDIA_PLAYBACK_COMPLETE_HEADER 'b'
 // reset message structure: "r/all"
 // triggers reboot of all pis currently connected on network
 #define SYSTEM_RESET_HEADER 'r'
@@ -87,7 +90,7 @@ class Tripdeck : public Runnable {
 		int64_t _nextActionMillis = 0;
 		bool _run = false;
 
-		virtual void _handleSerialInput(InputArgs& args) = 0;
+		virtual void _handleSerialInput(const InputArgs& args) = 0;
 		bool _validateSerialMessage(const std::string& buffer);
 		bool _validateHeader(char header);
 		MediaHashes _parseMediaHashes(const std::string& buffer);
@@ -95,6 +98,8 @@ class Tripdeck : public Runnable {
 		void _updateStatusFromStateArgs(TripdeckStateChangedArgs& args);
 		void _populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args);
 		std::string _populateBufferFromStateArgs(const TripdeckStateChangedArgs& args, char header = '0', char id = '0');
+		void _mediaManagerPlaybackComplete(const TripdeckStateChangedArgs& args);
+		virtual void _handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) = 0;
 		void _reset();
 		void _shutdown();
 

@@ -7,7 +7,7 @@
 
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
-#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
+#define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
 #define ENABLE_MEDIA_DEBUG 1		// when true, prints out messages regarding file system state
 
 ///////////////////////////////////////////
@@ -29,8 +29,9 @@
 #define LED_ANIMATION_EACH_PULL 1		// sculpture plays Pulled animation for each chain pull
 
 // Timing -- Leader and Follower
-#define DEFAULT_PING_INTERVAL 4000		// intervals on which Leader / Follower ping one another
-#define LED_WAIT_TIME 0					// Led decodes much faster than video, so a short pause may be needed
+#define DEFAULT_PING_INTERVAL 4000				// intervals on which Leader / Follower ping one another
+#define LED_WAIT_TIME 0							// Led decodes much faster than video, so a short pause may be needed
+#define PLAYBACK_MESSAGE_WAIT_INTERVAL 5000		// wait period within which to ignore new playback messages (in case two messages are sent at same time)
 
 // GPIO Settings (general)
 #define SERIAL_BAUD B38400				// networking baud rate
@@ -70,7 +71,7 @@
 #define NO_LEDS 2
 
 // * modify these values *
-#define LED_SETTING NO_LEDS	 				// * important * main led setting
+#define LED_SETTING CENTRE_LEDS	 			// * important * main led setting
 #define PIXEL_BRIGHTNESS 31 				// global pixel brightness
 #define SCALE_BRIGHTNESS 1					// bring pixel brightness down as color approaces black
 #define DARK_THRESHOLD 23					// rgb avg below this threshold will have brightness set to 0
@@ -82,16 +83,16 @@
 #if (LED_SETTING == MAIN_LEDS)		// Top Matrix * do not change this line *
 // * modify these values *
 #define LED_MATRIX_WIDTH 50
-#define LED_MATRIX_HEIGHT 50
+#define LED_MATRIX_HEIGHT 49
 #define LED_MATRIX_SPLIT 25
-#define GRID_AB_ORIENTATION LedController::Horizontal				// orientation of grid A and grid B (Horizontal -> A B -- Vertical -> A / B)
+#define GRID_AB_ORIENTATION LedController::None						// orientation of grid A and grid B (Horizontal -> A B -- Vertical -> A / B)
 #define LED_GRID_CONFIGURATION_OPTION_A Apa102::VerticalTopLeft		// configuration of first led grid in main light chamber
 #define LED_GRID_CONFIGURATION_OPTION_B Apa102::VerticalTopRight	// configuration of second led grid in main light chamber
 #elif (LED_SETTING == CENTRE_LEDS)	 // Centre Matrix * do no change this line *
 // * modify these values *
-#define LED_MATRIX_WIDTH 10
-#define LED_MATRIX_HEIGHT 50
-#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalBottomRight
+#define LED_MATRIX_WIDTH 22
+#define LED_MATRIX_HEIGHT 22
+#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft
 #define GRID_AB_ORIENTATION LedController::None
 #else
 // do nothing						// no leds

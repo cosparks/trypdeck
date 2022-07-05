@@ -4,7 +4,7 @@
 #include "Tripdeck.h"
 
 const char ValidHeaders[] = { STARTUP_NOTIFICATION_HEADER, STATE_CHANGED_HEADER, STATUS_UPDATE_HEADER, PLAY_MEDIA_HEADER,
-	STOP_MEDIA_HEADER, PAUSE_MEDIA_HEADER, PLAY_MEDIA_FROM_STATE_FOLDER_HEADER, SYSTEM_RESET_HEADER };
+	STOP_MEDIA_HEADER, PAUSE_MEDIA_HEADER, PLAY_MEDIA_FROM_ARGS_HEADER, MEDIA_PLAYBACK_COMPLETE_HEADER, SYSTEM_RESET_HEADER, SYSTEM_SHUTDOWN_HEADER };
 
 // tripdeck behavior
 Tripdeck::Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : _mediaManager(mediaManager), _inputManager(inputManager), _serial(serial) { }
@@ -17,10 +17,12 @@ void Tripdeck::init() {
 	
 	// create and add serial input and serial input delegate to InputManager
 	// ID does not matter in this case -- objects will be cleaned up by InputManger on Destruction
-	_inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new SerialInputDelegate(this));
+	_inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new Delegate<Tripdeck, InputArgs>(this, &Tripdeck::_handleSerialInput));
+	// _inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new SerialInputDelegate(this));
 
+	// add playback complete handler
+	_mediaManager->setPlaybackCompleteDelegate(new Delegate<Tripdeck, TripdeckStateChangedArgs>(this, &Tripdeck::_mediaManagerPlaybackComplete));
 
-	
 	_status.state = Connecting;
 	_run = true;
 }
@@ -69,13 +71,13 @@ void Tripdeck::_updateStatusFromStateArgs(TripdeckStateChangedArgs& args) {
 	_status.videoMedia = args.videoId;
 	_status.ledMedia = args.ledId;
 	_status.option = args.mediaOption;
-	_status.state = args.newState;
+	_status.state = args.state;
 	_status.lastTransmitMillis = Clock::instance().millis();
 	_status.connected = true;
 }
 
 void Tripdeck::_populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args) {
-	args.newState = _parseState(buffer);
+	args.state = _parseState(buffer);
 
 	// check for media id info
 	if (_containsMediaHashes(buffer)) {
@@ -92,7 +94,7 @@ std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArg
 	std::string message = DEFAULT_MESSAGE;
 	message[0] = header;
 	message[ID_INDEX] = id;
-	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.newState);
+	message[STATE_INDEX] = _singleDigitIntToChar((int32_t)args.state);
 	message[MEDIA_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.mediaOption);
 	message[PLAYBACK_OPTION_INDEX] = _singleDigitIntToChar((int32_t)args.playbackOption);
 	
@@ -102,6 +104,12 @@ std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArg
 	return message;
 }
 
+void Tripdeck::_mediaManagerPlaybackComplete(const TripdeckStateChangedArgs& args) {
+	// at the moment, we only care about Cycling Led videos
+	if (args.mediaOption == Led && args.playbackOption == MediaPlayer::Cycle) {
+		_handleMediaPlayerPlaybackComplete(args);
+	}
+}
 
 void Tripdeck::_reset() {
 	system("sudo reboot");
