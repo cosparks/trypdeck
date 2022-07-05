@@ -48,10 +48,7 @@ int main(int argc, char** argv) {
 	// Add Project Folders
 	for (int32_t state = TripdeckState::Connecting; state <= TripdeckState::Reveal; state++) {
 		mediaManager.addVideoFolder(TripdeckState(state), VideoFolders[state]);
-
-		#if RUN_LEDS
 		mediaManager.addLedFolder(TripdeckState(state), LedFolders[state]);
-		#endif
 	}
 
 	// Application

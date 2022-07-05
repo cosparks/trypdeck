@@ -47,14 +47,14 @@
 #define RESET_BUTTON_ID 'x'
 #define SHUTDOWN_BUTTON_ID 'y'
 #define LEADER_BUTTON_PIN 1
-#define PIN_BUTTON_2 2
-#define PIN_BUTTON_3 3
+#define FOLLOWER_1_BUTTON_PIN 2
+#define FOLLOWER_2_BUTTON_PIN 3
 #define RESET_BUTTON_PIN 4
 #define SHUTDOWN_BUTTON_PIN 5
 #define BUTTON_RESET_INTERVAL_MILLIS 1000
 
 // Buttons -- Leader only -- Testing
-#define RUN_MOCK_BUTTONS 1
+#define RUN_MOCK_BUTTONS 0
 #define MOCK_BUTTON_RANDOM_MIN_MILLIS 15000
 #define MOCK_BUTTON_RANDOM_MAX_MILLIS 21000
 
@@ -71,7 +71,7 @@
 #define NO_LEDS 2
 
 // * modify these values *
-#define LED_SETTING CENTRE_LEDS	 			// * important * main led setting
+#define LED_SETTING NO_LEDS		 			// * important * main led setting
 #define PIXEL_BRIGHTNESS 31 				// global pixel brightness
 #define SCALE_BRIGHTNESS 1					// bring pixel brightness down as color approaces black
 #define DARK_THRESHOLD 23					// rgb avg below this threshold will have brightness set to 0

@@ -5,6 +5,7 @@
 #include "td_util.h"
 #include "Clock.h"
 #include "MockButton.h"
+#include "InputDigitalButton.h"
 
 TripdeckLeader::TripdeckLeader(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
 

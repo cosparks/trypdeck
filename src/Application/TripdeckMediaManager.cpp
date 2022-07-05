@@ -177,41 +177,27 @@ void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder)
 }
 
 uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
-	if (_videoPlayer) {
-		const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
+	const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
 
-		#if ENABLE_MEDIA_DEBUG
-		std::cout << "\ncurrent representation of file folder for state: " << state << std::endl;
-		std::cout << "video files associated with this state: " << std::endl;
-		for (uint32_t file : _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state])) {
-			std::cout << "\t" << Index::instance().getSystemPath(file) << std::endl;
-		}
-		#endif
-
-		if (videoFiles.size() == 0) {
-			std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
-			throw std::runtime_error(message);
-		}
-
-		srand((uint32_t)Clock::instance().millis());
-		return videoFiles[rand() % videoFiles.size()];
+	if (videoFiles.size() == 0) {
+		std::string message = "Error: video folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+		throw std::runtime_error(message);
 	}
-	return 0;
+
+	srand((uint32_t)Clock::instance().millis());
+	return videoFiles[rand() % videoFiles.size()];
 }
 
 uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
-	if (_ledPlayer) {
-		const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
+	const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[_currentState]);
 
-		if (ledFiles.size() == 0) {
-			std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
-			throw std::runtime_error(message);
-		}
-
-		srand((uint32_t)Clock::instance().millis());
-		return ledFiles[rand() % ledFiles.size()];
+	if (ledFiles.size() == 0) {
+		std::string message = "Error: led folder for current state (" + std::to_string(_currentState) + ") does not contain any files";
+		throw std::runtime_error(message);
 	}
-	return 0;
+
+	srand((uint32_t)Clock::instance().millis());
+	return ledFiles[rand() % ledFiles.size()];
 }
 
 void TripdeckMediaManager::setPlaybackCompleteDelegate(Command* delegate) {
