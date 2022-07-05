@@ -1,10 +1,16 @@
 #include <iostream>
 
+#include "settings.h"
 #include "VideoPlayerVLC.h"
 #include "Index.h"
 
-const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--quiet", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
+#if ENABLE_MEDIA_DEBUG
+const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
+#define VLC_NUM_ARGS 9
+#else
+const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--quiet", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
 #define VLC_NUM_ARGS 10
+#endif
 
 VideoPlayerVLC::VideoPlayerVLC() { }
 

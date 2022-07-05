@@ -6,7 +6,7 @@
 #include "LedController.h"
 
 // Debug
-#define ENABLE_VISUAL_DEBUG 1		// when true, stops all calls to pigpio (only necessary if initializing leds)
+#define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
 #define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
 #define ENABLE_MEDIA_DEBUG 1		// when true, prints out messages regarding file system state
 
@@ -14,10 +14,10 @@
 // Trypdeck Settings
 
 // Leader or Follower
-#define Follower
+#define Leader
 
 // IDs
-#define ID '3'							// change this setting for different followers: each follower on the network MUST have a unique id
+#define ID '1'							// change this setting for different followers: each follower on the network MUST have a unique id
 #define LEADER_ID '0'					// do not change this ID
 
 // Timing -- Leader only
@@ -29,7 +29,7 @@
 #define LED_ANIMATION_EACH_PULL 1		// sculpture plays Pulled animation for each chain pull
 
 // Timing -- Leader and Follower
-#define DEFAULT_PING_INTERVAL 8000		// intervals on which Leader / Follower ping one another
+#define DEFAULT_PING_INTERVAL 4000		// intervals on which Leader / Follower ping one another
 #define LED_WAIT_TIME 0					// Led decodes much faster than video, so a short pause may be needed
 
 // GPIO Settings (general)
@@ -40,8 +40,8 @@
 #define NUM_FOLLOWERS 2					// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
 
 // Buttons -- Leader only
-#define LEADER_BUTTON_ID '0'
-#define FOLLOWER_1_BUTTON_ID '3'
+#define LEADER_BUTTON_ID '1'
+#define FOLLOWER_1_BUTTON_ID '2'
 #define FOLLOWER_2_BUTTON_ID '4'
 #define RESET_BUTTON_ID 'x'
 #define SHUTDOWN_BUTTON_ID 'y'
@@ -54,8 +54,8 @@
 
 // Buttons -- Leader only -- Testing
 #define RUN_MOCK_BUTTONS 1
-#define MOCK_BUTTON_RANDOM_MIN_MILLIS 9000
-#define MOCK_BUTTON_RANDOM_MAX_MILLIS 15000
+#define MOCK_BUTTON_RANDOM_MIN_MILLIS 15000
+#define MOCK_BUTTON_RANDOM_MAX_MILLIS 21000
 
 // Media Settings
 #define PLAY_MEDIA_ON_ADD 0
@@ -70,7 +70,7 @@
 #define NO_LEDS 2
 
 // * modify these values *
-#define LED_SETTING CENTRE_LEDS 			// * important * main led setting
+#define LED_SETTING NO_LEDS	 				// * important * main led setting
 #define PIXEL_BRIGHTNESS 31 				// global pixel brightness
 #define SCALE_BRIGHTNESS 1					// bring pixel brightness down as color approaces black
 #define DARK_THRESHOLD 23					// rgb avg below this threshold will have brightness set to 0

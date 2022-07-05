@@ -118,7 +118,7 @@ void TripdeckMediaManager::updateState(TripdeckStateChangedArgs& args) {
 		else
 			videoId = args.videoId;
 		
-		_videoPlayer->setCurrentMedia(videoId, args.playbackOption);
+		_videoPlayer->setCurrentMedia(videoId, (args.playbackOption == MediaPlayer::Cycle) ? MediaPlayer::Loop : args.playbackOption);
 
 		if (args.mediaOption == Video || args.mediaOption == Both) {
 			#if ENABLE_SERIAL_DEBUG

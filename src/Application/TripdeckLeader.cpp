@@ -137,7 +137,7 @@ void TripdeckLeader::_onStateChanged() {
 			args.videoId = _mediaManager->getRandomVideoId(_status.state);
 			args.ledId = _mediaManager->getRandomLedId(_status.state);
 			args.mediaOption = None;
-			args.playbackOption = MediaPlayer::Loop;
+			args.playbackOption = MediaPlayer::Cycle;
 			_updateStateFollowers(args);
 			_setMediaUpdateUniversalAction(Both, MediaPlayer::Play);
 			break;
