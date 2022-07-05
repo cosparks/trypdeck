@@ -38,6 +38,7 @@ class TripdeckMediaManager : public Runnable {
 		MediaPlayer* _videoPlayer = NULL;
 		MediaPlayer* _ledPlayer = NULL;
 		Command* _playbackCompleteDelegate;
+		MediaListener* _mediaListener = NULL;
 		std::unordered_map<TripdeckState, std::string> _stateToVideoFolder;
 		std::unordered_map<TripdeckState, std::string> _stateToLedFolder;
 		std::vector<Runnable*> _runnableObjects;

@@ -1,5 +1,6 @@
 #include "InputDigitalButton.h"
 
+#include <iostream>
 #include <stdexcept>
 #include <pigpio.h>
 #include "settings.h"
@@ -22,6 +23,11 @@ bool InputDigitalButton::read() {
 		}
 
 		if (ret == 1) {
+			#if ENABLE_SERIAL_DEBUG
+			// TODO: Remove debug code
+			std::cout << "Read HIGH from button: " << _id << " -- gpio pin: " << _gpio << std::endl;
+			#endif
+			
 			_lastReadHigh = currentTime;
 		}
 

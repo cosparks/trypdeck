@@ -6,6 +6,7 @@
 #include "Index.h"
 #include "Clock.h"
 #include "TripdeckMediaManager.h"
+#include "MediaListenerDummy.h"
 
 #define RUN_TIME_MILLIS 330000000
 #define VIDEO_PLAY_INTERVAL 10000
@@ -22,11 +23,18 @@ TripdeckMediaManager::TripdeckMediaManager(DataManager* dataManager, MediaPlayer
 		_runnableObjects.push_back(_ledPlayer);
 	if (_videoPlayer)
 		_runnableObjects.push_back(_videoPlayer);
+
+	if (!_ledPlayer || !_videoPlayer) {
+		_mediaListener = new MediaListenerDummy();
+	}
 }
 
 TripdeckMediaManager::~TripdeckMediaManager() {
 	if (_playbackCompleteDelegate)
 		delete _playbackCompleteDelegate;
+
+	if (_mediaListener)
+		delete _mediaListener;
 }
 
 void TripdeckMediaManager::init() {
@@ -47,6 +55,9 @@ void TripdeckMediaManager::init() {
 		_videoPlayer->setPlaybackCompleteDelegate(
 			new Delegate<TripdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TripdeckMediaManager::_videoPlayerPlaybackComplete));
 	}
+
+	if (_mediaListener)
+		_dataManager->addMediaListener(_mediaListener);
 }
 
 void TripdeckMediaManager::run() {
@@ -165,15 +176,21 @@ void TripdeckMediaManager::updateStateLed(const TripdeckStateChangedArgs& args) 
 void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folder) {
 	if (_videoPlayer) {
 		_videoPlayer->addMediaFolder(folder);
-		_stateToVideoFolder[state] = folder;
+	} else {
+		_mediaListener->addMediaFolder(folder);
 	}
+
+	_stateToVideoFolder[state] = folder;
 }
 
 void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder) {
 	if (_ledPlayer) {
 		_ledPlayer->addMediaFolder(folder);
-		_stateToLedFolder[state] = folder;
+	} else {
+		_mediaListener->addMediaFolder(folder);
 	}
+
+	_stateToLedFolder[state] = folder;
 }
 
 uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
