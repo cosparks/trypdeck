@@ -23,6 +23,7 @@ class TripdeckLeader : public Tripdeck {
 		bool _followersSynced = false;
 		bool _revealTriggered = false;
 		bool _chainPulled = false;
+		bool _firstPull = true;
 
 		// run
 		void _runStartup();

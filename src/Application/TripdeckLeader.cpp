@@ -4,6 +4,7 @@
 #include "TripdeckLeader.h"
 #include "td_util.h"
 #include "Clock.h"
+#include "Index.h"
 #include "MockButton.h"
 #include "InputDigitalButton.h"
 
@@ -16,13 +17,14 @@ void TripdeckLeader::init() {
 	Tripdeck::init();
 
 	// hook up button inputs with input manager (input manager will clean up heap objects)
-	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	#if RUN_MOCK_BUTTONS
 	// TODO: remove test code
+	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	_inputManager->addInput(new MockButton(FOLLOWER_2_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
-	#else
+	#elif not ENABLE_SERIAL_DEBUG
+	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	_inputManager->addInput(new InputDigitalButton(LEADER_BUTTON_ID, LEADER_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_1_BUTTON_ID, FOLLOWER_1_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_2_BUTTON_ID, FOLLOWER_2_BUTTON_PIN), digitalInputDelegate);
@@ -242,6 +244,15 @@ void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& arg
 }
 
 void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
+	#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	std::cout << "Updating followers for state " << _status.state;
+	if (args.videoId)
+		std::cout << "\n\t-- video file:  " << Index::instance().getSystemPath(args.videoId);
+	if (args.ledId)
+		std::cout << "\n\t-- led file:  " << Index::instance().getSystemPath(args.ledId) << std::endl;
+	#endif
+
 	for (auto const& pair : _nodeIdToStatus) {
 		_updateStateFollower(pair.first, args);
 	}
@@ -350,16 +361,12 @@ void TripdeckLeader::_handleDigitalInput(const InputArgs& args) {
 }
 
 void TripdeckLeader::_handleChainPull(char id) {
-	bool newPull = false;
-
 	if (id == LEADER_ID) {
 		// TODO: Write internal set state method..
 		// check if leader's chain has already been pulled
 		if (_status.state == Pulled)
 			return;
-		
-		newPull = true;
-
+	
 		// first chain pull -- handle internally
 		_status.state = Pulled;
 		_chainPulled = true;
@@ -368,8 +375,6 @@ void TripdeckLeader::_handleChainPull(char id) {
 		// check if follower node's chain has already been pulled
 		if (_nodeIdToStatus[id].state == Pulled)
 			return;
-
-		newPull = true;
 
 		#if ENABLE_SERIAL_DEBUG
 		// TODO: Remove debug code
@@ -420,10 +425,12 @@ void TripdeckLeader::_handleChainPull(char id) {
 		return;
 	}
 
-	if (newPull) {
+	if (_firstPull) {
 		#if LED_ANIMATION_EACH_PULL
 		_triggerLedAnimationForState(Pulled);
 		#endif
+
+		_firstPull = false;
 	}
 }
 
@@ -453,12 +460,17 @@ void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChang
 			
 			std::string message = _populateBufferFromStateArgs(newArgs, PLAY_MEDIA_FROM_ARGS_HEADER);
 
+			#if ENABLE_MEDIA_DEBUG
+			// TODO: Remove debug code
+			std::cout << "Cycling to next led animation for state " << _status.state << ": " << Index::instance().getSystemPath(newArgs.ledId);
+			#endif
+
 			for (const auto& pair : _nodeIdToStatus) {
 				message[ID_INDEX] = pair.first;
 				_serial->transmit(message);
 			}
 
-			_mediaManager->updateStateLed(args);
+			_mediaManager->updateStateLed(newArgs);
 		}
 	}
 }
@@ -514,6 +526,7 @@ void TripdeckLeader::_executeReveal() {
 void TripdeckLeader::_returnToWait() {
 	_revealTriggered = false;
 	_chainPulled = false;
+	_firstPull = true;
 	_status.state = Wait;
 	_onStateChanged();
 }

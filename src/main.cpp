@@ -3,6 +3,7 @@
 
 #include "settings.h"
 #include "Clock.h"
+#include "Index.h"
 #include "Serial.h"
 #include "td_pigpio.h"
 #include "VideoPlayerVLC.h"
@@ -60,6 +61,28 @@ int main(int argc, char** argv) {
 
 	// Initialize and Run
 	tripdeck.init();
+
+	#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	// check folders
+	for (const char* folder : VideoFolders) {
+		const auto& videoIds = dataManager.getFileIdsFromFolder(std::string(folder));
+		std::cout << "\nFiles in folder: " << folder << std::endl;
+		for (uint32_t id : videoIds) {
+			std::cout << "\t-- " << Index::instance().getSystemPath(id) << std::endl;
+		}
+	}
+
+	// check folders
+	for (const char* folder : LedFolders) {
+		const auto& ledIds = dataManager.getFileIdsFromFolder(std::string(folder));
+		std::cout << "\nFiles in folder: " << folder << std::endl;
+		for (uint32_t id : ledIds) {
+			std::cout << "\t-- " << Index::instance().getSystemPath(id) << std::endl;
+		}
+	}
+	#endif
+
 	tripdeck.run();
 
 	system("sudo sh -c \"TERM=linux setterm -foreground white >/dev/tty0\"");
