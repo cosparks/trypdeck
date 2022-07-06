@@ -4,7 +4,7 @@
 #include "VideoPlayerVLC.h"
 #include "Index.h"
 
-#if ENABLE_MEDIA_DEBUG
+#if ENABLE_VLC_DEBUG
 const char* VLC_ARGS[] = { "-v", "-I", "dummy", "--aout=adummy", "--fullscreen", "--no-osd", "--no-audio", "--vout", "mmal_vout" };
 #define VLC_NUM_ARGS 9
 #else
