@@ -142,7 +142,7 @@ void TripdeckMediaManager::updateStateVideo(const TripdeckStateChangedArgs& args
 		if (args.mediaOption == Video || args.mediaOption == Both) {
 			#if ENABLE_MEDIA_DEBUG
 			// TODO: Remove debug code
-			std::cout << "Playing video with hash: " << videoId << endl;
+			std::cout << "Playing video: " << Index::instance().getSystemPath(videoId) << endl;
 			#endif
 
 			_videoPlayer->play();
@@ -164,7 +164,7 @@ void TripdeckMediaManager::updateStateLed(const TripdeckStateChangedArgs& args) 
 		if (args.mediaOption == Led || args.mediaOption == Both) {
 			#if ENABLE_MEDIA_DEBUG
 			// TODO: Remove debug code
-			std::cout << "Playing led animation with hash: " << ledId << endl;
+			std::cout << "Playing led animation: " << Index::instance().getSystemPath(ledId) << endl;
 			#endif
 
 			_ledPlayer->play();
@@ -195,42 +195,17 @@ void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder)
 uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
 	const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
 
-	#if ENABLE_MEDIA_DEBUG
-	// TODO: Remove debug code
-	std::cout << "\nState: " << state << " -- Grabbing random VIDEO file from folder: " << _stateToVideoFolder[state] << std::endl;
-	for (uint32_t file : videoFiles) {
-		std::cout << "\t -- " << Index::instance().getSystemPath(file) << std::endl;
-	}
-	#endif
-
 	if (videoFiles.size() == 0) {
 		std::string message = "Error: video folder for current state (" + std::to_string(state) + ") does not contain any files";
 		throw std::runtime_error(message);
 	}
 
 	srand((uint32_t)Clock::instance().millis());
-
-	#if ENABLE_MEDIA_DEBUG
-	// TODO: Remove debug code
-	uint32_t videoId = videoFiles[rand() % videoFiles.size()];
-	std::cout << "return video file: " << Index::instance().getSystemPath(videoId) << std::endl;
-	return videoId;
-	#else
 	return videoFiles[rand() % videoFiles.size()];
-	#endif
-
 }
 
 uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
 	const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[state]);
-
-	#if ENABLE_MEDIA_DEBUG
-	// TODO: Remove debug code
-	std::cout << "\nState: " << state << " -- Grabbing random LED file from folder: " << _stateToLedFolder[state] << std::endl;
-	for (uint32_t file : ledFiles) {
-		std::cout << "\t -- " << Index::instance().getSystemPath(file) << std::endl;
-	}
-	#endif
 
 	if (ledFiles.size() == 0) {
 		std::string message = "Error: led folder for current state (" + std::to_string(state) + ") does not contain any files";
@@ -238,15 +213,7 @@ uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
 	}
 
 	srand((uint32_t)Clock::instance().millis());
-
-	#if ENABLE_MEDIA_DEBUG
-	// TODO: Remove debug code
-	uint32_t ledId = ledFiles[rand() % ledFiles.size()];
-	std::cout << "return led file: " << Index::instance().getSystemPath(ledId) << std::endl;
-	return ledId;
-	#else
 	return ledFiles[rand() % ledFiles.size()];
-	#endif
 }
 
 void TripdeckMediaManager::setPlaybackCompleteDelegate(Command* delegate) {

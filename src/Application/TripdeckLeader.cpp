@@ -361,12 +361,16 @@ void TripdeckLeader::_handleDigitalInput(const InputArgs& args) {
 }
 
 void TripdeckLeader::_handleChainPull(char id) {
+	bool chainPulled = false;
+
 	if (id == LEADER_ID) {
 		// TODO: Write internal set state method..
 		// check if leader's chain has already been pulled
 		if (_status.state == Pulled)
 			return;
-	
+
+		chainPulled = true;
+
 		// first chain pull -- handle internally
 		_status.state = Pulled;
 		_chainPulled = true;
@@ -376,10 +380,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 		if (_nodeIdToStatus[id].state == Pulled)
 			return;
 
-		#if ENABLE_SERIAL_DEBUG
-		// TODO: Remove debug code
-		std::cout << "State changed for node with id: " << id << ".  Updating node" << std::endl;
-		#endif
+		chainPulled = true;
 
 		// first chain pull -- update follower status
 		_nodeIdToStatus[id].state = Pulled;
@@ -405,7 +406,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 	if (!_revealTriggered) {
 		#if ENABLE_SERIAL_DEBUG
 		// TODO: Remove debug code
-		std::cout << "Adding _executePreReveal to one shot actions" << std::endl;
+		std::cout << "Starting countdown to reveal!" << std::endl;
 		#endif
 
 		_addOneShotAction(&TripdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
@@ -423,6 +424,13 @@ void TripdeckLeader::_handleChainPull(char id) {
 		_cancelOneShotActions();
 		_executePreReveal();
 		return;
+	}
+
+	if (chainPulled) {
+		#if ENABLE_SERIAL_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Chain pulled!  Node with id: " << id << ". Updating node" << std::endl;
+		#endif
 	}
 
 	if (_firstPull) {
@@ -487,7 +495,7 @@ void TripdeckLeader::_executePreReveal() {
 	_addOneShotAction(&TripdeckLeader::_executeReveal, PRE_REVEAL_TO_REVEAL_TIME);
 	#else
 	//trigger reveal right away
-	_updateMediaStateUniversal(Video, MediaPlayer::Stop);
+	_updateMediaStateUniversal(Both, MediaPlayer::Stop);
 	_executeReveal();
 	#endif
 

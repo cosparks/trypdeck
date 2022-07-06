@@ -6,7 +6,7 @@
 #include "LedController.h"
 
 // Debug
-#define ENABLE_VISUAL_DEBUG 1		// when true, stops all calls to pigpio (only necessary if initializing leds)
+#define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
 #define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
 #define ENABLE_MEDIA_DEBUG 1		// when true, prints out messages regarding file system state
 
@@ -41,7 +41,7 @@
 #define NUM_FOLLOWERS 2					// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
 
 // Buttons -- Leader only
-#define LEADER_BUTTON_ID '1'
+#define LEADER_BUTTON_ID '0'
 #define FOLLOWER_1_BUTTON_ID '2'
 #define FOLLOWER_2_BUTTON_ID '4'
 #define RESET_BUTTON_ID 'x'
@@ -54,7 +54,7 @@
 #define BUTTON_RESET_INTERVAL_MILLIS 1000
 
 // Buttons -- Leader only -- Testing
-#define RUN_MOCK_BUTTONS 0
+#define RUN_MOCK_BUTTONS 1
 #define MOCK_BUTTON_RANDOM_MIN_MILLIS 15000
 #define MOCK_BUTTON_RANDOM_MAX_MILLIS 21000
 
