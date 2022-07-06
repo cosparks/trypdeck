@@ -44,12 +44,14 @@ using namespace td_util;
 // message received by Leader: "mID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
 // ID is Follower whose media playback is complete, additional params give info on which media, etc..
 #define MEDIA_PLAYBACK_COMPLETE_HEADER 'b'
-// reset message structure: "r/all"
+// reset message structure: "rID"
 // triggers reboot of all pis currently connected on network
 #define SYSTEM_RESET_HEADER 'r'
+#define SYSTETM_RESET_MESSAGE "r/all"
 // reset message structure: "x/all"
 // triggers reboot of all pis currently connected on network
 #define SYSTEM_SHUTDOWN_HEADER 'x'
+#define SYSTEM_SHUTDOWN_MESSAGE "x/all"
 
 /** MESSAGE METADATA 
  * @note you must change these values if you make any changes to message format

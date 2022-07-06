@@ -28,6 +28,7 @@ void TripdeckLeader::init() {
 	_inputManager->addInput(new InputDigitalButton(LEADER_BUTTON_ID, LEADER_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_1_BUTTON_ID, FOLLOWER_1_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_2_BUTTON_ID, FOLLOWER_2_BUTTON_PIN), digitalInputDelegate);
+	_inputManager->addInput(new InputDigitalButton(SHUTDOWN_BUTTON_ID, SHUTDOWN_BUTTON_PIN), digitalInputDelegate);
 	#endif
 
 	// TODO: add buttons which will perform full reset and shutdown
@@ -448,8 +449,8 @@ void TripdeckLeader::_handleReset() {
 }
 
 void TripdeckLeader::_handleShutdown() {
-	// TODO
-	// careful...
+	_serial->transmit(std::string(SYSTEM_SHUTDOWN_MESSAGE));
+	_shutdown();
 }
 
 void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) {

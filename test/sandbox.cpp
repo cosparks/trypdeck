@@ -537,14 +537,10 @@ int main(int argv, char** argc) {
 		#if RUN_GPIO_TEST
 		if (currentTime > lastWriteMillis + GPIO_TEST_INTERVAL) {
 			lastWriteMillis = currentTime;
-			int64_t before = Clock::instance().micros();
-			gpioWrite(GPIO_WRITE_PIN, writeValue);
-			int64_t after = Clock::instance().micros();
-			std::cout << "Wrote " << writeValue << " to GPIO_WRITE_PIN in " << after - before << " micros" << std::endl;
 			
-			before = Clock::instance().micros();
+			int64_t before = Clock::instance().micros();
 			int32_t ret = gpioRead(GPIO_READ_PIN);
-			after = Clock::instance().micros();
+			int64_t after = Clock::instance().micros();
 
 			if (ret == PI_BAD_GPIO) {
 				std::cout << "Received PI_BAD_GPIO on read from GPIO_READ_PIN" << std::endl;

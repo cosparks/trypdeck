@@ -7,7 +7,7 @@
 
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
-#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
+#define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
 #define ENABLE_MEDIA_DEBUG 1		// when true, prints out messages regarding file system state
 #define ENABLE_VLC_DEBUG 0			// when true, prints out messages regarding libvlc playback
 
@@ -43,19 +43,19 @@
 
 // Buttons -- Leader only
 #define LEADER_BUTTON_ID '0'
-#define FOLLOWER_1_BUTTON_ID '2'
-#define FOLLOWER_2_BUTTON_ID '4'
+#define FOLLOWER_1_BUTTON_ID '4'
+#define FOLLOWER_2_BUTTON_ID '2'
 #define RESET_BUTTON_ID 'x'
 #define SHUTDOWN_BUTTON_ID 'y'
 #define LEADER_BUTTON_PIN 23
 #define FOLLOWER_1_BUTTON_PIN 24
 #define FOLLOWER_2_BUTTON_PIN 25
-#define RESET_BUTTON_PIN 5
-#define SHUTDOWN_BUTTON_PIN 6
+#define RESET_BUTTON_PIN 6
+#define SHUTDOWN_BUTTON_PIN 5
 #define BUTTON_RESET_INTERVAL_MILLIS 1000
 
 // Buttons -- Leader only -- Testing
-#define RUN_MOCK_BUTTONS 1
+#define RUN_MOCK_BUTTONS 0
 #define MOCK_BUTTON_RANDOM_MIN_MILLIS 15000
 #define MOCK_BUTTON_RANDOM_MAX_MILLIS 21000
 

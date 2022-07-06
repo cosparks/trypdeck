@@ -104,6 +104,7 @@ void TripdeckFollower::_handleSerialInput(const InputArgs& args) {
 				_reset();
 				break;
 			case SYSTEM_SHUTDOWN_HEADER:
+				_serial->transmit(std::string(SYSTEM_SHUTDOWN_MESSAGE));
 				_shutdown();
 				break;
 			default:
