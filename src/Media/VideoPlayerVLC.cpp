@@ -68,6 +68,11 @@ void VideoPlayerVLC::play() {
 	if (libvlc_media_list_player_is_playing(_mediaListPlayer))
 		stop();
 
+	#if ENABLE_MEDIA_DEBUG
+	// TODO: Remove debug code
+	std::cout << "VLC: playing media file " << Index::instance().getSystemPath(_currentMedia) << std::endl;
+	#endif
+
 	_state = MediaPlayerState::Play;
 	libvlc_media_list_player_play_item_at_index(_mediaListPlayer, _fileIdToIndex[_currentMedia]);
 
