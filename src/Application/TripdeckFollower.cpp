@@ -47,7 +47,7 @@ void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	_status.videoMedia = args.videoId;
 	_status.ledMedia = args.ledId;
 
-	#if ENABLE_SERIAL_DEBUG
+	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "State changed: " << _status.state << std::endl;
 	#endif

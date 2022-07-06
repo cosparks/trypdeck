@@ -23,7 +23,7 @@ void TripdeckLeader::init() {
 	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	_inputManager->addInput(new MockButton(FOLLOWER_2_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
-	#elif not ENABLE_SERIAL_DEBUG
+	#elif not ENABLE_VISUAL_DEBUG and not RUN_MOCK_BUTTONS
 	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	_inputManager->addInput(new InputDigitalButton(LEADER_BUTTON_ID, LEADER_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_1_BUTTON_ID, FOLLOWER_1_BUTTON_PIN), digitalInputDelegate);
@@ -168,7 +168,7 @@ void TripdeckLeader::_onStateChanged() {
 			break;
 	}
 
-	#if ENABLE_SERIAL_DEBUG
+	#if ENABLE_MEDIA_DEBUG
 	std::cout << "State changed: " << _status.state << std::endl;
 	#endif
 
@@ -404,7 +404,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 
 	// add one shot action for initialize pre-reveal
 	if (!_revealTriggered) {
-		#if ENABLE_SERIAL_DEBUG
+		#if ENABLE_MEDIA_DEBUG
 		// TODO: Remove debug code
 		std::cout << "Starting countdown to reveal!" << std::endl;
 		#endif
@@ -416,7 +416,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 	// check if all chains have been pulled
 	// skip straight to pre-reveal if true
 	if (_verifyAllPulled()) {
-		#if ENABLE_SERIAL_DEBUG
+		#if ENABLE_MEDIA_DEBUG
 		// TODO: Remove debug code
 		std::cout << "Removing _executePreReveal to one shot actions" << std::endl;
 		#endif
@@ -427,7 +427,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 	}
 
 	if (chainPulled) {
-		#if ENABLE_SERIAL_DEBUG
+		#if ENABLE_MEDIA_DEBUG
 		// TODO: Remove debug code
 		std::cout << "Chain pulled!  Node with id: " << id << ". Updating node" << std::endl;
 		#endif
@@ -484,7 +484,7 @@ void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChang
 }
 
 void TripdeckLeader::_executePreReveal() {
-	#if ENABLE_SERIAL_DEBUG
+	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Executing pre reveal!" << std::endl;
 	#endif
@@ -503,7 +503,7 @@ void TripdeckLeader::_executePreReveal() {
 }
 
 void TripdeckLeader::_executeReveal() {
-	#if ENABLE_SERIAL_DEBUG
+	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Executing reveal!" << std::endl;
 	#endif
