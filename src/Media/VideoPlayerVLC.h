@@ -1,5 +1,5 @@
-#ifndef _VIDEO_PLAYER_H_
-#define _VIDEO_PLAYER_H_
+#ifndef _VIDEO_PLAYER_VLC_H_
+#define _VIDEO_PLAYER_VLC_H_
 
 #include <vlc/vlc.h>
 #include <queue>
@@ -7,10 +7,10 @@
 
 #include "MediaPlayer.h"
 
-class VideoPlayer : public MediaPlayer {
+class VideoPlayerVLC : public MediaPlayer {
 	public:
-		VideoPlayer();
-		~VideoPlayer();
+		VideoPlayerVLC();
+		~VideoPlayerVLC();
 		void init() override;
 		void run() override;
 		void setCurrentMedia(uint32_t fileId, MediaPlaybackOption option = OneShot) override;
@@ -19,8 +19,13 @@ class VideoPlayer : public MediaPlayer {
 		void play() override;
 		void stop() override;
 		void pause() override;
+		bool containsMedia(uint32_t fileId) override;
 
 	private:
+		struct MediaData {
+			
+		};
+
 		uint32_t _currentMedia;
 		std::unordered_map<uint32_t, int32_t> _fileIdToIndex;
 		std::queue<uint32_t> _emptyIndices;

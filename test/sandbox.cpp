@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_map>
-#include <stack> 
+#include <stack>
 #include <functional>
 
 #include <sys/types.h>
@@ -53,10 +53,10 @@ using namespace std;
 #define PLAY_FRAMES_CORRECT_TIMING 0
 #define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
 
-#define PLAY_OMX 1
+#define PLAY_OMX 0
 #define STOP_OMX_ARGS "killall omxplayer.bin" // MAYBE ADD "omxplayer -p -o hdmi /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
-#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
-#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/loop/complex-color-test.mp4"
+#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/elden.mp4"
+#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/elden.mp4"
 
 #define PLAY_VLC 0
 #define PRINT_USER_INFO 0
@@ -68,6 +68,12 @@ using namespace std;
 #define TERMINATE_PROGRAM 1
 #define PROGRAM_RUN_TIME 50000
 #define MULTI_PURPOSE_INTERVAL 5000
+
+// GPIO
+#define RUN_GPIO_TEST 1
+#define GPIO_WRITE_PIN 23
+#define GPIO_READ_PIN 24
+#define GPIO_TEST_INTERVAL 2000
 
 // LED
 #define RUN_LEDS 0
@@ -149,8 +155,7 @@ void play_video_omx(const char* omxArgs, std::function<void()> func) {
 }
 
 void play_start_video() {
-	play_video_omx(OMX_ARGS1, [](void) -> void { ; });
-
+	play_video_omx(OMX_ARGS2, [](void) -> void { std::cout << "Thread terminated" << std::endl; });
 }
 
 struct VLCData {
@@ -158,9 +163,9 @@ struct VLCData {
 	libvlc_media_player_t* mp;
 };
 
-std::string get_full_path(std::string path) {
-	return CARD_VIDEO_DIRECTORY + path;
-}
+// std::string get_full_path(std::string path) {
+// 	return CARD_VIDEO_DIRECTORY + path;
+// }
 
 void stop_vlc(VLCData& data) {
 	libvlc_release(data.inst);
@@ -178,9 +183,8 @@ void initialize_vlc(VLCData& data) {
 	data.mp = libvlc_media_player_new(data.inst);
 
 	for (std::string movie : movies) {
-		_mediaCache[movie] = libvlc_media_new_path(data.inst, get_full_path(movie).c_str());
+		// _mediaCache[movie] = libvlc_media_new_path(data.inst, get_full_path(movie).c_str());
 	}
-
 }
 
 void play_vlc(std::string videoPath, VLCData& data) {
@@ -448,11 +452,13 @@ int runAv() {
 int main(int argv, char** argc) {
 	int64_t lastPrintTime = Clock::instance().millis();
 
-	#if RUN_LEDS
+	#if RUN_LEDS || RUN_GPIO_TEST
 	if (!initializeGpio()) {
 		return -1;
 	}
+	#endif
 
+	#if RUN_LEDS
 	int64_t lastLedUpdateTime = lastPrintTime;
 	uint32_t currentLed = 0;
 	int32_t edgeTestX = 0;
@@ -502,6 +508,22 @@ int main(int argv, char** argc) {
 	#endif
 	#endif
 
+	#if RUN_GPIO_TEST
+	int32_t ret = gpioSetMode(GPIO_WRITE_PIN, PI_OUTPUT);
+	if (ret != 0) {
+		throw std::runtime_error("Error code " + std::to_string(ret) + ": failed to setup pin 23 as output");
+	}
+
+	ret = gpioSetMode(GPIO_READ_PIN, PI_INPUT);
+	if (ret != 0) {
+		throw std::runtime_error("Error code " + std::to_string(ret) + ": failed to setup pin 24 as input");
+	}
+
+	int32_t writeValue = 0;
+	int64_t lastWriteMillis = 0;
+
+	#endif
+
 
 	while (true) {
 		int64_t currentTime = Clock::instance().millis();
@@ -510,6 +532,25 @@ int main(int argv, char** argc) {
 		if (currentTime >= PROGRAM_RUN_TIME) {
 			break;
 		}
+		#endif
+
+		#if RUN_GPIO_TEST
+		if (currentTime > lastWriteMillis + GPIO_TEST_INTERVAL) {
+			lastWriteMillis = currentTime;
+			
+			int64_t before = Clock::instance().micros();
+			int32_t ret = gpioRead(GPIO_READ_PIN);
+			int64_t after = Clock::instance().micros();
+
+			if (ret == PI_BAD_GPIO) {
+				std::cout << "Received PI_BAD_GPIO on read from GPIO_READ_PIN" << std::endl;
+			} else {
+				std::cout << "Read " << ret << " from GPIO_READ_PIN in " << after - before << " micros" << std::endl;
+			}
+
+			writeValue = writeValue ? 0 : 1;
+		}
+
 		#endif
 
 		// if (currentTime > lastPrintTime + MULTI_PURPOSE_INTERVAL) {

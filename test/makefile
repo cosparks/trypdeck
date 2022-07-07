@@ -55,7 +55,10 @@ $(BUILD_DIR)%.o: $(TEST_DIR)%.cpp $(DEPENDENCIES)
 sandbox: $(OBJ)
 	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
+libvlc-test: $(OBJ)
+	$(CC) -g $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
+
 .PHONY: clean
 
 clean : $(OBJ)
-	rm -r $(OBJ) sandbox
+	rm -r $(OBJ) sandbox libvlc-test

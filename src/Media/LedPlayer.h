@@ -15,12 +15,12 @@ extern "C" {
 
 #include <unordered_map>
 
-#include "Apa102.h"
+#include "LedController.h"
 #include "MediaPlayer.h"
 
 class LedPlayer : public MediaPlayer {
 	public:
-		LedPlayer(Apa102* apa102);
+		LedPlayer(LedController* ledController);
 		~LedPlayer();
 		void init() override;
 		void run() override;
@@ -30,12 +30,11 @@ class LedPlayer : public MediaPlayer {
 		void play() override;
 		void stop() override;
 		void pause() override;
+		bool containsMedia(uint32_t fileId) override;
 
 	private:
-		uint32_t _currentMedia = 0;
-		MediaPlaybackOption _playbackOption;
 		std::unordered_map<uint32_t, uint32_t> _fileIdToData;
-		Apa102* _apa102 = NULL;
+		LedController* _ledController = NULL;
 		AVFormatContext* _formatContext =  NULL;
 		AVCodecContext* _codecContext =  NULL;
 		SwsContext* _swsContext = NULL;

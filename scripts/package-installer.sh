@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo apt update && sudo apt upgrade -y
-sudo apt-get -y install build-essential cmake libvlc-dev pulseaudio libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev
+sudo apt-get -y install build-essential cmake vlc-bin vlc-plugin-base libvlc-dev pulseaudio libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev
 sudo apt install pkg-config
 mkdir ~/resources
 cd ~/resources

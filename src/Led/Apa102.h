@@ -2,7 +2,6 @@
 #define _APA102_H_
 
 #include <functional>
-#include <pigpio.h>
 
 struct Pixel {
 	uint8_t brightness;
@@ -29,7 +28,7 @@ struct Shape {
 class Apa102 {
 	public:
 		enum GridConfigurationOption { HorizontalTopLeft, HorizontalTopRight, HorizontalBottomRight, HorizontalBottomLeft,
-			VerticalTopLeft, VerticalTopRight, VerticalBottomRight, VerticalBottomLeft,};
+			VerticalTopLeft, VerticalTopRight, VerticalBottomRight, VerticalBottomLeft };
 
 		/**
 		 * @brief constructs Apa102 object

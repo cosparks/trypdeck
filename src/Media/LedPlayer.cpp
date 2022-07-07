@@ -5,28 +5,25 @@
 #include "Index.h"
 #include "LedPlayer.h"
 
-LedPlayer::LedPlayer(Apa102* apa102) {
-	_apa102 = apa102;
-}
+LedPlayer::LedPlayer(LedController* ledController) : _ledController(ledController) { }
 
 LedPlayer::~LedPlayer() {
-	#if not ENABLE_DEBUG
-	_apa102->clear();
-	_apa102->show();
+	#if not ENABLE_VISUAL_DEBUG
+	_ledController->clear();
+	_ledController->show();
 	#endif
+
+	if (_streamIsOpen) {
+		_closeStream();
+	}
 }
 
 void LedPlayer::init() {
-	#if not ENABLE_DEBUG
-	if (gpioInitialise() < 0)
-		throw std::runtime_error("Error: PI GPIO Initialization failed");
-	#endif
-	
-	_apa102->init(0, SPI_BAUD, 0);
+	_ledController->init(SPI_BAUD);
 
-	#if not ENABLE_DEBUG
-	_apa102->clear();
-	_apa102->show();
+	#if not ENABLE_VISUAL_DEBUG
+	_ledController->clear();
+	_ledController->show();
 	#endif
 }
 
@@ -40,6 +37,7 @@ void LedPlayer::run() {
 
 			if (_getNextFrame() < 0) {
 				stop();
+				_onPlaybackComplete();
 			}
 		}
 	}
@@ -51,7 +49,7 @@ void LedPlayer::setCurrentMedia(uint32_t fileId, MediaPlaybackOption option) {
 	}
 
 	_currentMedia = fileId;
-	_playbackOption = option;
+	_currentOption = option;
 	_mediaChanged = true;
 }
 
@@ -84,8 +82,18 @@ void LedPlayer::play() {
 	}
 
 	if (openStream) {
+		#if ENABLE_MEDIA_DEBUG
+		// TODO: Remove debug code
+		int64_t before = Clock::instance().micros();
+		#endif
+
 		_openStream();
 		_playStartTimeMicros = Clock::instance().micros();
+
+		#if ENABLE_MEDIA_DEBUG
+		// TODO: Remove debug code
+		std::cout << "Time to open stream in micros: " << _playStartTimeMicros - before << " -- " << Index::instance().getSystemPath(_currentMedia) << std::endl;
+		#endif
 	}
 
 	_mediaChanged = false;
@@ -102,9 +110,9 @@ void LedPlayer::stop() {
 
 	_state = Stop;
 
-	#if not ENABLE_DEBUG
-	_apa102->clear();
-	_apa102->show();
+	#if not ENABLE_VISUAL_DEBUG
+	_ledController->clear();
+	_ledController->show();
 	#endif
 }
 
@@ -115,17 +123,23 @@ void LedPlayer::pause() {
 	_state = Pause;
 }
 
+bool LedPlayer::containsMedia(uint32_t fileId) {
+	return _fileIdToData.find(fileId) != _fileIdToData.end();
+}
+
 void LedPlayer::_addMedia(uint32_t fileId) {
 	if (_fileIdToData.find(fileId) == _fileIdToData.end()) {
 		_fileIdToData[fileId] = 0;
 
-		// TODO: REMOVE (TEMP BEHAVIOR FOR TESTING)
+		#if PLAY_MEDIA_ON_ADD
+		// TODO: Remove temp behavior for testing
 		if (_streamIsOpen) {
 			setCurrentMedia(fileId, MediaPlaybackOption::Loop);
 
 			if (_state == MediaPlayerState::Play)
 				play();
 		}
+		#endif
 	}
 }
 
@@ -152,7 +166,7 @@ void LedPlayer::_updateMedia(uint32_t fileId) {
 }
 
 // TODO: DEBUG CODE REMOVE LATER
-#if ENABLE_DEBUG
+#if ENABLE_VISUAL_DEBUG
 int32_t printDebug = 0;
 int32_t i = 0;
 #endif
@@ -167,15 +181,15 @@ int32_t LedPlayer::_getNextFrame() {
 		ret = av_read_frame(_formatContext, &packet);
 
 		if (ret == AVERROR_EOF) {
-			if (_playbackOption == MediaPlaybackOption::Loop) {
+			if (_currentOption == MediaPlaybackOption::Loop) {
 				// reset avformat context and and continue loop
 				avio_seek(_formatContext->pb, 0, SEEK_SET);
 				avformat_seek_file(_formatContext, _streamId, 0, 0, stream->duration, AVSEEK_FLAG_ANY);
 
 				_streamRestarted = true;
 				
-				// TODO: REMOVE DEBUGGING CODE
-				#if ENABLE_DEBUG
+				#if ENABLE_VISUAL_DEBUG
+				// TODO: Remove debugging code
 				i = 0;
 				printDebug = 1;
 				#endif
@@ -206,7 +220,7 @@ int32_t LedPlayer::_getNextFrame() {
 			throw std::runtime_error("Error: avcodec_receive_frame returned < 0");
 		}
 
-		// flush non-key frames from end of video
+		// for Looping: reset timer after first key frame of video
 		if (_streamRestarted && _frame->key_frame) {
 			_playStartTimeMicros = Clock::instance().micros();
 			_streamRestarted = false;
@@ -217,7 +231,7 @@ int32_t LedPlayer::_getNextFrame() {
 
 		_nextFrameTimeMicros = _playStartTimeMicros + _frame->best_effort_timestamp * (1000000L / _streamTimeBase.den);
 
-		#if ENABLE_DEBUG
+		#if ENABLE_VISUAL_DEBUG
 		if (_streamRestarted) {
 			std::cout << "----frame restarted----" << std::endl;
 		}
@@ -239,8 +253,8 @@ int32_t LedPlayer::_getNextFrame() {
 }
 
 void LedPlayer::_showNextFrame() {
-	int32_t width = _apa102->getWidth();
-	int32_t height = _apa102->getHeight();
+	int32_t width = _ledController->getWidth();
+	int32_t height = _ledController->getHeight();
 	int32_t pixelsPerLedX = _frameRGB->width / width;
 	int32_t pixelsPerLedY = _frameRGB->height / height;
 	int32_t offsetX = 0;
@@ -250,12 +264,19 @@ void LedPlayer::_showNextFrame() {
 	for(int32_t y = 0; y < height; y++) {
 		for (int32_t x = 0; x < width; x++) {
 			uint8_t* ptr = _frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * _frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
-			_apa102->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			
+			#if SCALE_BRIGHTNESS
+			// logarithmic brightness scaling
+			uint16_t avg = (ptr[0] + ptr[1] + ptr[2]) / 3;
+			_ledController->setPixel(Pixel {  (uint8_t)((avg - 1 <= DARK_THRESHOLD) ? 0 : floor(log2((avg - DARK_THRESHOLD) * 4))), ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			#else
+			_ledController->setPixel(Pixel { PIXEL_BRIGHTNESS, ptr[0], ptr[1], ptr[2] }, Point { x, y });
+			#endif
 		}
 	}
 
-	#if not ENABLE_DEBUG
-	_apa102->show();
+	#if not ENABLE_VISUAL_DEBUG
+	_ledController->show();
 	#endif
 }
 
