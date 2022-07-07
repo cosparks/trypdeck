@@ -3,7 +3,6 @@
 
 #include "settings.h"
 #include "Clock.h"
-#include "Index.h"
 #include "Serial.h"
 #include "td_pigpio.h"
 #include "VideoPlayerVLC.h"
@@ -12,7 +11,6 @@
 #include "TripdeckMediaManager.h"
 #include "TripdeckLeader.h"
 #include "TripdeckFollower.h"
-#include "MockButton.h"
 
 const char* VideoFolders[] = { VIDEO_CONNECTING_DIRECTORY, VIDEO_CONNECTED_DIRECTORY, VIDEO_WAIT_DIRECTORY, VIDEO_PULLED_DIRECTORY, VIDEO_REVEAL_DIRECTORY };
 const char* LedFolders[] = { LED_CONNECTING_DIRECTORY, LED_CONNECTED_DIRECTORY, LED_WAIT_DIRECTORY, LED_PULLED_DIRECTORY, LED_REVEAL_DIRECTORY };
