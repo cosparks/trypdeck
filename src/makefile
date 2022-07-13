@@ -58,5 +58,5 @@ debug: $(OBJ)
 
 .PHONY: clean
 
-clean : $(OBJ)
+clean:
 	rm -r $(OBJ) tripdeck

@@ -12,7 +12,7 @@ BUILD_DIR = $(PARENT_DIRECTORY)/obj/
 LIB_DIR = $(PARENT_DIRECTORY)/lib/
 
 # Get all directories from lib
-INCLUDE_DIRS_LIB += $(wildcard $(LIB_DIR)*/)
+INCLUDE_DIRS_LIB += $(wildcard $(LIB_DIR)**/src/)
 INCLUDE_DIRS += $(INCLUDE_DIRS_LIB)
 # Add lib cpp/c files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.cpp)))
@@ -34,20 +34,27 @@ INCLUDE_DIRS += $(SRC_DIR) $(TEST_DIR)
 # Create flags to include all directories (so we don't have to use paths in #include)
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
-# Add all src-level files
+# Add all test-level files
 CPPTEST := $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.cpp)))
 CTEST += $(patsubst /%,%,$(foreach %,$(TEST_DIR),$(wildcard $(%)*.c)))
 DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(TEST_DIR) ,$(wildcard $(%)*.h)))
 
-OBJ := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
-OBJ += $(patsubst $(TEST_DIR)%,$(BUILD_DIR)%, $(CPPTEST:.cpp=.o) $(CTEST:.c=.o))
+OBJ_SRC := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
+OBJ_SRC += $(patsubst $(TEST_DIR)%,$(BUILD_DIR)%, $(CPPTEST:.cpp=.o) $(CTEST:.c=.o))
+OBJ := $(patsubst $(LIB_DIR)%,$(BUILD_DIR)%, $(OBJ_SRC))
 
-# pattern rules for src and test files
+$(info CPPSRC is $(CPPSRC))
+
+# pattern rules for src, test and lib files
 $(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEPENDENCIES)
 	@mkdir -p $(@D)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
 $(BUILD_DIR)%.o: $(TEST_DIR)%.cpp $(DEPENDENCIES)
+	@mkdir -p $(@D)
+	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
+
+$(BUILD_DIR)%.o: $(LIB_DIR)%.cpp $(DEPENDENCIES)
 	@mkdir -p $(@D)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 
@@ -60,5 +67,5 @@ libvlc-test: $(OBJ)
 
 .PHONY: clean
 
-clean : $(OBJ)
+clean:
 	rm -r $(OBJ) sandbox libvlc-test
