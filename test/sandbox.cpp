@@ -49,7 +49,7 @@ using namespace std;
 #define DEBUG_MODE 0
 
 #define RUN_AV_DECODING 0
-#define PLAY_RGB_FRAMES 0 // RUN_LEDS must be on for this to work
+#define PLAY_RGB_FRAMES 0 // RUN_LED_TEST must be on for this to work
 #define PLAY_FRAMES_CORRECT_TIMING 0
 #define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
 
@@ -76,7 +76,7 @@ using namespace std;
 #define GPIO_TEST_INTERVAL 2000
 
 // LED
-#define RUN_LEDS 0
+#define RUN_LED_TEST 0
 #define PIXEL_BRIGHTNESS_TEST 5
 #define MATRIX_WIDTH 53
 #define MATRIX_HEIGHT 10
@@ -269,7 +269,7 @@ void playFrame(AVFrame* frameRGB) {
 	int32_t offsetY = 0;
 
 
-	#if RUN_LEDS
+	#if RUN_LED_TEST
 	lights.clear();
 	#endif
 
@@ -277,12 +277,12 @@ void playFrame(AVFrame* frameRGB) {
 	for(int32_t y = 0; y < MATRIX_HEIGHT; y++) {
 		for (int32_t x = 0; x < MATRIX_WIDTH; x++) {
 			uint8_t* ptr = frameRGB->data[0] + (y * pixelsPerLedY + offsetY) * frameRGB->linesize[0] + 3 * (x * pixelsPerLedX + offsetX);
-			#if RUN_LEDS
+			#if RUN_LED_TEST
 			lights.setPixel(Pixel { PIXEL_BRIGHTNESS_TEST, ptr[0], ptr[1], ptr[2] }, Point { x, y });
 			#endif
 		}
 	}
-	#if RUN_LEDS
+	#if RUN_LED_TEST
 	lights.show();
 	#endif
 }
@@ -452,13 +452,13 @@ int runAv() {
 int main(int argv, char** argc) {
 	int64_t lastPrintTime = Clock::instance().millis();
 
-	#if RUN_LEDS || RUN_GPIO_TEST
+	#if RUN_LED_TEST || RUN_GPIO_TEST
 	if (!initializeGpio()) {
 		return -1;
 	}
 	#endif
 
-	#if RUN_LEDS
+	#if RUN_LED_TEST
 	int64_t lastLedUpdateTime = lastPrintTime;
 	uint32_t currentLed = 0;
 	int32_t edgeTestX = 0;

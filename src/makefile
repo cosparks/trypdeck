@@ -12,7 +12,7 @@ BUILD_DIR = $(PARENT_DIRECTORY)/obj/
 LIB_DIR = $(PARENT_DIRECTORY)/lib/
 
 # Get all directories from lib
-INCLUDE_DIRS_LIB += $(wildcard $(LIB_DIR)*/)
+INCLUDE_DIRS_LIB += $(wildcard $(LIB_DIR)**/src/)
 INCLUDE_DIRS += $(INCLUDE_DIRS_LIB)
 # Add lib cpp/c files and get their .h dependencies
 CPPSRC += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_LIB),$(wildcard $(%)*.cpp)))
@@ -36,12 +36,17 @@ DEPENDENCIES += $(patsubst /%,%,$(foreach %,$(INCLUDE_DIRS_SRC),$(wildcard $(%)*
 # Create flags to include all directories (so we don't have to use paths in #include)
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE)$(wildcard $(%)))
 
-OBJ := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
+OBJ_SRC := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o) $(CSRC:.c=.o))
+OBJ = $(patsubst $(LIB_DIR)%,$(BUILD_DIR)%, $(OBJ_SRC))
 
 # Debug Info
-# $(info INCLUDE_DIRS_SRC is $(INCLUDE_DIRS_SRC))
+# $(info INCLUDE_DIRS_LIB is $(INCLUDE_DIRS_LIB))
 
 $(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEPENDENCIES)
+	@mkdir -p $(@D)
+	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
+
+$(BUILD_DIR)%.o: $(LIB_DIR)%.cpp $(DEPENDENCIES)
 	@mkdir -p $(@D)
 	$(CC) $(LIBS_CARGS) -c -o $@ $< $(CFLAGS) $(INCLUDE_FLAGS)
 

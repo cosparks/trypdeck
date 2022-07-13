@@ -1,0 +1,3 @@
+[submodule "lib/apa102-cppi"]
+	path = lib/apa102-cppi
+	url = https://github.com/cosparks/apa102-cppi.git
