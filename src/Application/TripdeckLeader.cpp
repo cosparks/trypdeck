@@ -16,15 +16,15 @@ void TripdeckLeader::init() {
 	// sets state to Connecting and _run to true
 	Tripdeck::init();
 
+	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
+
 	// hook up button inputs with input manager (input manager will clean up heap objects)
 	#if RUN_MOCK_BUTTONS
 	// TODO: remove test code
-	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	_inputManager->addInput(new MockButton(LEADER_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	_inputManager->addInput(new MockButton(FOLLOWER_1_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	_inputManager->addInput(new MockButton(FOLLOWER_2_BUTTON_ID, MOCK_BUTTON_RANDOM_MIN_MILLIS, MOCK_BUTTON_RANDOM_MAX_MILLIS), digitalInputDelegate);
 	#elif not ENABLE_VISUAL_DEBUG and not RUN_MOCK_BUTTONS
-	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
 	_inputManager->addInput(new InputDigitalButton(LEADER_BUTTON_ID, LEADER_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_1_BUTTON_ID, FOLLOWER_1_BUTTON_PIN), digitalInputDelegate);
 	_inputManager->addInput(new InputDigitalButton(FOLLOWER_2_BUTTON_ID, FOLLOWER_2_BUTTON_PIN), digitalInputDelegate);
@@ -146,14 +146,7 @@ void TripdeckLeader::_onStateChanged() {
 			_setMediaUpdateUniversalAction(Both, MediaPlayer::Play);
 			break;
 		case Pulled:
-			// pre-reveal stuff can be handled here
-			#if STOP_VIDEO_ON_PULLED
-			_mediaManager->stop(Video);
-			args.mediaOption = None;
-			#else
 			args.mediaOption = Video;
-			#endif
-
 			args.playbackOption = MediaPlayer::OneShot;
 			break; 
 		case Reveal:
@@ -386,19 +379,11 @@ void TripdeckLeader::_handleChainPull(char id) {
 		// first chain pull -- update follower status
 		_nodeIdToStatus[id].state = Pulled;
 
-		// send stop Video message to Follower
-		#if STOP_VIDEO_ON_PULLED
-		_updateMediaStateFollower(id, Video, MediaPlayer::Stop);
-		TripdeckMediaOption option = None;
-		#else
-		TripdeckMediaOption option = Video;
-		#endif
-
 		// send Pulled state update message to Followers (change led effect but not video)
 		// at this point, we rely on Leader's internal representation of follower state to determine behavior
 		TripdeckStateChangedArgs args = { };
 		args.state = Pulled;
-		args.mediaOption = option;
+		args.mediaOption = Video;
 		args.playbackOption = MediaPlayer::OneShot;
 		_updateStateFollower(id, args);
 	}
@@ -538,13 +523,4 @@ void TripdeckLeader::_returnToWait() {
 	_firstPull = true;
 	_status.state = Wait;
 	_onStateChanged();
-}
-
-// Digital Input Delegate
-TripdeckLeader::DigitalInputDelegate::DigitalInputDelegate(TripdeckLeader* owner) : _owner(owner) { }
-
-TripdeckLeader::DigitalInputDelegate::~DigitalInputDelegate() { }
-
-void TripdeckLeader::DigitalInputDelegate::execute(CommandArgs args) {
-	_owner->_handleDigitalInput(*((InputArgs*)args));
 }

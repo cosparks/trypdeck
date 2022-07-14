@@ -55,15 +55,7 @@ class TripdeckLeader : public Tripdeck {
 		void _executePreReveal();
 		void _executeReveal();
 		void _returnToWait();
-
-		class DigitalInputDelegate : public Command {
-			public:
-				DigitalInputDelegate(TripdeckLeader* owner);
-				~DigitalInputDelegate();
-				void execute(CommandArgs args) override;
-			private:
-				TripdeckLeader* _owner;
-		};
+		
 };
 
 #endif

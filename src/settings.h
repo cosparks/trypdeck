@@ -26,7 +26,6 @@
 #define PULL_TO_PRE_REVEAL_TIME 5000	// amount of time between chain pull (on any pi) and pre-reveal state
 #define PRE_REVEAL_TO_REVEAL_TIME 0		// amount of time between pre-reveal and reveal state.  if zero, pre reveal does nothing
 #define REVEAL_TIME 15000				// duration for which tarot cards will be displayed before returning to wait state
-#define STOP_VIDEO_ON_PULLED 0			// when chain is pulled, stop video playback on associated screen
 #define LED_ANIMATION_EACH_PULL 1		// sculpture plays Pulled animation for each chain pull
 
 // Timing -- Leader and Follower
