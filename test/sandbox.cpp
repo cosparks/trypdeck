@@ -49,7 +49,8 @@ using namespace std;
 #define RUN_AV_DECODING 1
 #define PLAY_RGB_FRAMES 1
 #define RUN_LED_TEST PLAY_RGB_FRAMES
-#define PLAY_FRAMES_CORRECT_TIMING 0
+#define PLAY_FRAMES_CORRECT_TIMING 1
+#define RUN_DECODE_PERFORMANCE_TESTING 0
 #define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
 
 #define PLAY_OMX 0
@@ -62,7 +63,6 @@ using namespace std;
 #define RUN_SERIAL_NETWORKING 0
 #define START_VIDEO_VLC "nyan-cat.mp4"
 
-#define RUN_DECODE_PERFORMANCE_TESTING 0
 #define RUN_MULTITHREADING 0
 #define TERMINATE_PROGRAM 1
 #define PROGRAM_RUN_TIME 50000
@@ -242,13 +242,17 @@ static void video_decode_example()
 	std::cout << "Stream time base: " << stream_time_base.num << " / " << stream_time_base.den << std::endl;
 
 	// PERFORMANCE Testing
+	std::queue<int64_t> performanceQueue;
+
 	#if RUN_DECODE_PERFORMANCE_TESTING
 	int64_t start = Clock::instance().seconds();
 	int fpsCount = 0;
 	#endif
-	std::queue<int64_t> performanceQueue;
+
+	#if PLAY_FRAMES_CORRECT_TIMING
 	int i = 0;
 	int startTime = Clock::instance().micros();
+	#endif
 
 	// Read all the frames
 	while (av_read_frame_log_time(fmt_ctx, &avpkt, performanceQueue) >= 0) {
@@ -293,8 +297,8 @@ static void video_decode_example()
 		#if PLAY_RGB_FRAMES
 		#if PLAY_FRAMES_CORRECT_TIMING
 		double frameTimeEstimate = (double)frame->best_effort_timestamp * ((double)stream_time_base.num / (double)stream_time_base.den);
-		// std::cout << "frame time stamp offset: " << frame->best_effort_timestamp << endl;
-		// std::cout << "actual time: " << frameTimeEstimate << endl;
+		std::cout << "frame time stamp offset: " << frame->best_effort_timestamp << endl;
+		std::cout << "actual time: " << frameTimeEstimate << endl;
 		int64_t nextFrameTime = startTime + frame->best_effort_timestamp * (1000000L / stream_time_base.den);
 		int i = 0;
 		while (nextFrameTime > Clock::instance().micros()) {
@@ -456,19 +460,20 @@ int main(int argv, char** argc) {
 		}
 
 		#endif
-
+		
+		#if PLAY_OMX
 		if (currentTime > lastPrintTime + MULTI_PURPOSE_INTERVAL) {
-			#if PLAY_OMX
 			stop_omx();
 			threadCount++;
 			if (first)
 				std::thread(play_video_omx, OMX_ARGS1, [threadCount](void) -> void { std::cout << "Thread number " << threadCount << " has exited" << std::endl; }).detach();
 			else
 				std::thread(play_video_omx, OMX_ARGS2, [threadCount](void) -> void { std::cout << "Thread number " << threadCount << " has exited" << std::endl; }).detach();
-			#endif
+
 			first = !first;
 			lastPrintTime = currentTime;
 		}
+		#endif
 	}
 
 	return 1;

@@ -5,6 +5,7 @@ obj/
 cache/
 media/
 test/sandbox
+test/test-libvlc
 bin/
 *.bin
 *.o
