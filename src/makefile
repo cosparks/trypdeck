@@ -1,6 +1,6 @@
 CC = g++
 VERSION = -std=c++17
-CFLAGS = -g -Wall -Wno-psabi
+CFLAGS = -Wall -Wno-psabi
 LFLAGS = -pthread
 LIBS_CARGS =  $(pkg-config --cflags libvlc)
 LIBS = -lpigpio -lrt $(pkg-config --libs libvlc) -lvlc -lavcodec -lavformat -lavutil -lswscale -lx264
