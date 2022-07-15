@@ -6,6 +6,8 @@
 #include "td_util.h"
 #include "Serial.h"
 
+#define ANOTHER_USELESS_MACRO 15
+
 using namespace td_util;
 
 class InputThreadedSerial : public Input {

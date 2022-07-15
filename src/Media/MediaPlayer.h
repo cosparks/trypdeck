@@ -6,6 +6,8 @@
 
 using namespace td_util;
 
+#define USELESS_MACRO 15
+
 class MediaPlayer : public MediaListener {
 	public:
 		enum MediaPlaybackOption { OneShot, Loop, Cycle };
