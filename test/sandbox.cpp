@@ -46,8 +46,8 @@ using namespace std;
 // PROGRAM MACROS
 #define DEBUG_MODE 0
 
-#define RUN_AV_DECODING 1
-#define PLAY_RGB_FRAMES 1
+#define RUN_AV_DECODING 0
+#define PLAY_RGB_FRAMES 0
 #define RUN_LED_TEST PLAY_RGB_FRAMES
 #define PLAY_FRAMES_CORRECT_TIMING 1
 #define RUN_DECODE_PERFORMANCE_TESTING 0
@@ -69,10 +69,10 @@ using namespace std;
 #define MULTI_PURPOSE_INTERVAL 5000
 
 // GPIO
-#define RUN_GPIO_TEST 0
-#define GPIO_WRITE_PIN 23
-#define GPIO_READ_PIN 24
-#define GPIO_TEST_INTERVAL 2000
+#define RUN_GPIO_TEST 1
+#define GPIO_READ_PIN_1 23
+#define GPIO_READ_PIN_2 24
+#define DEBOUNCE_MILLIS 75
 
 // LED
 #define PIXEL_BRIGHTNESS_TEST 31
@@ -418,18 +418,20 @@ int main(int argv, char** argc) {
 	#endif
 
 	#if RUN_GPIO_TEST
-	int32_t ret = gpioSetMode(GPIO_WRITE_PIN, PI_OUTPUT);
-	if (ret != 0) {
-		throw std::runtime_error("Error code " + std::to_string(ret) + ": failed to setup pin 23 as output");
-	}
-
-	ret = gpioSetMode(GPIO_READ_PIN, PI_INPUT);
+	int32_t ret = gpioSetMode(GPIO_READ_PIN_1, PI_INPUT);
 	if (ret != 0) {
 		throw std::runtime_error("Error code " + std::to_string(ret) + ": failed to setup pin 24 as input");
 	}
 
-	int32_t writeValue = 0;
-	int64_t lastWriteMillis = 0;
+	ret = gpioSetMode(GPIO_READ_PIN_2, PI_INPUT);
+	if (ret != 0) {
+		throw std::runtime_error("Error code " + std::to_string(ret) + ": failed to setup pin 24 as input");
+	}
+
+	int32_t lastReadValue1 = 0;
+	int64_t lastReadTime1 = 0;
+	int32_t lastReadValue2 = 0;
+	int64_t lastReadTime2 = 0;
 	#endif
 
 
@@ -443,20 +445,37 @@ int main(int argv, char** argc) {
 		#endif
 
 		#if RUN_GPIO_TEST
-		if (currentTime > lastWriteMillis + GPIO_TEST_INTERVAL) {
-			lastWriteMillis = currentTime;
-			
-			int64_t before = Clock::instance().micros();
-			int32_t ret = gpioRead(GPIO_READ_PIN);
-			int64_t after = Clock::instance().micros();
+		
+		int64_t before = Clock::instance().micros();
+		int32_t ret = gpioRead(GPIO_READ_PIN_1);
+		int64_t after = Clock::instance().micros();
+
+		if (lastReadValue1 != ret && currentTime > lastReadTime1 + DEBOUNCE_MILLIS) {
 
 			if (ret == PI_BAD_GPIO) {
-				std::cout << "Received PI_BAD_GPIO on read from GPIO_READ_PIN" << std::endl;
+				std::cout << "Received PI_BAD_GPIO on read from GPIO_READ_PIN_1" << std::endl;
 			} else {
-				std::cout << "Read " << ret << " from GPIO_READ_PIN in " << after - before << " micros" << std::endl;
+				std::cout << "Read " << ret << " from GPIO_READ_PIN_1 in " << after - before << " micros" << std::endl;
 			}
 
-			writeValue = writeValue ? 0 : 1;
+			lastReadValue1 = ret;
+			lastReadTime1 = currentTime;
+		}
+
+		before = Clock::instance().micros();
+		ret = gpioRead(GPIO_READ_PIN_2);
+		after = Clock::instance().micros();
+
+		if (lastReadValue2 != ret && currentTime > lastReadTime2 + DEBOUNCE_MILLIS) {
+
+			if (ret == PI_BAD_GPIO) {
+				std::cout << "Received PI_BAD_GPIO on read from GPIO_READ_PIN_2" << std::endl;
+			} else {
+				std::cout << "Read " << ret << " from GPIO_READ_PIN_2 in " << after - before << " micros" << std::endl;
+			}
+
+			lastReadValue2 = ret;
+			lastReadTime2 = currentTime;
 		}
 
 		#endif
