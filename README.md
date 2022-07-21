@@ -31,18 +31,5 @@ $ make tripdeck
 $ sudo ./tripdeck
 ```
 
-##### (Optional) Test PIGPIO:
-• check that pigpio is working correctly (don't enter the `#` or anything after it)
-```
-$ sudo ./x_pigpio # check C I/F
-
-$ sudo pigpiod    # start daemon
-
-$ ./x_pigpiod_if2 # check C      I/F to daemon
-$ ./x_pigpio.py   # check Python I/F to daemon
-$ ./x_pigs        # check pigs   I/F to daemon
-$ ./x_pipe        # check pipe   I/F to daemon
-```
-
 ### Dependencies:
 ffmpeg, vlc, pigpio, make
