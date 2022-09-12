@@ -80,6 +80,7 @@ using namespace std;
 #define PIXEL_BRIGHTNESS_TEST 5
 #define MATRIX_WIDTH 22
 #define MATRIX_HEIGHT 22
+#define MATRIX_CONFIGURATION_OPTION Apa102::HorizontalTopLeft
 
 // LED TESTS (ONLY CHOOSE ONE AT A TIME)
 #define RUN_EDGE_TEST 0
@@ -100,7 +101,7 @@ using namespace std;
 
 const std::string movies[] = { "music.m4v", "elden.mp4", "kung-fu.mp4", "napalm.mp4", "numa.m4v", "nyan-cat.mp4", "complex-color-test.mp4", "sonic2.mp4", "rick-roll.mp4" };
 std::unordered_map<std::string, libvlc_media_t*> _mediaCache;
-Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::HorizontalTopLeft);
+Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, MATRIX_CONFIGURATION_OPTION);
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {
