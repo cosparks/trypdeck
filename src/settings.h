@@ -7,18 +7,18 @@
 
 // Debug
 #define ENABLE_VISUAL_DEBUG 0		// when true, stops all calls to pigpio (only necessary if initializing leds)
-#define ENABLE_SERIAL_DEBUG 1		// when true, prints out serial read/write data
-#define ENABLE_MEDIA_DEBUG 1		// when true, prints out messages regarding file system state
+#define ENABLE_SERIAL_DEBUG 0		// when true, prints out serial read/write data
+#define ENABLE_MEDIA_DEBUG 0		// when true, prints out messages regarding file system state
 #define ENABLE_VLC_DEBUG 0			// when true, prints out messages regarding libvlc playback
 
 ///////////////////////////////////////////
 // Trypdeck Settings
 
 // Leader or Follower
-#define Leader
+#define Follower
 
 // IDs
-#define ID '1'							// change this setting for different followers: each follower on the network MUST have a unique id
+#define ID '2'							// change this setting for different followers: each follower on the network MUST have a unique id
 #define LEADER_ID '0'					// do not change this ID
 
 // Timing -- Leader only
@@ -35,9 +35,9 @@
 #define PLAYBACK_MESSAGE_WAIT_INTERVAL 5000		// wait period within which to ignore new playback messages (in case two messages are sent at same time)
 
 // GPIO Settings (general)
-#define SERIAL_BAUD B38400				// networking baud rate
+#define SERIAL_BAUD B19200				// networking baud rate
 #define SERIAL_BUFFER_SIZE 32			// largest possible serial message size
-#define SPI_BAUD 4000000				// led matrix baud rate
+#define SPI_BAUD 3000000				// led matrix baud rate
 #define NUM_INPUTS 2					// number of inputs for pull-chains on sculpture
 #define NUM_FOLLOWERS 2					// number of pis on TripdeckMediaManager network (TODO: evaluate necessity of this)
 
@@ -72,7 +72,7 @@
 #define NO_LEDS 2
 
 // * modify these values *
-#define LED_SETTING NO_LEDS		 			// * important * main led setting
+#define LED_SETTING CENTRE_LEDS		 		// * important * main led setting
 #define PIXEL_BRIGHTNESS 31 				// global pixel brightness
 #define SCALE_BRIGHTNESS 1					// bring pixel brightness down as color approaces black
 #define DARK_THRESHOLD 23					// rgb avg below this threshold will have brightness set to 0
@@ -85,7 +85,7 @@
 // * modify these values *
 #define LED_MATRIX_WIDTH 50
 #define LED_MATRIX_HEIGHT 49
-#define LED_MATRIX_SPLIT 25
+#define LED_MATRIX_SPLIT 50
 #define GRID_AB_ORIENTATION LedController::None						// orientation of grid A and grid B (Horizontal -> A B -- Vertical -> A / B)
 #define LED_GRID_CONFIGURATION_OPTION_A Apa102::VerticalTopLeft		// configuration of first led grid in main light chamber
 #define LED_GRID_CONFIGURATION_OPTION_B Apa102::VerticalTopRight	// configuration of second led grid in main light chamber
