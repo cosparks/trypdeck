@@ -46,7 +46,7 @@ using namespace std;
 #define SPI_BAUD_TEST 6000000
 
 // PROGRAM MACROS
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 
 #define RUN_AV_DECODING 0
 #define PLAY_RGB_FRAMES 0 // RUN_LEDS must be on for this to work
@@ -70,13 +70,13 @@ using namespace std;
 #define MULTI_PURPOSE_INTERVAL 5000
 
 // GPIO
-#define RUN_GPIO_TEST 1
+#define RUN_GPIO_TEST 0
 #define GPIO_WRITE_PIN 23
 #define GPIO_READ_PIN 24
 #define GPIO_TEST_INTERVAL 2000
 
 // LED
-#define RUN_LEDS 0
+#define RUN_LEDS 1
 #define PIXEL_BRIGHTNESS_TEST 5
 #define MATRIX_WIDTH 53
 #define MATRIX_HEIGHT 10
@@ -88,7 +88,7 @@ using namespace std;
 #define RUN_RAINBOW_STEPPING_TEST 0
 #define RUN_DRAW_SHAPE_TEST 0
 #define RUN_FILL_TEST 0
-#define RUN_GRID_TEST 0
+#define RUN_GRID_TEST 1
 #define RUN_COLOR_TEST 0
 
 // LED timing intervals
