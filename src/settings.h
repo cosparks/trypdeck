@@ -86,12 +86,12 @@
 #define LED_MATRIX_HEIGHT 49
 #define LED_MATRIX_SPLIT 25
 #define GRID_AB_ORIENTATION LedController::None						// orientation of grid A and grid B (Horizontal -> A B -- Vertical -> A / B)
-#define LED_GRID_CONFIGURATION_OPTION_A Apa102::VerticalTopLeft		// configuration of first led grid in main light chamber
+#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft		// configuration of first led grid in main light chamber
 #define LED_GRID_CONFIGURATION_OPTION_B Apa102::VerticalTopRight	// configuration of second led grid in main light chamber
 #elif (LED_SETTING == CENTRE_LEDS)	 // Centre Matrix * do no change this line *
 // * modify these values *
-#define LED_MATRIX_WIDTH 22
-#define LED_MATRIX_HEIGHT 22
+#define LED_MATRIX_WIDTH 10
+#define LED_MATRIX_HEIGHT 50
 #define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft
 #define GRID_AB_ORIENTATION LedController::None
 #else

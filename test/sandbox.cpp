@@ -31,7 +31,7 @@ extern "C" {
 
 #include "settings.h"
 #include "Serial.h"
-#include "Apa102.h"
+#include "LedController.h"
 #include "Clock.h"
 
 #ifdef HAVE_AV_CONFIG_H
@@ -81,7 +81,7 @@ using namespace std;
 
 #define INBUF_SIZE 4096
 
-Apa102 lights(MATRIX_WIDTH, MATRIX_HEIGHT, Apa102::HorizontalTopLeft);
+LedController lights(MATRIX_WIDTH, MATRIX_HEIGHT, 0, GRID_AB_ORIENTATION, Apa102::VerticalTopLeft, Apa102::HorizontalTopLeft);
 
 bool initializeGpio() {
 	if (gpioInitialise() < 0) {
@@ -391,9 +391,8 @@ int main(int argv, char** argc) {
 		return -1;
 	}
 
-	lights.init(0, SPI_BAUD_TEST, 0);
+	lights.init(SPI_BAUD_TEST);
 	lights.clear();
-	cout << "Apa102 initialized with: " << lights.getNumLeds() << " leds" << endl;
 	#endif
 
 	#if RUN_SERIAL_NETWORKING

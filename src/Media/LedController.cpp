@@ -1,7 +1,6 @@
 #include <stdexcept>
 #include <math.h>
 
-#include "settings.h"
 #include "LedController.h"
 
 LedController::LedController(int32_t width, int32_t height, int32_t centre, SplitOrientationOption option,
@@ -29,9 +28,9 @@ void LedController::init(uint32_t spiBaud) {
             break;
     }
 
-    _ledGridA->init(0, SPI_BAUD, 0);
+    _ledGridA->init(0, spiBaud, 0);
     if (_ledGridB)
-        _ledGridB->init(1, SPI_BAUD, 0);
+        _ledGridB->init(1, spiBaud, 0);
 
     _clear();
     _show();
