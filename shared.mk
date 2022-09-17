@@ -35,10 +35,16 @@ CPPSRC += $(foreach %,$(SRC_SUB_DIRS),$(wildcard $(%)*.cpp))
 # Create flags to include all directories (so we don't have to use paths in #include)
 INCLUDE_FLAGS := $(foreach %,$(INCLUDE_DIRS),$(INCLUDE_PREFIX)$(wildcard $(%)))
 
+$(info include dirs: $(INCLUDE_FLAGS))
+
 # generate object / dependency file paths for source and library files
 OBJ_SRC := $(patsubst $(SRC_DIR)%,$(BUILD_DIR)%, $(CPPSRC:.cpp=.o))
 OBJ = $(patsubst $(LIB_DIR)%,$(BUILD_DIR)%, $(OBJ_SRC))
 DEPENDENCIES := $(patsubst $(BUILD_DIR)%.o,$(DEP_DIR)%.d,$(OBJ))
+
+$(info SRC_DIRS is $(SRC_DIRS))
+$(info CPPSRC is $(CPPSRC))
+$(info OBJ_SRC is $(OBJ_SRC))
 
 # rules for generating object / dependency files
 $(BUILD_DIR)%.o: $(SRC_DIR)%.cpp $(DEP_DIR)%.d | $(DEP_DIR)
