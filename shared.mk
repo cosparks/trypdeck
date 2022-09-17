@@ -46,11 +46,6 @@ $(BUILD_DIR)%.o: $(PARENT_DIRECTORY)%.cpp $(DEP_DIR)%.d | $(DEP_DIR)
 	@mkdir -p $(@D)
 	@$(CC) $(DEPFLAGS) $(CFLAGS) $(LIBS_CARGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-# $(BUILD_DIR)%.o: $(LIB_DIR)%.cpp $(DEP_DIR)%.d | $(DEP_DIR)
-# 	@echo ' *** building $@ *** '
-# 	@mkdir -p $(@D)
-# 	@$(CC) $(DEPFLAGS) $(CFLAGS) $(LIBS_CARGS) -c -o $@ $< $(INCLUDE_FLAGS)
-
 $(DEP_DIR)%.d:
 	@mkdir -p $(@D)
 
