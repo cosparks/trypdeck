@@ -1,19 +1,20 @@
 #include <pigpio.h>
 #include <iostream>
 
-#include "settings.h"
 #include "Clock.h"
 #include "LedController.h"
 
 // TEST PARAMS
+#define SPI_BAUD 4000000
 #define TEST_PIXEL_BRIGHTNESS 31
+#define LED_MATRIX_WIDTH 10
+#define LED_MATRIX_HEIGHT 51
+#define LED_GRID_CONFIGURATION_OPTION Apa102::VerticalTopLeft
+#define GRID_AB_ORIENTATION LedController::None
+#define LED_MATRIX_SPLIT 0
 
 #define TEST_LED_INTERVAL 80		// led test update interval
-#define TEST_RUN_TIME 20000			// led test duration in milliseconds
-
-#ifndef LED_MATRIX_SPLIT
-#define LED_MATRIX_SPLIT 0
-#endif
+#define TEST_RUN_TIME 60000			// led test duration in milliseconds
 
 bool initializeGpio();
 
