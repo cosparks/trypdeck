@@ -42,7 +42,7 @@ DEPENDENCIES := $(patsubst $(BUILD_DIR)%.o,$(DEP_DIR)%.d,$(OBJ))
 
 # rules for generating object / dependency files
 $(BUILD_DIR)%.o: $(PARENT_DIRECTORY)%.cpp $(DEP_DIR)%.d | $(DEP_DIR)
-	@echo ' *** compiling $@ *** '
+	@echo ' *** compiling $< *** '
 	@mkdir -p $(@D)
 	@$(CC) $(DEPFLAGS) $(CFLAGS) $(LIBS_CARGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
