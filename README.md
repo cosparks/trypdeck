@@ -1,5 +1,7 @@
 # Trypdeck Basscoast
 
+![image](https://user-images.githubusercontent.com/20360622/191133995-b9554fdb-050f-4551-8bd6-64d7be6bdde0.png)
+
 Software for an interactive multimedia fortune-telling installation.  This project is designed to compile and run on a raspberry pi.
 
 ## Building and Running the Project
