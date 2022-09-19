@@ -2,7 +2,7 @@
 
 ![image](https://user-images.githubusercontent.com/20360622/191133995-b9554fdb-050f-4551-8bd6-64d7be6bdde0.png)
 
-Software for interactive sculpture.  This project is designed to compile and run on a raspberry pi zero w 2
+Software for Trypdeck, an interactive sculpture.  This project is designed to compile and run on a raspberry pi zero w 2
 
 ## Building and Running the Project
 ### Clone the Project:
