@@ -1,40 +1,40 @@
 #include <iostream>
 
-#include "TripdeckFollower.h"
+#include "TrypdeckFollower.h"
 
-TripdeckFollower::TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
+TrypdeckFollower::TrypdeckFollower(TrypdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Trypdeck(mediaManager, inputManager, serial) { }
 
-TripdeckFollower::~TripdeckFollower() { }
+TrypdeckFollower::~TrypdeckFollower() { }
 
-void TripdeckFollower::init() {
+void TrypdeckFollower::init() {
 	// sets state to Connecting and _run to true
-	Tripdeck::init();
+	Trypdeck::init();
 
-	TripdeckStateChangedArgs args = { };
+	TrypdeckStateChangedArgs args = { };
 	args.state = _status.state;
 	args.mediaOption = Both;
 	args.playbackOption = MediaPlayer::Loop;
 	_onStateChanged(args);
 }
 
-void TripdeckFollower::run() {
+void TrypdeckFollower::run() {
 	while (_run) {
-		Tripdeck::run();
+		Trypdeck::run();
 
 		switch (_status.state) {
 			case Connecting:
-				_runTimedAction(this, &TripdeckFollower::_pingLeader);
+				_runTimedAction(this, &TrypdeckFollower::_pingLeader);
 				break;
 			case Connected:
 				// behavior is same as Wait
 			case Wait:
-				_runTimedAction(this, &TripdeckFollower::_sendStatusUpdate);
+				_runTimedAction(this, &TrypdeckFollower::_sendStatusUpdate);
 				break;
 			case Pulled:
 				// followers and leaders may be out of sync during Pulled phase
 				break;
 			case Reveal:
-				_runTimedAction(this, &TripdeckFollower::_sendStatusUpdate);
+				_runTimedAction(this, &TrypdeckFollower::_sendStatusUpdate);
 				break;
 			default:
 				// do nothing
@@ -43,7 +43,7 @@ void TripdeckFollower::run() {
 	}
 }
 
-void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
+void TrypdeckFollower::_onStateChanged(TrypdeckStateChangedArgs& args) {
 	_status.videoMedia = args.videoId;
 	_status.ledMedia = args.ledId;
 
@@ -55,13 +55,13 @@ void TripdeckFollower::_onStateChanged(TripdeckStateChangedArgs& args) {
 	_mediaManager->updateState(args);
 }
 
-void TripdeckFollower::_pingLeader() {
+void TrypdeckFollower::_pingLeader() {
 	std::string data(HEADER_LENGTH, STARTUP_NOTIFICATION_HEADER);
 	data += ID;
 	_serial->transmit(data);
 }
 
-void TripdeckFollower::_sendStatusUpdate() {
+void TrypdeckFollower::_sendStatusUpdate() {
 	std::string message = DEFAULT_MESSAGE;
 	message[0] = STATUS_UPDATE_HEADER;
 	message[ID_INDEX] = ID;
@@ -71,7 +71,7 @@ void TripdeckFollower::_sendStatusUpdate() {
 	_serial->transmit(message);
 }
 
-void TripdeckFollower::_handleSerialInput(const InputArgs& args) {
+void TrypdeckFollower::_handleSerialInput(const InputArgs& args) {
 	if (!_validateSerialMessage(args.buffer))
 		return;
 	
@@ -79,7 +79,7 @@ void TripdeckFollower::_handleSerialInput(const InputArgs& args) {
 	if (_parseId(args.buffer)== ID) {
 		
 		char header = _parseHeader(args.buffer);
-		TripdeckMediaOption mediaOption = None;
+		TrypdeckMediaOption mediaOption = None;
 
 		switch (header) {
 			case STATE_CHANGED_HEADER:
@@ -117,8 +117,8 @@ void TripdeckFollower::_handleSerialInput(const InputArgs& args) {
 	}
 }
 
-void TripdeckFollower::_handleStateChangedMessage(const std::string& buffer) {
-	TripdeckStateChangedArgs stateArgs = { };
+void TrypdeckFollower::_handleStateChangedMessage(const std::string& buffer) {
+	TrypdeckStateChangedArgs stateArgs = { };
 
 	if (_parseStateChangedMessage(buffer, stateArgs)) {
 		_updateStatusFromStateArgs(stateArgs);
@@ -126,8 +126,8 @@ void TripdeckFollower::_handleStateChangedMessage(const std::string& buffer) {
 	}
 }
 
-void TripdeckFollower::_handlePlayMediaFromArgsMessage(const std::string& buffer) {
-	TripdeckStateChangedArgs stateArgs = { };
+void TrypdeckFollower::_handlePlayMediaFromArgsMessage(const std::string& buffer) {
+	TrypdeckStateChangedArgs stateArgs = { };
 	_populateStateArgsFromBuffer(buffer, stateArgs);
 
 	switch (stateArgs.mediaOption) {
@@ -147,7 +147,7 @@ void TripdeckFollower::_handlePlayMediaFromArgsMessage(const std::string& buffer
 }
 
 // returns true and loads StateChangedArgs if entering new state, false otherwise
-bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args) {
+bool TrypdeckFollower::_parseStateChangedMessage(const std::string& buffer, TrypdeckStateChangedArgs& args) {
 	if (buffer.length() < 6)
 		throw std::runtime_error("Error: Invalid state changed message.  State message length must be >= 6");
 
@@ -159,7 +159,7 @@ bool TripdeckFollower::_parseStateChangedMessage(const std::string& buffer, Trip
 	return false;
 }
 
-void TripdeckFollower::_handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) {
+void TrypdeckFollower::_handleMediaPlayerPlaybackComplete(const TrypdeckStateChangedArgs& args) {
 	// currently only called when Wait && Led && Cycle
 	if (_status.state == Wait) {
 		std::string message = _populateBufferFromStateArgs(args, MEDIA_PLAYBACK_COMPLETE_HEADER, ID);

@@ -9,38 +9,38 @@
 #include "td_util.h"
 #include "DataManager.h"
 #include "InputManager.h"
-#include "TripdeckState.h"
+#include "TrypdeckState.h"
 #include "MediaPlayer.h"
 
 using namespace td_util;
 
-class TripdeckMediaManager : public Runnable {
+class TrypdeckMediaManager : public Runnable {
 	public:
-		TripdeckMediaManager(DataManager* dataManager, MediaPlayer* _videoPlayer, MediaPlayer* _ledPlayer = NULL);
-		~TripdeckMediaManager();
+		TrypdeckMediaManager(DataManager* dataManager, MediaPlayer* _videoPlayer, MediaPlayer* _ledPlayer = NULL);
+		~TrypdeckMediaManager();
 		void init() override;
 		void run() override;
-		void updateState(const TripdeckStateChangedArgs& args);
-		void updateStateVideo(const TripdeckStateChangedArgs& args);
-		void updateStateLed(const TripdeckStateChangedArgs& args);
-		void play(TripdeckMediaOption option = Both);
-		void stop(TripdeckMediaOption option = Both);
-		void pause(TripdeckMediaOption option = Both);
-		void addVideoFolder(TripdeckState state, const char* folder);
-		void addLedFolder(TripdeckState state, const char* folder);
-		uint32_t getRandomVideoId(TripdeckState state);
-		uint32_t getRandomLedId(TripdeckState state);
+		void updateState(const TrypdeckStateChangedArgs& args);
+		void updateStateVideo(const TrypdeckStateChangedArgs& args);
+		void updateStateLed(const TrypdeckStateChangedArgs& args);
+		void play(TrypdeckMediaOption option = Both);
+		void stop(TrypdeckMediaOption option = Both);
+		void pause(TrypdeckMediaOption option = Both);
+		void addVideoFolder(TrypdeckState state, const char* folder);
+		void addLedFolder(TrypdeckState state, const char* folder);
+		uint32_t getRandomVideoId(TrypdeckState state);
+		uint32_t getRandomLedId(TrypdeckState state);
 		void setPlaybackCompleteDelegate(Command* delegate);
 
 	private:
-		TripdeckState _currentState = Unknown;
+		TrypdeckState _currentState = Unknown;
 		DataManager* _dataManager = NULL;
 		MediaPlayer* _videoPlayer = NULL;
 		MediaPlayer* _ledPlayer = NULL;
 		Command* _playbackCompleteDelegate;
 		MediaListener* _mediaListener = NULL;
-		std::unordered_map<TripdeckState, std::string> _stateToVideoFolder;
-		std::unordered_map<TripdeckState, std::string> _stateToLedFolder;
+		std::unordered_map<TrypdeckState, std::string> _stateToVideoFolder;
+		std::unordered_map<TrypdeckState, std::string> _stateToLedFolder;
 		std::vector<Runnable*> _runnableObjects;
 		bool _run;
 

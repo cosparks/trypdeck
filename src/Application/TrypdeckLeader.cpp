@@ -1,22 +1,22 @@
 #include <iostream>
 #include <algorithm>
 
-#include "TripdeckLeader.h"
+#include "TrypdeckLeader.h"
 #include "td_util.h"
 #include "Clock.h"
 #include "Index.h"
 #include "MockButton.h"
 #include "InputDigitalButton.h"
 
-TripdeckLeader::TripdeckLeader(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Tripdeck(mediaManager, inputManager, serial) { }
+TrypdeckLeader::TrypdeckLeader(TrypdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : Trypdeck(mediaManager, inputManager, serial) { }
 
-TripdeckLeader::~TripdeckLeader() { }
+TrypdeckLeader::~TrypdeckLeader() { }
 
-void TripdeckLeader::init() {
+void TrypdeckLeader::init() {
 	// sets state to Connecting and _run to true
-	Tripdeck::init();
+	Trypdeck::init();
 
-	td_util::Command* digitalInputDelegate = new Delegate<TripdeckLeader, InputArgs>(this, &TripdeckLeader::_handleDigitalInput);
+	td_util::Command* digitalInputDelegate = new Delegate<TrypdeckLeader, InputArgs>(this, &TrypdeckLeader::_handleDigitalInput);
 
 	// hook up button inputs with input manager (input manager will clean up heap objects)
 	#if RUN_MOCK_BUTTONS
@@ -35,16 +35,16 @@ void TripdeckLeader::init() {
 	_onStateChanged();
 }
 
-void TripdeckLeader::run() {
+void TrypdeckLeader::run() {
 	while (_run) {
-		Tripdeck::run();
+		Trypdeck::run();
 		_runOneShotActions();
 
 		switch (_status.state) {
 			case Connecting:
 				// same as Connected
 			case Connected:
-				_runTimedAction(this, &TripdeckLeader::_runStartup, 100);
+				_runTimedAction(this, &TrypdeckLeader::_runStartup, 100);
 				break;
 			case Wait:
 				break;
@@ -59,7 +59,7 @@ void TripdeckLeader::run() {
 	}
 }
 
-void TripdeckLeader::_runStartup() {
+void TrypdeckLeader::_runStartup() {
 	if (_nodeIdToStatus.size() < NUM_FOLLOWERS)
 		return;
 	
@@ -79,7 +79,7 @@ void TripdeckLeader::_runStartup() {
 	}
 }
 
-bool TripdeckLeader::_verifySynced() {
+bool TrypdeckLeader::_verifySynced() {
 	for (auto const& pair : _nodeIdToStatus) {
 		if (!pair.second.connected)
 			return false;
@@ -88,7 +88,7 @@ bool TripdeckLeader::_verifySynced() {
 	return true;
 }
 
-bool TripdeckLeader::_verifyAllPulled() {
+bool TrypdeckLeader::_verifyAllPulled() {
 	for (auto const& pair : _nodeIdToStatus) {
 		if (pair.second.state != Pulled)
 			return false;
@@ -97,15 +97,15 @@ bool TripdeckLeader::_verifyAllPulled() {
 	return _status.state == Pulled;
 }
 
-void TripdeckLeader::_addOneShotAction(void (TripdeckLeader::*action)(void), int64_t wait) {
+void TrypdeckLeader::_addOneShotAction(void (TrypdeckLeader::*action)(void), int64_t wait) {
 	_oneShotActions.push_back(std::make_pair(Clock::instance().millis() + wait, action));
 }
 
-void TripdeckLeader::_cancelOneShotActions() {
+void TrypdeckLeader::_cancelOneShotActions() {
 	_oneShotActions.clear();
 }
 
-void TripdeckLeader::_runOneShotActions() {
+void TrypdeckLeader::_runOneShotActions() {
 	if (_oneShotActions.size() > 0) {
 		std::vector<int32_t> toDelete;
 		uint8_t i = 0;
@@ -126,8 +126,8 @@ void TripdeckLeader::_runOneShotActions() {
 	}
 }
 
-void TripdeckLeader::_onStateChanged() {
-	TripdeckStateChangedArgs args = { };
+void TrypdeckLeader::_onStateChanged() {
+	TrypdeckStateChangedArgs args = { };
 	args.state = _status.state;
 
 	switch (_status.state) {
@@ -169,7 +169,7 @@ void TripdeckLeader::_onStateChanged() {
 	_mediaManager->updateState(args);
 }
 
-void TripdeckLeader::_handleSerialInput(const InputArgs& args) {
+void TrypdeckLeader::_handleSerialInput(const InputArgs& args) {
 	if (!_validateSerialMessage(args.buffer))
 		return;
 
@@ -192,23 +192,23 @@ void TripdeckLeader::_handleSerialInput(const InputArgs& args) {
 	}
 }
 
-void TripdeckLeader::_receiveStartupNotification(char id, const std::string& buffer) {
+void TrypdeckLeader::_receiveStartupNotification(char id, const std::string& buffer) {
 	// add node to map and send state update message
 	if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end())
-		_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, Both, Unknown, 0, false };
+		_nodeIdToStatus[id] = TrypdeckStatus { 0x0, 0x0, Both, Unknown, 0, false };
 
 	// update follower to connected state and tell it to play new media upon receipt of message
-	TripdeckStateChangedArgs stateArgs = { };
+	TrypdeckStateChangedArgs stateArgs = { };
 	stateArgs.state = Connected;
 	stateArgs.mediaOption = Both;
 	_updateStateFollower(id, stateArgs);
 }
 
-void TripdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& buffer) {
+void TrypdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& buffer) {
 	// update internal representation of node's state, including time
 	int64_t currentTime = Clock::instance().millis();
 	if (_nodeIdToStatus.find(id) == _nodeIdToStatus.end()) {
-		_nodeIdToStatus[id] = TripdeckStatus { 0x0, 0x0, _parseMediaOption(buffer), _parseState(buffer), currentTime, true };
+		_nodeIdToStatus[id] = TrypdeckStatus { 0x0, 0x0, _parseMediaOption(buffer), _parseState(buffer), currentTime, true };
 	} else {
 		_nodeIdToStatus[id].option = _parseMediaOption(buffer);
 		_nodeIdToStatus[id].state = _parseState(buffer);
@@ -223,21 +223,21 @@ void TripdeckLeader::_receiveFollowerStatusUpdate(char id, const std::string& bu
 	}
 }
 
-void TripdeckLeader::_handleMediaPlaybackCompleteMessage(char id, const std::string& buffer) {
+void TrypdeckLeader::_handleMediaPlaybackCompleteMessage(char id, const std::string& buffer) {
 	// Only handle cycling Led at the moment
 	if (_parsePlaybackOption(buffer) == MediaPlayer::Cycle && _parseMediaOption(buffer) == Led) {
-		TripdeckStateChangedArgs args = { };
+		TrypdeckStateChangedArgs args = { };
 		_populateStateArgsFromBuffer(buffer, args);
 		_handleMediaPlayerPlaybackComplete(args);
 	}
 }
 
-void TripdeckLeader::_updateStateFollower(char id, TripdeckStateChangedArgs& args) {
+void TrypdeckLeader::_updateStateFollower(char id, TrypdeckStateChangedArgs& args) {
 	std::string message = _populateBufferFromStateArgs(args, STATE_CHANGED_HEADER, id);
 	_serial->transmit(message);
 }
 
-void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
+void TrypdeckLeader::_updateStateFollowers(TrypdeckStateChangedArgs& args) {
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Updating followers for state " << _status.state;
@@ -252,7 +252,7 @@ void TripdeckLeader::_updateStateFollowers(TripdeckStateChangedArgs& args) {
 	}
 }
 
-void TripdeckLeader::_updateMediaStateFollower(char id, TripdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
+void TrypdeckLeader::_updateMediaStateFollower(char id, TrypdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
 	std::string message = DEFAULT_MESSAGE;
 	
 	switch (state) {
@@ -272,32 +272,32 @@ void TripdeckLeader::_updateMediaStateFollower(char id, TripdeckMediaOption opti
 	_serial->transmit(message);
 }
 
-void TripdeckLeader::_setMediaUpdateUniversalAction(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state, int64_t wait) {
+void TrypdeckLeader::_setMediaUpdateUniversalAction(TrypdeckMediaOption option, MediaPlayer::MediaPlayerState state, int64_t wait) {
 	_nextMediaActionOption = option;
 	_nextMediaPlayerState = state;
-	_addOneShotAction(&TripdeckLeader::_updateMediaStateUniversalAction, wait);
+	_addOneShotAction(&TrypdeckLeader::_updateMediaStateUniversalAction, wait);
 }
 
-void TripdeckLeader::_updateMediaStateUniversalAction() {
+void TrypdeckLeader::_updateMediaStateUniversalAction() {
 	_updateMediaStateUniversal(_nextMediaActionOption, _nextMediaPlayerState);
 }
 
-void TripdeckLeader::_updateMediaStateUniversal(TripdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
+void TrypdeckLeader::_updateMediaStateUniversal(TrypdeckMediaOption option, MediaPlayer::MediaPlayerState state) {
 	std::string message = DEFAULT_MESSAGE;
-	void (TripdeckMediaManager::*localAction)(TripdeckMediaOption) = NULL;
+	void (TrypdeckMediaManager::*localAction)(TrypdeckMediaOption) = NULL;
 
 	switch (state) {
 		case MediaPlayer::Play:
-			localAction = &TripdeckMediaManager::play;
+			localAction = &TrypdeckMediaManager::play;
 			message[0] = PLAY_MEDIA_HEADER;
 			break;
 		case MediaPlayer::Stop:
 			message[0] = STOP_MEDIA_HEADER;
-			localAction = &TripdeckMediaManager::stop;
+			localAction = &TrypdeckMediaManager::stop;
 			break;
 		default:
 			message[0] = PAUSE_MEDIA_HEADER;
-			localAction = &TripdeckMediaManager::pause;
+			localAction = &TrypdeckMediaManager::pause;
 			break;
 	}
 
@@ -313,8 +313,8 @@ void TripdeckLeader::_updateMediaStateUniversal(TripdeckMediaOption option, Medi
 	(_mediaManager->*localAction)(option);
 }
 
-void TripdeckLeader::_triggerLedAnimationForState(TripdeckState state, MediaPlayer::MediaPlaybackOption playbackOption) {
-	TripdeckStateChangedArgs args = { };
+void TrypdeckLeader::_triggerLedAnimationForState(TrypdeckState state, MediaPlayer::MediaPlaybackOption playbackOption) {
+	TrypdeckStateChangedArgs args = { };
 	args.state = state;
 	args.ledId = _mediaManager->getRandomLedId(state);
 	args.mediaOption = Led;
@@ -333,7 +333,7 @@ void TripdeckLeader::_triggerLedAnimationForState(TripdeckState state, MediaPlay
 	_mediaManager->updateStateLed(args);
 }
 
-void TripdeckLeader::_handleDigitalInput(const InputArgs& args) {
+void TrypdeckLeader::_handleDigitalInput(const InputArgs& args) {
 	if (args.buffer[0] != '1')
 		return;
 	
@@ -354,7 +354,7 @@ void TripdeckLeader::_handleDigitalInput(const InputArgs& args) {
 		_handleChainPull(args.id);
 }
 
-void TripdeckLeader::_handleChainPull(char id) {
+void TrypdeckLeader::_handleChainPull(char id) {
 	bool chainPulled = false;
 
 	if (id == LEADER_ID) {
@@ -381,7 +381,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 
 		// send Pulled state update message to Followers (change led effect but not video)
 		// at this point, we rely on Leader's internal representation of follower state to determine behavior
-		TripdeckStateChangedArgs args = { };
+		TrypdeckStateChangedArgs args = { };
 		args.state = Pulled;
 		args.mediaOption = Video;
 		args.playbackOption = MediaPlayer::OneShot;
@@ -395,7 +395,7 @@ void TripdeckLeader::_handleChainPull(char id) {
 		std::cout << "Starting countdown to reveal!" << std::endl;
 		#endif
 
-		_addOneShotAction(&TripdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
+		_addOneShotAction(&TrypdeckLeader::_executePreReveal, PULL_TO_PRE_REVEAL_TIME);
 		_revealTriggered = true;
 	}
 
@@ -428,17 +428,17 @@ void TripdeckLeader::_handleChainPull(char id) {
 	}
 }
 
-void TripdeckLeader::_handleReset() {
+void TrypdeckLeader::_handleReset() {
 	// TODO
 	// careful...
 }
 
-void TripdeckLeader::_handleShutdown() {
+void TrypdeckLeader::_handleShutdown() {
 	_serial->transmit(std::string(SYSTEM_SHUTDOWN_MESSAGE));
 	_shutdown();
 }
 
-void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) {
+void TrypdeckLeader::_handleMediaPlayerPlaybackComplete(const TrypdeckStateChangedArgs& args) {
 	// currently only called when Led && Cycle
 	if (_status.state == Wait && args.state == Wait) {
 		int64_t currentTime = Clock::instance().millis();
@@ -446,7 +446,7 @@ void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChang
 			_lastPlaybackCompleteMessageMillis = currentTime;
 
 			// try twice to get random led animation:
-			TripdeckStateChangedArgs newArgs = args;
+			TrypdeckStateChangedArgs newArgs = args;
 			newArgs.ledId = _mediaManager->getRandomLedId(_status.state);
 
 			if (newArgs.ledId == args.ledId)
@@ -469,7 +469,7 @@ void TripdeckLeader::_handleMediaPlayerPlaybackComplete(const TripdeckStateChang
 	}
 }
 
-void TripdeckLeader::_executePreReveal() {
+void TrypdeckLeader::_executePreReveal() {
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Executing pre reveal!" << std::endl;
@@ -478,7 +478,7 @@ void TripdeckLeader::_executePreReveal() {
 	#if PRE_REVEAL_TO_REVEAL_TIME
 	// if we are using pre-reveal state, stop all media and add actual reveal to one shot actions
 	_updateMediaStateUniversal(Both, MediaPlayer::Stop);
-	_addOneShotAction(&TripdeckLeader::_executeReveal, PRE_REVEAL_TO_REVEAL_TIME);
+	_addOneShotAction(&TrypdeckLeader::_executeReveal, PRE_REVEAL_TO_REVEAL_TIME);
 	#else
 	//trigger reveal right away
 	_updateMediaStateUniversal(Both, MediaPlayer::Stop);
@@ -488,7 +488,7 @@ void TripdeckLeader::_executePreReveal() {
 	// set next action, reveal
 }
 
-void TripdeckLeader::_executeReveal() {
+void TrypdeckLeader::_executeReveal() {
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Executing reveal!" << std::endl;
@@ -498,7 +498,7 @@ void TripdeckLeader::_executeReveal() {
 	uint32_t ledId = _mediaManager->getRandomLedId(Reveal);
 
 	for (auto const& pair : _nodeIdToStatus) {
-		TripdeckStateChangedArgs args = { };
+		TrypdeckStateChangedArgs args = { };
 		args.state = Reveal;
 		args.ledId = ledId;
 
@@ -514,10 +514,10 @@ void TripdeckLeader::_executeReveal() {
 	_status.state = Reveal;
 	_onStateChanged();
 
-	_addOneShotAction(&TripdeckLeader::_returnToWait, REVEAL_TIME);
+	_addOneShotAction(&TrypdeckLeader::_returnToWait, REVEAL_TIME);
 }
 
-void TripdeckLeader::_returnToWait() {
+void TrypdeckLeader::_returnToWait() {
 	_revealTriggered = false;
 	_chainPulled = false;
 	_firstPull = true;

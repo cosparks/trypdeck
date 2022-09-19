@@ -8,9 +8,9 @@
 #include "VideoPlayerVLC.h"
 #include "VideoPlayerOmx.h"
 #include "LedPlayer.h"
-#include "TripdeckMediaManager.h"
-#include "TripdeckLeader.h"
-#include "TripdeckFollower.h"
+#include "TrypdeckMediaManager.h"
+#include "TrypdeckLeader.h"
+#include "TrypdeckFollower.h"
 
 const char* VideoFolders[] = { VIDEO_CONNECTING_DIRECTORY, VIDEO_CONNECTED_DIRECTORY, VIDEO_WAIT_DIRECTORY, VIDEO_PULLED_DIRECTORY, VIDEO_REVEAL_DIRECTORY };
 const char* LedFolders[] = { LED_CONNECTING_DIRECTORY, LED_CONNECTED_DIRECTORY, LED_WAIT_DIRECTORY, LED_PULLED_DIRECTORY, LED_REVEAL_DIRECTORY };
@@ -39,27 +39,27 @@ int main(int argc, char** argv) {
 	LedController ledController(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT, 0, GRID_AB_ORIENTATION, LED_GRID_CONFIGURATION_OPTION, Apa102::GridConfigurationOption(0));
 	#endif
 	LedPlayer ledPlayer(&ledController);
-	TripdeckMediaManager mediaManager(&dataManager, &videoPlayer, &ledPlayer);
+	TrypdeckMediaManager mediaManager(&dataManager, &videoPlayer, &ledPlayer);
 	#else
-	TripdeckMediaManager mediaManager(&dataManager, &videoPlayer);
+	TrypdeckMediaManager mediaManager(&dataManager, &videoPlayer);
 	#endif
 
 	// Add Project Folders
-	for (int32_t state = TripdeckState::Connecting; state <= TripdeckState::Reveal; state++) {
-		mediaManager.addVideoFolder(TripdeckState(state), VideoFolders[state]);
-		mediaManager.addLedFolder(TripdeckState(state), LedFolders[state]);
+	for (int32_t state = TrypdeckState::Connecting; state <= TrypdeckState::Reveal; state++) {
+		mediaManager.addVideoFolder(TrypdeckState(state), VideoFolders[state]);
+		mediaManager.addLedFolder(TrypdeckState(state), LedFolders[state]);
 	}
 
 	// Application
 	#ifdef Leader
-	TripdeckLeader tripdeck(&mediaManager, &inputManager, &serial);
+	TrypdeckLeader trypdeck(&mediaManager, &inputManager, &serial);
 	#else
-	TripdeckFollower tripdeck(&mediaManager, &inputManager, &serial);
+	TrypdeckFollower trypdeck(&mediaManager, &inputManager, &serial);
 	#endif
 
 	// Initialize and Run
-	tripdeck.init();
-	tripdeck.run();
+	trypdeck.init();
+	trypdeck.run();
 
 	system("sudo sh -c \"TERM=linux setterm -foreground white >/dev/tty0\"");
 	return 1;

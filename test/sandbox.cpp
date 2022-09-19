@@ -51,12 +51,12 @@ using namespace std;
 #define RUN_LED_TEST PLAY_RGB_FRAMES
 #define PLAY_FRAMES_CORRECT_TIMING 1
 #define RUN_DECODE_PERFORMANCE_TESTING 0
-#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/tripdeck_basscoast/media/loop/nyan-cat.mp4"
+#define TRANSCODE_VIDEO_PATH "/home/trypdeck/projects/trypdeck/media/loop/nyan-cat.mp4"
 
 #define PLAY_OMX 0
-#define STOP_OMX_ARGS "killall omxplayer.bin" // MAYBE ADD "omxplayer -p -o hdmi /home/trypdeck/projects/tripdeck_basscoast/media/loop/elden.mp4"
-#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/elden.mp4"
-#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/elden.mp4"
+#define STOP_OMX_ARGS "killall omxplayer.bin" // MAYBE ADD "omxplayer -p -o hdmi /home/trypdeck/projects/trypdeck/media/loop/elden.mp4"
+#define OMX_ARGS1 "omxplayer --no-osd /home/trypdeck/projects/trypdeck/media/video/connecting/elden.mp4"
+#define OMX_ARGS2 "omxplayer --loop --no-osd /home/trypdeck/projects/trypdeck/media/video/connecting/elden.mp4"
 
 #define PLAY_VLC 0
 #define PRINT_USER_INFO 0

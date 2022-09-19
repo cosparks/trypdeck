@@ -1,8 +1,8 @@
 include ../shared.mk
 
-OBJ += $(BUILD_DIR)src/tripdeck.o
+OBJ += $(BUILD_DIR)src/trypdeck.o
 
-tripdeck: $(OBJ) 
+trypdeck: $(OBJ) 
 	@echo ' *** building $@ *** '
 	@$(CC) $(VERSION) $(CFLAGS) $(LFLAGS) -o $@ $^ $(LIBS) $(INCLUDE_FLAGS)
 
@@ -13,4 +13,4 @@ debug: $(OBJ)
 .PHONY: clean
  
 clean:
-	@rm -r $(OBJ) $(DEPENDENCIES) tripdeck
+	@rm -r $(OBJ) $(DEPENDENCIES) trypdeck

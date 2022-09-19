@@ -5,17 +5,17 @@
 
 #include "Index.h"
 #include "Clock.h"
-#include "TripdeckMediaManager.h"
+#include "TrypdeckMediaManager.h"
 #include "MediaListenerDummy.h"
 
 #define RUN_TIME_MILLIS 330000000
 #define VIDEO_PLAY_INTERVAL 10000
 #define VLC_DELAY 600
 
-TripdeckMediaManager::TripdeckMediaManager(DataManager* dataManager, MediaPlayer* videoPlayer, MediaPlayer* ledPlayer) :
+TrypdeckMediaManager::TrypdeckMediaManager(DataManager* dataManager, MediaPlayer* videoPlayer, MediaPlayer* ledPlayer) :
 	_dataManager(dataManager), _videoPlayer(videoPlayer), _ledPlayer(ledPlayer) {
 	if (!_dataManager)
-		throw std::runtime_error("Error: TripdeckMediaManager::_dataManager cannot be null!");
+		throw std::runtime_error("Error: TrypdeckMediaManager::_dataManager cannot be null!");
 
 	_runnableObjects.push_back(_dataManager);
 
@@ -29,7 +29,7 @@ TripdeckMediaManager::TripdeckMediaManager(DataManager* dataManager, MediaPlayer
 	}
 }
 
-TripdeckMediaManager::~TripdeckMediaManager() {
+TrypdeckMediaManager::~TrypdeckMediaManager() {
 	if (_playbackCompleteDelegate)
 		delete _playbackCompleteDelegate;
 
@@ -37,7 +37,7 @@ TripdeckMediaManager::~TripdeckMediaManager() {
 		delete _mediaListener;
 }
 
-void TripdeckMediaManager::init() {
+void TrypdeckMediaManager::init() {
 	// initialize all runnable objects
 	for (Runnable* runnable : _runnableObjects) {
 		runnable->init();
@@ -47,26 +47,26 @@ void TripdeckMediaManager::init() {
 	if (_ledPlayer) {
 		_dataManager->addMediaListener(_ledPlayer);
 		_ledPlayer->setPlaybackCompleteDelegate(
-			new Delegate<TripdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TripdeckMediaManager::_ledPlayerPlaybackComplete));
+			new Delegate<TrypdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TrypdeckMediaManager::_ledPlayerPlaybackComplete));
 	}
 
 	if (_videoPlayer) {
 		_dataManager->addMediaListener(_videoPlayer);
 		_videoPlayer->setPlaybackCompleteDelegate(
-			new Delegate<TripdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TripdeckMediaManager::_videoPlayerPlaybackComplete));
+			new Delegate<TrypdeckMediaManager, MediaPlayer::PlaybackCompleteArgs>(this, &TrypdeckMediaManager::_videoPlayerPlaybackComplete));
 	}
 
 	if (_mediaListener)
 		_dataManager->addMediaListener(_mediaListener);
 }
 
-void TripdeckMediaManager::run() {
+void TrypdeckMediaManager::run() {
 	for (Runnable* runnable : _runnableObjects) {
 			runnable->run();
 	}
 }
 
-void TripdeckMediaManager::play(TripdeckMediaOption option) {
+void TrypdeckMediaManager::play(TrypdeckMediaOption option) {
 	switch (option) {
 		case None:
 			// do nothing
@@ -84,7 +84,7 @@ void TripdeckMediaManager::play(TripdeckMediaOption option) {
 	} 
 }
 
-void TripdeckMediaManager::stop(TripdeckMediaOption option) {
+void TrypdeckMediaManager::stop(TrypdeckMediaOption option) {
 	switch (option) {
 		case None:
 			// do nothing
@@ -102,7 +102,7 @@ void TripdeckMediaManager::stop(TripdeckMediaOption option) {
 	}
 }
 
-void TripdeckMediaManager::pause(TripdeckMediaOption option) {
+void TrypdeckMediaManager::pause(TrypdeckMediaOption option) {
 	switch (option) {
 		case None:
 			// do nothing
@@ -120,7 +120,7 @@ void TripdeckMediaManager::pause(TripdeckMediaOption option) {
 	}
 }
 
-void TripdeckMediaManager::updateState(const TripdeckStateChangedArgs& args) {
+void TrypdeckMediaManager::updateState(const TrypdeckStateChangedArgs& args) {
 	if (args.state != Unknown)
 		_currentState = args.state;
 
@@ -128,7 +128,7 @@ void TripdeckMediaManager::updateState(const TripdeckStateChangedArgs& args) {
 	updateStateLed(args);
 }
 
-void TripdeckMediaManager::updateStateVideo(const TripdeckStateChangedArgs& args) {
+void TrypdeckMediaManager::updateStateVideo(const TrypdeckStateChangedArgs& args) {
 	if (_videoPlayer) {
 		uint32_t videoId = 0;
 
@@ -150,7 +150,7 @@ void TripdeckMediaManager::updateStateVideo(const TripdeckStateChangedArgs& args
 	}
 }
 
-void TripdeckMediaManager::updateStateLed(const TripdeckStateChangedArgs& args) {
+void TrypdeckMediaManager::updateStateLed(const TrypdeckStateChangedArgs& args) {
 	if (_ledPlayer) {
 		uint32_t ledId = 0;
 
@@ -172,7 +172,7 @@ void TripdeckMediaManager::updateStateLed(const TripdeckStateChangedArgs& args) 
 	}
 }
 
-void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folder) {
+void TrypdeckMediaManager::addVideoFolder(TrypdeckState state, const char* folder) {
 	if (_videoPlayer) {
 		_videoPlayer->addMediaFolder(folder);
 	} else {
@@ -182,7 +182,7 @@ void TripdeckMediaManager::addVideoFolder(TripdeckState state, const char* folde
 	_stateToVideoFolder[state] = folder;
 }
 
-void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder) {
+void TrypdeckMediaManager::addLedFolder(TrypdeckState state, const char* folder) {
 	if (_ledPlayer) {
 		_ledPlayer->addMediaFolder(folder);
 	} else {
@@ -192,7 +192,7 @@ void TripdeckMediaManager::addLedFolder(TripdeckState state, const char* folder)
 	_stateToLedFolder[state] = folder;
 }
 
-uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
+uint32_t TrypdeckMediaManager::getRandomVideoId(TrypdeckState state) {
 	const auto& videoFiles = _dataManager->getFileIdsFromFolder(_stateToVideoFolder[state]);
 
 	if (videoFiles.size() == 0) {
@@ -204,7 +204,7 @@ uint32_t TripdeckMediaManager::getRandomVideoId(TripdeckState state) {
 	return videoFiles[rand() % videoFiles.size()];
 }
 
-uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
+uint32_t TrypdeckMediaManager::getRandomLedId(TrypdeckState state) {
 	const auto& ledFiles = _dataManager->getFileIdsFromFolder(_stateToLedFolder[state]);
 
 	if (ledFiles.size() == 0) {
@@ -216,66 +216,66 @@ uint32_t TripdeckMediaManager::getRandomLedId(TripdeckState state) {
 	return ledFiles[rand() % ledFiles.size()];
 }
 
-void TripdeckMediaManager::setPlaybackCompleteDelegate(Command* delegate) {
+void TrypdeckMediaManager::setPlaybackCompleteDelegate(Command* delegate) {
 	_playbackCompleteDelegate = delegate;
 }
 
-void TripdeckMediaManager::_playVideoInternal() {
+void TrypdeckMediaManager::_playVideoInternal() {
 	if (_videoPlayer) {
 		_videoPlayer->play();
 	}
 }
 
-void TripdeckMediaManager::_playLedInternal() {
+void TrypdeckMediaManager::_playLedInternal() {
 	if (_ledPlayer) {
 		_ledPlayer->play();
 	}
 }
 
-void TripdeckMediaManager::_stopVideoInternal() {
+void TrypdeckMediaManager::_stopVideoInternal() {
 	if (_videoPlayer) {
 		_videoPlayer->stop();
 	}
 }
 
-void TripdeckMediaManager::_stopLedInternal() {
+void TrypdeckMediaManager::_stopLedInternal() {
 	if (_ledPlayer) {
 		_ledPlayer->stop();
 	}
 }
 
-void TripdeckMediaManager::_pauseVideoInternal() {
+void TrypdeckMediaManager::_pauseVideoInternal() {
 	if (_videoPlayer) {
 		_videoPlayer->pause();
 	}
 }
 
-void TripdeckMediaManager::_pauseLedInternal() {
+void TrypdeckMediaManager::_pauseLedInternal() {
 	if (_ledPlayer) {
 		_ledPlayer->pause();
 	}
 }
 
-void TripdeckMediaManager::_ledPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args) {
+void TrypdeckMediaManager::_ledPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args) {
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Received led player playback complete call with current media set to :" << args.currentMedia << std::endl;
 	#endif
 	
 	if (_playbackCompleteDelegate) {
-		TripdeckStateChangedArgs stateArgs = { _currentState, 0, args.currentMedia, Led, args.playbackOption };
+		TrypdeckStateChangedArgs stateArgs = { _currentState, 0, args.currentMedia, Led, args.playbackOption };
 		_playbackCompleteDelegate->execute((CommandArgs)&stateArgs);
 	}
 }
 
-void TripdeckMediaManager::_videoPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args) {
+void TrypdeckMediaManager::_videoPlayerPlaybackComplete(const MediaPlayer::PlaybackCompleteArgs& args) {
 	#if ENABLE_MEDIA_DEBUG
 	// TODO: Remove debug code
 	std::cout << "Received video player playback complete call with current media set to :" << args.currentMedia << std::endl;
 	#endif
 
 	if (_playbackCompleteDelegate) {
-		TripdeckStateChangedArgs stateArgs = { _currentState, args.currentMedia, 0, Video, args.playbackOption };
+		TrypdeckStateChangedArgs stateArgs = { _currentState, args.currentMedia, 0, Video, args.playbackOption };
 		_playbackCompleteDelegate->execute((CommandArgs)&stateArgs);
 	}
 }

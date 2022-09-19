@@ -6,7 +6,7 @@ Software for an interactive multimedia fortune-telling installation.  This proje
 ### Clone the Project:
 • navigate to the desired folder and in the command line of your raspberry pi enter
 ```
-$ git clone https://github.com/cosparks/tripdeck_basscoast.git
+$ git clone https://github.com/cosparks/trypdeck.git
 $ git pull
 ```
 
@@ -25,10 +25,10 @@ $ sudo raspi-config
 • enable SPI
 
 ### Build and Run:
-• navigate to `.../tripdeck_basscoast/src` folder and enter
+• navigate to `.../trypdeck/src` folder and enter
 ```
-$ make tripdeck
-$ sudo ./tripdeck
+$ make trypdeck
+$ sudo ./trypdeck
 ```
 
 ### Dependencies:

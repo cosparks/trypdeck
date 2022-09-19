@@ -8,18 +8,18 @@
 #include "td_util.h"
 #include "Clock.h"
 #include "Runnable.h"
-#include "TripdeckMediaManager.h"
+#include "TrypdeckMediaManager.h"
 #include "InputManager.h"
 #include "InputThreadedSerial.h"
 
 using namespace td_util;
 
 /** HEADERS 
- * @note if you add a new header, it must also be added to ValidHeaders array in Tripdeck.cpp
+ * @note if you add a new header, it must also be added to ValidHeaders array in Trypdeck.cpp
 **/
 
 // startup notification structure: "cID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
-// STATE is TripdeckState to change to and OPTION/PLAYBACK contains information on how media should be played
+// STATE is TrypdeckState to change to and OPTION/PLAYBACK contains information on how media should be played
 // VIDEOHASH/LEDHASH are optional arguments for video and led file IDs
 // if VIDEOHASH or LEDHASH are zero, follower will select and play random media associated with that state
 #define STATE_CHANGED_HEADER 'c'
@@ -30,13 +30,13 @@ using namespace td_util;
 // sent during Follower's connected and wait phase -- generally to notify leader that follower is still connected
 #define STATUS_UPDATE_HEADER 'u'
 // message dictating that follower play media: "jID/STATE/OPTION"
-// OPTION is TripdeckMediaOption
+// OPTION is TrypdeckMediaOption
 #define PLAY_MEDIA_HEADER 'j'
 // message dictating that follower stop media: "sID/STATE/OPTION"
-// OPTION is TripdeckMediaOption
+// OPTION is TrypdeckMediaOption
 #define STOP_MEDIA_HEADER 's'
 // message dictating that follower pause media: "pID/STATE/OPTION"
-// OPTION is TripdeckMediaOption
+// OPTION is TrypdeckMediaOption
 #define PAUSE_MEDIA_HEADER 'p'
 // play media from state folder message: "mID/STATE/OPTION/PLAYBACK(/VIDEOHASH/LEDHASH)"
 // allows Leader to send message to follower indicating that it should play media from a folder not associated with its current state
@@ -72,10 +72,10 @@ using namespace td_util;
  * @brief Abstract class the children of which will encapsulate the unique behavior for leader and follower
  * @note essentially just manages application state and leader/follower networking behavior
  */
-class Tripdeck : public Runnable {
+class Trypdeck : public Runnable {
 	public:
-		Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
-		virtual ~Tripdeck() { }
+		Trypdeck(TrypdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
+		virtual ~Trypdeck() { }
 		void init() override;
 		void run() override;
 
@@ -85,10 +85,10 @@ class Tripdeck : public Runnable {
 			uint32_t ledHash;
 		};
 		
-		TripdeckMediaManager* _mediaManager = NULL;
+		TrypdeckMediaManager* _mediaManager = NULL;
 		InputManager* _inputManager = NULL;
 		Serial* _serial = NULL;
-		TripdeckStatus _status = { }; //  video and led media ids, current state and connection status
+		TrypdeckStatus _status = { }; //  video and led media ids, current state and connection status
 		int64_t _nextActionMillis = 0;
 		bool _run = false;
 
@@ -97,11 +97,11 @@ class Tripdeck : public Runnable {
 		bool _validateHeader(char header);
 		MediaHashes _parseMediaHashes(const std::string& buffer);
 		const std::string _hashToHexString(uint32_t hash);
-		void _updateStatusFromStateArgs(TripdeckStateChangedArgs& args);
-		void _populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args);
-		std::string _populateBufferFromStateArgs(const TripdeckStateChangedArgs& args, char header = '0', char id = '0');
-		void _mediaManagerPlaybackComplete(const TripdeckStateChangedArgs& args);
-		virtual void _handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) = 0;
+		void _updateStatusFromStateArgs(TrypdeckStateChangedArgs& args);
+		void _populateStateArgsFromBuffer(const std::string& buffer, TrypdeckStateChangedArgs& args);
+		std::string _populateBufferFromStateArgs(const TrypdeckStateChangedArgs& args, char header = '0', char id = '0');
+		void _mediaManagerPlaybackComplete(const TrypdeckStateChangedArgs& args);
+		virtual void _handleMediaPlayerPlaybackComplete(const TrypdeckStateChangedArgs& args) = 0;
 		void _reset();
 		void _shutdown();
 
@@ -123,12 +123,12 @@ class Tripdeck : public Runnable {
 			return buffer[ID_INDEX];
 		}
 
-		inline TripdeckState _parseState(const std::string& buffer) {
-			return (TripdeckState)(buffer[STATE_INDEX] - '0');
+		inline TrypdeckState _parseState(const std::string& buffer) {
+			return (TrypdeckState)(buffer[STATE_INDEX] - '0');
 		}
 
-		inline TripdeckMediaOption _parseMediaOption(const std::string& buffer) {
-			return (TripdeckMediaOption)(buffer[MEDIA_OPTION_INDEX] - '0');
+		inline TrypdeckMediaOption _parseMediaOption(const std::string& buffer) {
+			return (TrypdeckMediaOption)(buffer[MEDIA_OPTION_INDEX] - '0');
 		}
 
 		inline MediaPlayer::MediaPlaybackOption _parsePlaybackOption(const std::string& buffer) {
@@ -145,11 +145,11 @@ class Tripdeck : public Runnable {
 
 		class SerialInputDelegate : public Command {
 			public:
-				SerialInputDelegate(Tripdeck* owner);
+				SerialInputDelegate(Trypdeck* owner);
 				~SerialInputDelegate();
 				void execute(CommandArgs args) override;
 			private:
-				Tripdeck* _owner;
+				Trypdeck* _owner;
 		};
 };
 

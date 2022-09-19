@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 	libvlc_media_list_t* mediaList = libvlc_media_list_new(instance);
 	libvlc_media_list_player_t* mediaListPlayer = libvlc_media_list_player_new(instance);
 	libvlc_media_list_player_set_media_list(mediaListPlayer, mediaList);
-	libvlc_media_t* media = libvlc_media_new_path(instance, "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/complex-color-test-fast.mp4");
+	libvlc_media_t* media = libvlc_media_new_path(instance, "/home/trypdeck/projects/trypdeck/media/video/connecting/complex-color-test-fast.mp4");
 	
 	libvlc_media_list_lock(mediaList);
 	int32_t ret1 = libvlc_media_list_insert_media(mediaList, media, 0);
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 	std::cout << "media list count 2: " << libvlc_media_list_count(mediaList) << std::endl;
 	libvlc_media_list_unlock(mediaList);
 
-	libvlc_media_t* newMedia = libvlc_media_new_path(instance, "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/sonic2.mp4");
+	libvlc_media_t* newMedia = libvlc_media_new_path(instance, "/home/trypdeck/projects/trypdeck/media/video/connecting/sonic2.mp4");
 
 	libvlc_media_list_lock(mediaList);
 	// int32_t ret3 = libvlc_media_list_insert_media(mediaList, newMedia, 0);

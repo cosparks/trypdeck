@@ -3,27 +3,27 @@
 
 #define NOTIFICATION_INTERVAL 2000
 
-#include "Tripdeck.h"
+#include "Trypdeck.h"
 
-class TripdeckFollower : public Tripdeck {
+class TrypdeckFollower : public Trypdeck {
 	public:
-		TripdeckFollower(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
-		~TripdeckFollower();
+		TrypdeckFollower(TrypdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial);
+		~TrypdeckFollower();
 		void init() override;
 		void run() override;
 
 	private:
 
 		// state and networking
-		void _onStateChanged(TripdeckStateChangedArgs& args);
+		void _onStateChanged(TrypdeckStateChangedArgs& args);
 		void _pingLeader();
 		void _sendStatusUpdate();
 		void _handleSerialInput(const InputArgs& args) override;
 		void _handleStateChangedMessage(const std::string& buffer);
 		void _handlePlayMediaFromArgsMessage(const std::string& buffer);
-		bool _parseStateChangedMessage(const std::string& buffer, TripdeckStateChangedArgs& args);
+		bool _parseStateChangedMessage(const std::string& buffer, TrypdeckStateChangedArgs& args);
 		// events
-		void _handleMediaPlayerPlaybackComplete(const TripdeckStateChangedArgs& args) override;
+		void _handleMediaPlayerPlaybackComplete(const TrypdeckStateChangedArgs& args) override;
 
 };
 

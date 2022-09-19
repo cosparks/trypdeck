@@ -1,15 +1,15 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Tripdeck.h"
+#include "Trypdeck.h"
 
 const char ValidHeaders[] = { STARTUP_NOTIFICATION_HEADER, STATE_CHANGED_HEADER, STATUS_UPDATE_HEADER, PLAY_MEDIA_HEADER,
 	STOP_MEDIA_HEADER, PAUSE_MEDIA_HEADER, PLAY_MEDIA_FROM_ARGS_HEADER, MEDIA_PLAYBACK_COMPLETE_HEADER, SYSTEM_RESET_HEADER, SYSTEM_SHUTDOWN_HEADER };
 
-// tripdeck behavior
-Tripdeck::Tripdeck(TripdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : _mediaManager(mediaManager), _inputManager(inputManager), _serial(serial) { }
+// trypdeck behavior
+Trypdeck::Trypdeck(TrypdeckMediaManager* mediaManager, InputManager* inputManager, Serial* serial) : _mediaManager(mediaManager), _inputManager(inputManager), _serial(serial) { }
 
-void Tripdeck::init() {
+void Trypdeck::init() {
 	// initialize members
 	_inputManager->init();
 	_mediaManager->init();
@@ -17,22 +17,22 @@ void Tripdeck::init() {
 	
 	// create and add serial input and serial input delegate to InputManager
 	// ID does not matter in this case -- objects will be cleaned up by InputManger on Destruction
-	_inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new Delegate<Tripdeck, InputArgs>(this, &Tripdeck::_handleSerialInput));
+	_inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new Delegate<Trypdeck, InputArgs>(this, &Trypdeck::_handleSerialInput));
 	// _inputManager->addInput(new InputThreadedSerial((char)0xFF, _serial), new SerialInputDelegate(this));
 
 	// add playback complete handler
-	_mediaManager->setPlaybackCompleteDelegate(new Delegate<Tripdeck, TripdeckStateChangedArgs>(this, &Tripdeck::_mediaManagerPlaybackComplete));
+	_mediaManager->setPlaybackCompleteDelegate(new Delegate<Trypdeck, TrypdeckStateChangedArgs>(this, &Trypdeck::_mediaManagerPlaybackComplete));
 
 	_status.state = Connecting;
 	_run = true;
 }
 
-void Tripdeck::run() {
+void Trypdeck::run() {
 	_inputManager->run();
 	_mediaManager->run();
 }
 
-bool Tripdeck::_validateSerialMessage(const std::string& buffer) {
+bool Trypdeck::_validateSerialMessage(const std::string& buffer) {
 	// shortest possible message is HEADER_LENGTH + ID + '\n'
 	if (buffer.length() < HEADER_LENGTH + 2) {
 		#if ENABLE_SERIAL_DEBUG
@@ -47,7 +47,7 @@ bool Tripdeck::_validateSerialMessage(const std::string& buffer) {
 	return iswalnum(buffer[0]) != 0 && _validateHeader(buffer[0]);
 }
 
-bool Tripdeck::_validateHeader(char header) {
+bool Trypdeck::_validateHeader(char header) {
 	for (char h : ValidHeaders) {
 		if (header == h)
 			return true;
@@ -55,19 +55,19 @@ bool Tripdeck::_validateHeader(char header) {
 	return false;
 }
 
-Tripdeck::MediaHashes Tripdeck::_parseMediaHashes(const std::string& buffer) {
+Trypdeck::MediaHashes Trypdeck::_parseMediaHashes(const std::string& buffer) {
 	std::string mediaHashes = buffer.substr(HASH_INDEX);
 	int32_t slashIndex = mediaHashes.find("/");
 	return MediaHashes { std::stoul(mediaHashes.substr(0, slashIndex), NULL, 16), std::stoul(mediaHashes.substr(slashIndex + 1), NULL, 16) };
 }
 
-const std::string Tripdeck::_hashToHexString(uint32_t hash) {
+const std::string Trypdeck::_hashToHexString(uint32_t hash) {
 	std::stringstream stream;
 	stream << std::hex << hash;
 	return stream.str();
 }
 
-void Tripdeck::_updateStatusFromStateArgs(TripdeckStateChangedArgs& args) {
+void Trypdeck::_updateStatusFromStateArgs(TrypdeckStateChangedArgs& args) {
 	_status.videoMedia = args.videoId;
 	_status.ledMedia = args.ledId;
 	_status.option = args.mediaOption;
@@ -76,7 +76,7 @@ void Tripdeck::_updateStatusFromStateArgs(TripdeckStateChangedArgs& args) {
 	_status.connected = true;
 }
 
-void Tripdeck::_populateStateArgsFromBuffer(const std::string& buffer, TripdeckStateChangedArgs& args) {
+void Trypdeck::_populateStateArgsFromBuffer(const std::string& buffer, TrypdeckStateChangedArgs& args) {
 	args.state = _parseState(buffer);
 
 	// check for media id info
@@ -90,7 +90,7 @@ void Tripdeck::_populateStateArgsFromBuffer(const std::string& buffer, TripdeckS
 	args.playbackOption = _parsePlaybackOption(buffer);
 }
 
-std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArgs& args, char header, char id) {
+std::string Trypdeck::_populateBufferFromStateArgs(const TrypdeckStateChangedArgs& args, char header, char id) {
 	std::string message = DEFAULT_MESSAGE;
 	message[0] = header;
 	message[ID_INDEX] = id;
@@ -104,26 +104,26 @@ std::string Tripdeck::_populateBufferFromStateArgs(const TripdeckStateChangedArg
 	return message;
 }
 
-void Tripdeck::_mediaManagerPlaybackComplete(const TripdeckStateChangedArgs& args) {
+void Trypdeck::_mediaManagerPlaybackComplete(const TrypdeckStateChangedArgs& args) {
 	// at the moment, we only care about Cycling Led videos
 	if (args.mediaOption == Led && args.playbackOption == MediaPlayer::Cycle) {
 		_handleMediaPlayerPlaybackComplete(args);
 	}
 }
 
-void Tripdeck::_reset() {
+void Trypdeck::_reset() {
 	system("sudo reboot");
 }
 
-void Tripdeck::_shutdown() {
+void Trypdeck::_shutdown() {
 	system("sudo shutdown -h now");
 }
 
 // Serial Input Delegate
-Tripdeck::SerialInputDelegate::SerialInputDelegate(Tripdeck* owner) : _owner(owner) { }
+Trypdeck::SerialInputDelegate::SerialInputDelegate(Trypdeck* owner) : _owner(owner) { }
 
-Tripdeck::SerialInputDelegate::~SerialInputDelegate() { }
+Trypdeck::SerialInputDelegate::~SerialInputDelegate() { }
 
-void Tripdeck::SerialInputDelegate::execute(CommandArgs args) {
+void Trypdeck::SerialInputDelegate::execute(CommandArgs args) {
 	_owner->_handleSerialInput(*((InputArgs*)args));
 }

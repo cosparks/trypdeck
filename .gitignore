@@ -1,12 +1,13 @@
 .vscode/
 !.vscode/launch.json
-tripdeck
+trypdeck
 obj/
 dep/
 cache/
 media/
 test/sandbox
 test/test-libvlc
+test/led-config-test
 bin/
 *.bin
 *.o
