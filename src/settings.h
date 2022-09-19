@@ -99,16 +99,16 @@
 #endif // LED_SETTINGS
 
 // Media Folders
-#define VIDEO_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connecting/"
-#define VIDEO_CONNECTED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/connected/"
-#define VIDEO_WAIT_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/wait/"
-#define VIDEO_PULLED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/pulled/"
-#define VIDEO_REVEAL_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/video/reveal/"
+#define VIDEO_CONNECTING_DIRECTORY "/home/trypdeck/projects/trypdeck/media/video/connecting/"
+#define VIDEO_CONNECTED_DIRECTORY "/home/trypdeck/projects/trypdeck/media/video/connected/"
+#define VIDEO_WAIT_DIRECTORY "/home/trypdeck/projects/trypdeck/media/video/wait/"
+#define VIDEO_PULLED_DIRECTORY "/home/trypdeck/projects/trypdeck/media/video/pulled/"
+#define VIDEO_REVEAL_DIRECTORY "/home/trypdeck/projects/trypdeck/media/video/reveal/"
 
-#define LED_CONNECTING_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/connecting/"
-#define LED_CONNECTED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/connected/"
-#define LED_WAIT_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/wait/"
-#define LED_PULLED_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/pulled/"
-#define LED_REVEAL_DIRECTORY "/home/trypdeck/projects/tripdeck_basscoast/media/led/reveal/"
+#define LED_CONNECTING_DIRECTORY "/home/trypdeck/projects/trypdeck/media/led/connecting/"
+#define LED_CONNECTED_DIRECTORY "/home/trypdeck/projects/trypdeck/media/led/connected/"
+#define LED_WAIT_DIRECTORY "/home/trypdeck/projects/trypdeck/media/led/wait/"
+#define LED_PULLED_DIRECTORY "/home/trypdeck/projects/trypdeck/media/led/pulled/"
+#define LED_REVEAL_DIRECTORY "/home/trypdeck/projects/trypdeck/media/led/reveal/"
 
 #endif // _SETTINGS_H_
