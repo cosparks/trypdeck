@@ -1,4 +1,4 @@
-# Trypdeck Basscoast
+# Trypdeck
 
 ![image](https://user-images.githubusercontent.com/20360622/191133995-b9554fdb-050f-4551-8bd6-64d7be6bdde0.png)
 
